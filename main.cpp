@@ -1,5 +1,5 @@
 #include <iostream>
-#include <thread>
+//#include <thread>
 #include "Tracking.hpp"
 
 static const int num_threads = 10;
@@ -26,13 +26,10 @@ int main()
   //   t[i].join();
   // }
 
-  // TrackingThread t1(5,1);
-  // TrackingThread t2(6,1);
-  // t1.start();
-  // t2.start();
 
   Tracking t(10);
-  t.run();
+  std::cout << t.numThreads() << std::endl;
+  t.start();
 
   return 0;
 }
