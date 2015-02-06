@@ -12,23 +12,12 @@ void call_from_thread(int tid) {
 
 int main()
 {
-  // std::thread t[num_threads];
+  Tracking t(6);
+  std::cout << t.numThreads() << " threads, " << t.numParticles() << " tasks." << std::endl;
 
-  // //Launch a group of threads
-  // for (int i = 0; i < num_threads; ++i) {
-  //   t[i] = std::thread(call_from_thread, i);
-  // }
+  t.config.x = 1; //rotation per step in degree
+  t.config.s_start = {0,1,0};
 
-  // std::cout << "Launched from the main\n";
-
-  // //Join the threads with the main thread
-  // for (int i = 0; i < num_threads; ++i) {
-  //   t[i].join();
-  // }
-
-
-  Tracking t(10);
-  std::cout << t.numThreads() << std::endl;
   t.start();
 
   return 0;

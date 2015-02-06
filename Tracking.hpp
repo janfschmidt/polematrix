@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include "Configuration.hpp"
 #include "TrackingTask.hpp"
 
 class Tracking
@@ -23,8 +24,6 @@ private:
   unsigned int nThreads;   // number of threads to be executed in parallel
 
 public:
- 
-
   Tracking(unsigned int nParticles, unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
   ~Tracking() {}
 
@@ -32,6 +31,8 @@ public:
 
   unsigned int numParticles() const {return nParticles;}
   unsigned int numThreads() const {return nThreads;}
+
+  Configuration config;
 };
 
 #endif

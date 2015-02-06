@@ -9,9 +9,8 @@ Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nPart
     nThreads = 1;
 
   // fill queue
-  double x_in = 1;
   for (unsigned int i=0; i<nParticles; i++) {
-    queue.emplace_back(TrackingTask(i,x_in));
+    queue.emplace_back(TrackingTask(i,&config));
   }
 
   // set iterator to begin of queue
