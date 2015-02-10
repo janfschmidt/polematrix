@@ -12,11 +12,13 @@ void call_from_thread(int tid) {
 
 int main()
 {
-  Tracking t(6);
+  Tracking t(2);
   std::cout << t.numThreads() << " threads, " << t.numParticles() << " tasks." << std::endl;
 
+  t.config.setPath("./test");
   t.config.x = 1; //rotation per step in degree
   t.config.s_start = {0,1,0};
+  t.config.dt_out = 1e5;
 
   t.start();
 

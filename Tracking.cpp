@@ -10,13 +10,14 @@ Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nPart
 
   // fill queue
   for (unsigned int i=0; i<nParticles; i++) {
-    queue.emplace_back(TrackingTask(i,&config));
+    TrackingTask toll(i,&config);
+    queue.push_back(std::move(toll));
   }
 
   // set iterator to begin of queue
   queueIt = queue.begin();
 
-  //create threads
+  // create threads
   for (unsigned int i=0; i<nThreads; i++) {
     threadPool.emplace_back(std::thread());
   }
