@@ -1,5 +1,5 @@
 CC=g++
-CCFLAGS=-std=c++14 -O3 -Wall #-g -O0 #last 2 for valgrind
+CCFLAGS=-std=c++11 -O3 -Wall -Wl,--no-as-needed #-g -O0 #last 2 for valgrind
 INSTALL_PATH=/usr/local/
 PROG_NAME=polematrix
 ALL_O=main.o TrackingTask.o Tracking.o Configuration.o
@@ -9,7 +9,7 @@ all: $(PROG_NAME)
 .PHONY: all
 
 $(PROG_NAME): $(ALL_O)
-	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -pthread -lm
+	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -pthread -lpal -lm
 
 main.o: main.cpp TrackingTask.hpp
 	$(CC) $(CCFLAGS) -c $<
