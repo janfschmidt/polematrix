@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <stdexcept>
+#include <map>
 #include <memory>
 #include <armadillo>
 #include "Configuration.hpp"
@@ -24,12 +25,13 @@ inline arma::mat33 rotxMatrix(double angle) const;
 std::string outfileName() const;            // output file name
 
 private:
+std::map<double,arma::colvec3> storage;     // store results
 std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
 unsigned int w;                             // output file column width
 void outfileOpen();                         // open output file and write header
 void outfileClose();                        // write footer and close output file
 void outfileAdd(const double &t, const arma::colvec3 &s); // append s(t) to outfile
-void storeStep(const double &t, const arma::colvec3 &s);  // append s(t) to result and outfile
+void storeStep(const double &t, const arma::colvec3 &s);  // append s(t) to storage and outfile
 };
 
 

@@ -89,5 +89,6 @@ void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
 
 void TrackingTask::storeStep(const double &t, const arma::colvec3 &s)
 {
+  storage.insert(std::pair<double,arma::colvec3>(t,s));
   outfileAdd(t,s);
 }

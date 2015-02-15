@@ -12,7 +12,7 @@ void call_from_thread(int tid) {
 
 int main()
 {
-  Tracking t(2);
+  Tracking t(6);
   std::cout << t.numThreads() << " threads, " << t.numParticles() << " tasks." << std::endl;
 
   t.config.setPath("./test");
