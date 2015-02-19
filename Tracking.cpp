@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nParticles(nParticles_in), nThreads(nThreads_in)
+Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nParticles(nParticles_in), nThreads(nThreads_in), sim(NULL), lattice(NULL), orbit(NULL)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -26,6 +26,9 @@ Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nPart
 
 void Tracking::start()
 {
+  if (lattice==NULL || orbit==NULL)
+    throw TrackError("ERROR: Tracking::start(): Cannot start tracking, if model is not specified (Lattice, Orbit).");
+
   auto start = std::chrono::high_resolution_clock::now();
 
   //start threads
@@ -58,7 +61,17 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       mutex.unlock();
+      myTask->lattice=lattice;
+      myTask->orbit=orbit;
       myTask->run(); // run next queued TrackingTask
     }
   }
+}
+
+
+void Tracking::setModel(pal::SimToolInstance *s, pal::AccLattice *l, pal::FunctionOfPos<pal::AccPair> *o)
+{
+  setSimToolInstance(s);
+  setLattice(l);
+  setOrbit(o);
 }

@@ -7,6 +7,7 @@
 TrackingTask::TrackingTask(unsigned int id, const Configuration *c)
   : particleId(id), config(c), w(14)
 {
+  one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
 }
 
@@ -24,18 +25,30 @@ void TrackingTask::run()
 
 void TrackingTask::matrixTracking()
 {
-  // arma::mat33 A = {,2,3,4,5,6,7,8,9};
-  // arma::mat33 one(arma::fill::eye);
-
   arma::colvec3 s = config->s_start;
-  pal::AccTriple B;
-  B.x=config->x*M_PI/180.;
+  pal::AccTriple omega;
+  double pos = config->pos_start();
+  double pos_stop = config->pos_stop();
+  double dpos_out = config->dpos_out();
 
-  for (unsigned int i=0; i<this->particleId*123456789; i++) {
-    s = rotMatrix(B) * s;
+  // set current iterator and position
+  pal::const_AccIterator it=lattice->nextCIt( orbit->posInTurn(pos) );
+  pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(it);
+  //B.x=config->x*M_PI/180.;
 
-    if (i%config->dt_out == 0) //output
-      storeStep(i,s);
+  //  for (unsigned int i=0; i<this->particleId*123456789; i++) {
+  while (pos < pos_stop) {
+    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ); // field of element
+    omega *= config->agamma(0.);
+    s = rotMatrix(omega) * s; // spin rotation
+    std::cout << rotMatrix(omega) << std::endl;
+
+    // if (std::fmod(pos,dpos_out) == 0) //output
+      storeStep(pos,s);
+
+    // step to next element
+    pos += lattice->distanceNext(it);
+    it = lattice->revolve(it);
   }
 }
 
@@ -53,6 +66,8 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 {
   arma::colvec3 B = {B_in.x,B_in.z,B_in.s};
   double angle = std::sqrt(std::pow(B(0),2) + std::pow(B(1),2) + std::pow(B(2),2)); //faster than arma::norm(B);
+  if (angle < MIN_AMPLITUDE) return one;
+
   arma::colvec3 n = B/angle; //faster than arma::normalise(B)
 
   double c=std::cos(angle);

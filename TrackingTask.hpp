@@ -7,6 +7,8 @@
 #include <memory>
 #define ARMA_NO_DEBUG
 #include <armadillo>
+#include <libpal/AccLattice.hpp>
+#include <libpal/FunctionOfPos.hpp>
 #include <libpal/types.hpp>
 #include "Configuration.hpp"
 
@@ -15,6 +17,8 @@ class TrackingTask
 public:
   const unsigned int particleId;
   const Configuration *config;
+  const pal::AccLattice *lattice;
+  const pal::FunctionOfPos<pal::AccPair> *orbit;
   
   TrackingTask(unsigned int id, const Configuration *c);
   TrackingTask(const TrackingTask& other) = delete;
@@ -23,11 +27,14 @@ public:
   
   void run();                                 //run tracking task
   void matrixTracking();
+
   inline arma::mat33 rotxMatrix(double angle) const;
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
+  double gamma() const;
   std::string outfileName() const;            // output file name
   
 private:
+  arma::mat33 one;
   std::map<double,arma::colvec3> storage;     // store results
   std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
   unsigned int w;                             // output file column width

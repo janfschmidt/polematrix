@@ -23,7 +23,14 @@ private:
   unsigned int nParticles; // total number of particles (tasks)
   unsigned int nThreads;   // number of threads to be executed in parallel
 
+  pal::SimToolInstance *sim;
+  const pal::AccLattice *lattice;
+  const pal::FunctionOfPos<pal::AccPair> *orbit;
+
+
 public:
+  Configuration config;
+
   Tracking(unsigned int nParticles, unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
   ~Tracking() {}
 
@@ -31,8 +38,14 @@ public:
 
   unsigned int numParticles() const {return nParticles;}
   unsigned int numThreads() const {return nThreads;}
+  pal::SimToolInstance* getSimToolInstance() const {return sim;}
+  const pal::AccLattice* getLattice() const {return lattice;}
+  const pal::FunctionOfPos<pal::AccPair>* getOrbit() const {return orbit;}
 
-  Configuration config;
+  void setModel(pal::SimToolInstance *s, pal::AccLattice *l, pal::FunctionOfPos<pal::AccPair> *o);
+  void setSimToolInstance(pal::SimToolInstance *s) {sim = s;}
+  void setLattice(pal::AccLattice *l) {lattice = l;}
+  void setOrbit(pal::FunctionOfPos<pal::AccPair> *o) {orbit = o;}
 };
 
 #endif
