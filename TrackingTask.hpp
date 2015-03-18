@@ -40,8 +40,8 @@ private:
   unsigned int w;                             // output file column width
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
-  void outfileAdd(const double &t, const arma::colvec3 &s); // append s(t) to outfile
-  void storeStep(const double &t, const arma::colvec3 &s);  // append s(t) to storage and outfile
+  void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
+  void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
 };
 
 

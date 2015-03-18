@@ -15,7 +15,7 @@ public:
   arma::colvec3 s_start;
   double t_start;         // time / s
   double t_stop;
-  unsigned int dt_out;
+  double dt_out;
   double E_start;         // energy / GeV
   double dE;              // dE/dt / GeV/s
 
@@ -34,6 +34,7 @@ public:
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}
 
+  double gamma(double t) const;
   double agamma(double t) const;
 };
 
