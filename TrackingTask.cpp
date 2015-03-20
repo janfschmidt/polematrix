@@ -34,24 +34,29 @@ void TrackingTask::matrixTracking()
   double pos_stop = config->pos_stop();
   double dpos_out = config->dpos_out();
   double pos_nextOut = pos + dpos_out;
-  double agamma;
+  double gamma;
 
   // set current iterator and position
   pal::const_AccIterator it=lattice->nextCIt( orbit->posInTurn(pos) );
   pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(it);
   t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
-  //B.x=config->x*M_PI/180.;
 
   //  for (unsigned int i=0; i<this->particleId*123456789; i++) {
   while (pos < pos_stop) {
-    agamma = config->agamma(t);
-    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ); // field of element
-    omega *= agamma;
+    gamma = config->gamma(t);
+    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config->a_gyro; // field of element
+    omega.x *= gamma;
+    omega.z *= gamma;
+    // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
+
     s = rotMatrix(omega) * s; // spin rotation
     //std::cout << rotMatrix(omega) << std::endl;
 
+    //renormalize
+    //s = s/std::sqrt(std::pow(s(0),2) + std::pow(s(1),2) + std::pow(s(2),2));
+
     if (pos >= pos_nextOut) {//output
-      storeStep(t,s,agamma);
+      storeStep(t,s,gamma);
       pos_nextOut += dpos_out;
     }
 
@@ -108,7 +113,7 @@ void TrackingTask::outfileOpen()
     throw TrackFileError(outfileName());
   else
     *outfile << "#"<<std::setw(w+1)<< "t / s" <<std::setw(w)<< "Sx" <<std::setw(w)<< "Sz" <<std::setw(w)<< "Ss"
-	    <<std::setw(w)<< "|S|" <<std::setw(w)<< "a*gamma" << std::endl;
+	    <<std::setw(w)<< "|S|" <<std::setw(w)<< "gamma" << std::endl;
 }
 
 
@@ -119,19 +124,19 @@ void TrackingTask::outfileClose()
 }
 
 
-void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma)
+void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s, const double &gamma)
 {
   *outfile <<std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
 	   <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
 	   <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
 	   <<std::setw(w)<< s[0] <<std::setw(w)<< s[1] <<std::setw(w)<< s[2]
-	   <<std::setw(w)<< arma::norm(s) <<std::setw(w)<< agamma << std::endl;
+	   <<std::setw(w)<< arma::norm(s) <<std::setw(w)<< gamma << std::endl;
 }
 
 
 
-void TrackingTask::storeStep(const double &t, const arma::colvec3 &s, const double &agamma)
+void TrackingTask::storeStep(const double &t, const arma::colvec3 &s, const double &gamma)
 {
   storage.insert(std::pair<double,arma::colvec3>(t,s));
-  outfileAdd(t,s,agamma);
+  outfileAdd(t,s,gamma);
 }

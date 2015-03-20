@@ -14,7 +14,7 @@ int main()
 
   // t.config.s_start = {0,0.7,0.714};
   // t.config.t_start = 0.;
-  // t.config.t_stop = 548e-9;
+  // t.config.t_stop = 548e-8;
   // t.config.E_start = 1.32194;
   // t.config.dE = 0.;
   // t.config.dt_out = 1e-9;
@@ -25,6 +25,7 @@ int main()
   t.config.E_start = 1.2;
   t.config.dE = 6.0;
   t.config.dt_out = 2e-5;
+
   std::cout << "dpos: " <<std::setiosflags(std::ios::scientific)<<std::setprecision(8)<< t.config.dpos_out() << std::endl;
 
   pal::SimToolInstance sim(pal::madx, pal::online, t.config.subfolder("madx")+ "elsa_harmcorr.seq");
