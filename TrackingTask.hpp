@@ -7,9 +7,9 @@
 #include <memory>
 #define ARMA_NO_DEBUG
 #include <armadillo>
-#include <libpal/AccLattice.hpp>
-#include <libpal/FunctionOfPos.hpp>
-#include <libpal/types.hpp>
+#include <libpalattice/AccLattice.hpp>
+#include <libpalattice/FunctionOfPos.hpp>
+#include <libpalattice/types.hpp>
 #include "Configuration.hpp"
 
 class TrackingTask

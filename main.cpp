@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
-#include <libpal/AccLattice.hpp>
-#include <libpal/FunctionOfPos.hpp>
+#include <libpalattice/AccLattice.hpp>
+#include <libpalattice/FunctionOfPos.hpp>
 #include "Tracking.hpp"
 
 
@@ -10,7 +10,7 @@ int main()
   Tracking t(2,2);
   std::cout << t.numThreads() << " threads, " << t.numParticles() << " tasks." << std::endl;
 
-  t.config.setPath("/home/schmidt/pole/MyProjects/libpalfield");
+  t.config.setPath("/home/schmidt/pole/MyProjects/depolVStracking");
 
   // t.config.s_start = {0,0.7,0.714};
   // t.config.t_start = 0.;
@@ -28,7 +28,7 @@ int main()
 
   std::cout << "dpos: " <<std::setiosflags(std::ios::scientific)<<std::setprecision(8)<< t.config.dpos_out() << std::endl;
 
-  pal::SimToolInstance sim(pal::madx, pal::online, t.config.subfolder("madx")+ "elsa_harmcorr.seq");
+  pal::SimToolInstance sim(pal::madx, pal::online, t.config.subfolder("madx")+ "elsa.madx");
   pal::AccLattice lattice("polematrix",sim);
   pal::FunctionOfPos<pal::AccPair> orbit(sim);
   orbit.simToolClosedOrbit(sim);
