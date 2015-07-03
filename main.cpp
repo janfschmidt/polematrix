@@ -19,7 +19,7 @@ int main()
   // t.config.dE = 0.;
   // t.config.dt_out = 1e-9;
 
-  t.config.s_start = {0.,1.,0.};
+  t.config.s_start = {0.,0.,1.};
   t.config.t_start = 0.01;
   t.config.t_stop =  0.03;
   t.config.E_start = 1.2;

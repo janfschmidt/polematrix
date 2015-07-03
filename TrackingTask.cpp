@@ -79,7 +79,7 @@ arma::mat33 TrackingTask::rotxMatrix(double angle) const
 
 arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 {
-  arma::colvec3 B = {B_in.x,B_in.z,B_in.s};
+  arma::colvec3 B = {B_in.x,B_in.s,B_in.z};
   double angle = std::sqrt(std::pow(B(0),2) + std::pow(B(1),2) + std::pow(B(2),2)); //faster than arma::norm(B);
   if (angle < MIN_AMPLITUDE) return one;
 
@@ -129,7 +129,7 @@ void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s, const dou
   *outfile <<std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
 	   <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
 	   <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
-	   <<std::setw(w)<< s[0] <<std::setw(w)<< s[1] <<std::setw(w)<< s[2]
+	   <<std::setw(w)<< s[0] <<std::setw(w)<< s[2] <<std::setw(w)<< s[1]
 	   <<std::setw(w)<< arma::norm(s) <<std::setw(w)<< gamma << std::endl;
 }
 
