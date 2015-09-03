@@ -2,17 +2,11 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nParticles(nParticles_in), nThreads(nThreads_in), sim(NULL), lattice(NULL), orbit(NULL)
+Tracking::Tracking(unsigned int nThreads) : sim(NULL), lattice(NULL), orbit(NULL)
 {
   // use at least one thread
   if (nThreads == 0)
     nThreads = 1;
-
-  // fill queue
-  for (unsigned int i=0; i<nParticles; i++) {
-    TrackingTask toll(i,&config);
-    queue.push_back(std::move(toll));
-  }
 
   // set iterator to begin of queue
   queueIt = queue.begin();
@@ -25,9 +19,23 @@ Tracking::Tracking(unsigned int nParticles_in, unsigned int nThreads_in) : nPart
 
 
 void Tracking::start()
-{
+{ 
   if (lattice==NULL || orbit==NULL)
-    throw TrackError("ERROR: Tracking::start(): Cannot start tracking, if model is not specified (Lattice, Orbit).");
+    throw TrackError("ERROR: Cannot start tracking, if model is not specified (Lattice, Orbit).");
+
+  if (config.t_stop <= config.t_start) {
+    std::stringstream msg;
+    msg << "ERROR: Cannot track backwards: t_stop=" << config.t_stop << " < t_start=" << config.t_start;
+    throw TrackError(msg.str());
+  }
+
+  // fill queue
+  for (unsigned int i=0; i<config.nParticles; i++) {
+    TrackingTask toll(i,&config);
+    queue.push_back(std::move(toll));
+  }
+  // set iterator to begin of queue
+  queueIt = queue.begin();
 
   auto start = std::chrono::high_resolution_clock::now();
 
@@ -55,7 +63,7 @@ void Tracking::processQueue()
     mutex.lock();
     if (queueIt == queue.end()) {
       mutex.unlock();
-      return;
+      return;   // finish this thread
     }
     else {
       myTask = queueIt;

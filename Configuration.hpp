@@ -16,22 +16,23 @@ class Configuration
 {
 private:
   std::string p; //path
-  const unsigned int default_steps;
 
   
 public:
   arma::colvec3 s_start;
   double t_start;         // time / s
   double t_stop;
-  double dt_out;
-  double E_start;         // energy / GeV
+  double dt_out;          // output(!) step width / s
+  double E0;              // energy at t=0 / GeV
   double dE;              // dE/dt / GeV/s
+  unsigned int nParticles; // number of tracked particles
 
   //constants
   const double E_rest;    // electron rest energy / GeV
   const double a_gyro;    // electron gyromagnetic anomaly a = (g-2)/2
+  const unsigned int default_steps; // number of output steps if not specified by dt_out
 
-  Configuration(std::string path="~");
+  Configuration(std::string path=".");
   ~Configuration() {}
 
   std::string path() const {return p;}
