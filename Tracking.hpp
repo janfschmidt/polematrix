@@ -24,6 +24,9 @@ private:
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
 
+  SpinMotion polarization;
+  void calcPolarization();  //calculate polarization: average over all spin vectors for each time step
+
 
 public:
   Configuration config;
@@ -43,7 +46,12 @@ public:
   void setSimToolInstance(pal::SimToolInstance *s) {sim = s;}
   void setLattice(pal::AccLattice *l) {lattice = l;}
   void setOrbit(pal::FunctionOfPos<pal::AccPair> *o) {orbit = o;}
+
+  std::map<double,arma::colvec3> getPolarization() const {return polarization;}
+  void savePolarization();
 };
+
+
 
 #endif
 // __POLEMATRIX__TRACKING_HPP_

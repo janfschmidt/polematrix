@@ -5,40 +5,43 @@
 #include <armadillo>
 #include <gsl/gsl_const_mksa.h>
 #include <fstream>
-// #include <boost/serialization/base_object.hpp>
-// #include <boost/archive/xml_oarchive.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/filesystem.hpp>
 
 namespace pt = boost::property_tree;
+namespace fs = boost::filesystem;
 
 class Configuration
 {
-private:
-  std::string p; //path
-
-  
 public:
+  fs::path outpath;
+  
   arma::colvec3 s_start;
-  double t_start;         // time / s
+  double t_start;          // time / s
   double t_stop;
-  double dt_out;          // output(!) step width / s
-  double E0;              // energy at t=0 / GeV
-  double dE;              // dE/dt / GeV/s
+  double dt_out;           // output(!) step width / s
+  double E0;               // energy at t=0 / GeV
+  double dE;               // dE/dt / GeV/s
   unsigned int nParticles; // number of tracked particles
+  fs::path simFile;       // lattice simulation file for pal::SimToolInstance
 
-  //constants
-  const double E_rest;    // electron rest energy / GeV
-  const double a_gyro;    // electron gyromagnetic anomaly a = (g-2)/2
+  //constants / internal configuration (constructor)
+  const double E_rest;              // electron rest energy / GeV
+  const double a_gyro;              // electron gyromagnetic anomaly a = (g-2)/2
   const unsigned int default_steps; // number of output steps if not specified by dt_out
+  const std::string spinDirName;    // directory name for tracking output files (outpath/spinDirName)
+  const std::string polFileName;    // file name for polarization output file (Tracking::savePolarization())
 
   Configuration(std::string path=".");
   ~Configuration() {}
 
-  std::string path() const {return p;}
-  void setPath(std::string path);
-  std::string subfolder(std::string folder) const {return p + folder + "/";}
-
+  //std::string outpath() const {return _outpath;}
+  //void setPath(std::string path);
+  
+  fs::path subDirectory(std::string folder) const {return outpath/folder;}
+  fs::path spinDirectory() const {return outpath/spinDirName;}
+  fs::path polFile() const {return outpath/polFileName;}
   double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start;}
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}

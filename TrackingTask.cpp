@@ -1,10 +1,84 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <stdexcept>
 #include "TrackingTask.hpp"
 
 
-TrackingTask::TrackingTask(unsigned int id, const Configuration *c)
+void SpinMotion::operator+=(const SpinMotion &other)
+{
+  if (this->size() != other.size())
+    throw std::runtime_error("SpinMotion::operator+= not possible for objects of different size");
+  
+  std::map<double,arma::colvec3>::const_iterator otherIt = other.begin();
+    
+  for (auto it = this->begin(); it != this->end(); ++it) {
+    if (it->first == otherIt->first) {
+      it->second += otherIt->second;
+      otherIt++;
+    }
+    else
+      throw std::runtime_error("SpinMotion::operator+= with incompatible tracking time steps");
+  }
+}
+
+void SpinMotion::operator/=(const unsigned int &num)
+{
+  for (auto it = this->begin(); it!= this->end(); ++it) {
+    it->second /= num;
+  }
+}
+
+
+std::string SpinMotion::printHeader(unsigned int w, std::string name) const
+{
+  std::stringstream ss;
+  ss << "#"<<std::setw(w+1)<< "t / s" <<std::setw(w)<< name+"x" <<std::setw(w)<< name+"z"
+     <<std::setw(w)<< name+"s" <<std::setw(w)<< "|"+name+"|";
+  return ss.str();
+}
+
+std::string SpinMotion::print(unsigned int w) const
+{
+  std::stringstream ss;
+  for (auto it = this->begin(); it!= this->end(); ++it) {
+    ss << std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
+       <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< it->first
+       <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
+       <<std::setw(w)<< it->second[0] <<std::setw(w)<< it->second[2] <<std::setw(w)<< it->second[1]
+       <<std::setw(w)<< arma::norm(it->second) << std::endl;
+  }
+    return ss.str();
+}
+
+std::string SpinMotion::printLine(unsigned int w, const double &key) const
+{
+  std::stringstream ss;
+  ss << std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
+     <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< key
+     <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
+     <<std::setw(w)<< this->at(key)[0] <<std::setw(w)<< this->at(key)[2] <<std::setw(w)<< this->at(key)[1]
+     <<std::setw(w)<< arma::norm(this->at(key)) << std::endl;
+  return ss.str();
+}
+
+std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma::colvec3 &s) const
+{
+  std::stringstream ss;
+  ss << std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
+     <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
+     <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
+     <<std::setw(w)<< s[0] <<std::setw(w)<< s[2] <<std::setw(w)<< s[1]
+     <<std::setw(w)<< arma::norm(s) << std::endl;
+  return ss.str();
+}
+
+
+
+
+
+
+TrackingTask::TrackingTask(unsigned int id, const Configuration &c)
   : particleId(id), config(c), w(14)
 {
   one.eye(); // fill unit matrix
@@ -27,12 +101,12 @@ void TrackingTask::run()
 
 void TrackingTask::matrixTracking()
 {
-  arma::colvec3 s = config->s_start;
+  arma::colvec3 s = config.s_start;
   pal::AccTriple omega;
-  double pos = config->pos_start();
+  double pos = config.pos_start();
   double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
-  double pos_stop = config->pos_stop();
-  double dpos_out = config->dpos_out();
+  double pos_stop = config.pos_stop();
+  double dpos_out = config.dpos_out();
   double pos_nextOut = pos + dpos_out;
   double gamma;
 
@@ -43,8 +117,8 @@ void TrackingTask::matrixTracking()
 
   //  for (unsigned int i=0; i<this->particleId*123456789; i++) {
   while (pos < pos_stop) {
-    gamma = config->gamma(t);
-    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config->a_gyro; // field of element
+    gamma = config.gamma(t);
+    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
     omega.x *= gamma;
     omega.z *= gamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
@@ -100,37 +174,35 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 std::string TrackingTask::outfileName() const
 {
   std::stringstream ss;
-  ss << config->subfolder("spins") << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
-  return ss.str();
+  //  ss << config.subfolder("spins") << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
+    ss << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
+    return ( config.spinDirectory()/ss.str() ).string();
 }
 
 
 
 void TrackingTask::outfileOpen()
 {
+  if ( fs::create_directory(config.spinDirectory()) )
+       std::cout << "* created directory " << config.spinDirectory() << std::endl;
   outfile->open(outfileName());
   if (!outfile->is_open())
     throw TrackFileError(outfileName());
   else
-    *outfile << "#"<<std::setw(w+1)<< "t / s" <<std::setw(w)<< "Sx" <<std::setw(w)<< "Sz" <<std::setw(w)<< "Ss"
-	    <<std::setw(w)<< "|S|" <<std::setw(w)<< "gamma" << std::endl;
+    *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma" << std::endl;
 }
 
 
 void TrackingTask::outfileClose()
 {
   outfile->close();
-  std::cout << "* Wrote " << outfileName() << "." << std::endl;
+  std::cout << "* Wrote " << storage.size() << " steps to " << outfileName() << "." << std::endl;
 }
 
 
 void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s, const double &gamma)
 {
-  *outfile <<std::resetiosflags(std::ios::fixed)<<std::setiosflags(std::ios::scientific)
-	   <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
-	   <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
-	   <<std::setw(w)<< s[0] <<std::setw(w)<< s[2] <<std::setw(w)<< s[1]
-	   <<std::setw(w)<< arma::norm(s) <<std::setw(w)<< gamma << std::endl;
+  *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< gamma << std::endl;
 }
 
 

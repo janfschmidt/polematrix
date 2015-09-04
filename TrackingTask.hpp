@@ -12,15 +12,32 @@
 #include <libpalattice/types.hpp>
 #include "Configuration.hpp"
 
+
+// spin tracking result container (3d spin vector as function of time)
+class SpinMotion : public std::map<double,arma::colvec3>
+{
+public:
+  void operator+=(const SpinMotion &other); // operators for calculation of polarization (average over spins)
+  void operator/=(const unsigned int &num);
+  
+  std::string printHeader(unsigned int columnWidth, std::string name="S") const; //name for vector
+  std::string print(unsigned int columnWidth) const;
+  std::string printLine(unsigned int columnWidth, const double &key) const;
+  //print a line of external data. used for faster "online" file output during tracking
+  std::string printAnyData(unsigned int columnWidth, const double &t, const arma::colvec3 &s) const;
+};
+
+
+
 class TrackingTask
 {
 public:
   const unsigned int particleId;
-  const Configuration *config;
+  const Configuration &config;
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   
-  TrackingTask(unsigned int id, const Configuration *c);
+  TrackingTask(unsigned int id, const Configuration &c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}
@@ -32,17 +49,20 @@ public:
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
   double gamma() const;
   std::string outfileName() const;            // output file name
+
+  SpinMotion getStorage() const {return storage;}
   
 private:
   arma::mat33 one;
-  std::map<double,arma::colvec3> storage;     // store results
+  SpinMotion storage;                         // store results
   std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
-  unsigned int w;                             // output file column width
+  unsigned int w;                             // output column width (print)
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
   void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
   void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
 };
+
 
 
 // exceptions

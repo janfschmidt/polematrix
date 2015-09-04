@@ -1,18 +1,13 @@
 #include "Configuration.hpp"
 
-Configuration::Configuration(std::string pathIn) : E_rest(0.000511), a_gyro(0.001159652), default_steps(200)//E_rest(GSL_CONST_MKSA_MASS_ELECTRON*pow(GSL_CONST_MKSA_SPEED_OF_LIGHT,2)/GSL_CONST_MKSA_ELECTRON_CHARGE/1e9)
+Configuration::Configuration(std::string pathIn) : E_rest(0.000511), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat")//E_rest(GSL_CONST_MKSA_MASS_ELECTRON*pow(GSL_CONST_MKSA_SPEED_OF_LIGHT,2)/GSL_CONST_MKSA_ELECTRON_CHARGE/1e9)
 {
-  setPath(pathIn);
+  //setPath(pathIn);
+  outpath = pathIn;
   nParticles = 1;
 }
 
 
-void Configuration::setPath(std::string path)
-{
-  if (path.back() != '/')
-    path += "/";
-  this->p = path;
-}
 
 double Configuration::gamma(double t) const
 {
@@ -28,7 +23,6 @@ double Configuration::agamma(double t) const
 void Configuration::save(const std::string &filename) const
 {
   pt::ptree tree;
-  tree.put("config.path", path());
   tree.put("config.numParticles", nParticles);
   tree.put("config.t_start", t_start);
   tree.put("config.t_stop", t_stop);
@@ -38,8 +32,12 @@ void Configuration::save(const std::string &filename) const
   tree.put("config.s_start.x", s_start[0]);
   tree.put("config.s_start.z", s_start[2]);
   tree.put("config.s_start.s", s_start[1]);
+  tree.put("config.simTool.file", simFile);
   pt::xml_writer_settings<char> settings(' ', 4); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
+
+  std::cout << "* current configuration saved to " << filename << std::endl;
+  return;
 }
 
 void Configuration::load(const std::string &filename)
@@ -55,6 +53,7 @@ void Configuration::load(const std::string &filename)
     s_start[0] = tree.get<double>("config.s_start.x");
     s_start[2] = tree.get<double>("config.s_start.z");
     s_start[1] = tree.get<double>("config.s_start.s");
+    simFile = tree.get<std::string>("config.simTool.file");
   } catch (pt::ptree_error &e) {
     std::cout << "Error loading configuration file:" << std::endl
 	      << e.what() << std::endl;
@@ -62,10 +61,11 @@ void Configuration::load(const std::string &filename)
   }
     
   // optional config with default values
-  setPath( tree.get("config.path", ".") );
   nParticles = tree.get("config.numParticles", 1);
   t_start = tree.get("config.t_start", 0.0);
   dt_out = tree.get("config.dt_out", (t_stop-t_start)/default_steps);
-  
+
+  std::cout << "* configuration loaded from " << filename << std::endl;
+  return;
 }
 

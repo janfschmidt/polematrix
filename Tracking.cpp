@@ -31,7 +31,7 @@ void Tracking::start()
 
   // fill queue
   for (unsigned int i=0; i<config.nParticles; i++) {
-    TrackingTask toll(i,&config);
+    TrackingTask toll(i,config);
     queue.push_back(std::move(toll));
   }
   // set iterator to begin of queue
@@ -52,6 +52,8 @@ void Tracking::start()
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
   std::cout << "Tracking took " << duration.count() << " s." << std::endl;
+
+  calcPolarization();
 }
 
 
@@ -71,9 +73,16 @@ void Tracking::processQueue()
       mutex.unlock();
       myTask->lattice=lattice;
       myTask->orbit=orbit;
-      myTask->run(); // run next queued TrackingTask
-    }
-  }
+      try {
+	myTask->run(); // run next queued TrackingTask
+      }
+      catch (TrackError &e) {
+	std::cout << "ERROR: " << e.what() << " (thread_id " << std::this_thread::get_id()
+		  << ", particle " << myTask->particleId << ")"<< std::endl;
+	return;
+      }
+    }//else
+  }//while
 }
 
 
@@ -82,4 +91,33 @@ void Tracking::setModel(pal::SimToolInstance *s, pal::AccLattice *l, pal::Functi
   setSimToolInstance(s);
   setLattice(l);
   setOrbit(o);
+}
+
+
+//calculate polarization: average over all spin vectors for each time step
+void Tracking::calcPolarization()
+{
+  polarization = queue[0].getStorage();
+  
+  for (unsigned int i=1; i<queue.size(); i++) {
+    polarization += queue[i].getStorage();
+  }
+  polarization /= numParticles();
+}
+
+void Tracking::savePolarization()
+{
+  std::ofstream file;
+  std::string filename = config.polFile().string();
+  unsigned int w = 14;
+  
+  file.open(filename);
+  if (!file.is_open())
+    throw TrackFileError(filename);
+
+  file << polarization.printHeader(w, "P") << std::endl;
+  file << polarization.print(w);
+  
+  file.close();
+  std::cout << "* Wrote polarization for " << polarization.size() << " steps to " << filename <<"."<< std::endl;
 }

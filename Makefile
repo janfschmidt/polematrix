@@ -9,7 +9,7 @@ all: $(PROG_NAME)
 .PHONY: all
 
 $(PROG_NAME): $(ALL_O)
-	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -pthread -lboost_program_options -lpalattice -lgsl -lgslcblas -lm
+	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -pthread -lboost_program_options -lboost_filesystem -lboost_system -lpalattice -lgsl -lgslcblas -lm
 
 main.o: main.cpp TrackingTask.hpp Configuration.hpp
 	$(CC) $(CCFLAGS) -c $<
