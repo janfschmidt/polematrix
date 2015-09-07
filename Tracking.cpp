@@ -37,6 +37,9 @@ void Tracking::start()
   // set iterator to begin of queue
   queueIt = queue.begin();
 
+  // write current config to file
+  config.save( config.confOutFile().string() );
+
   auto start = std::chrono::high_resolution_clock::now();
 
   //start threads

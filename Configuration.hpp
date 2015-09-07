@@ -7,6 +7,7 @@
 #include <fstream>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 
 namespace pt = boost::property_tree;
@@ -27,11 +28,12 @@ public:
   fs::path simFile;       // lattice simulation file for pal::SimToolInstance
 
   //constants / internal configuration (constructor)
-  const double E_rest;              // electron rest energy / GeV
-  const double a_gyro;              // electron gyromagnetic anomaly a = (g-2)/2
-  const unsigned int default_steps; // number of output steps if not specified by dt_out
-  const std::string spinDirName;    // directory name for tracking output files (outpath/spinDirName)
-  const std::string polFileName;    // file name for polarization output file (Tracking::savePolarization())
+  const double E_rest;               // electron rest energy / GeV
+  const double a_gyro;               // electron gyromagnetic anomaly a = (g-2)/2
+  const unsigned int default_steps;  // number of output steps if not specified by dt_out
+  const std::string spinDirName;     // directory name for tracking output files (outpath/spinDirName)
+  const std::string polFileName;     // file name for polarization output file (Tracking::savePolarization())
+  const std::string confOutFileName; // file name for config output file (written by Tracking::start())
 
   Configuration(std::string path=".");
   ~Configuration() {}
@@ -42,6 +44,7 @@ public:
   fs::path subDirectory(std::string folder) const {return outpath/folder;}
   fs::path spinDirectory() const {return outpath/spinDirName;}
   fs::path polFile() const {return outpath/polFileName;}
+  fs::path confOutFile() const {return outpath/confOutFileName;}
   double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start;}
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}
