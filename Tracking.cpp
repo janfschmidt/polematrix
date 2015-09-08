@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : sim(NULL), lattice(NULL), orbit(NULL)
+Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -15,6 +15,12 @@ Tracking::Tracking(unsigned int nThreads) : sim(NULL), lattice(NULL), orbit(NULL
   for (unsigned int i=0; i<nThreads; i++) {
     threadPool.emplace_back(std::thread());
   }
+}
+
+Tracking::~Tracking()
+{
+  delete lattice;
+  delete orbit;
 }
 
 
@@ -89,11 +95,16 @@ void Tracking::processQueue()
 }
 
 
-void Tracking::setModel(pal::SimToolInstance *s, pal::AccLattice *l, pal::FunctionOfPos<pal::AccPair> *o)
+void Tracking::setLattice()
 {
-  setSimToolInstance(s);
-  setLattice(l);
-  setOrbit(o);
+  lattice = new pal::AccLattice("polematrix", config.getSimToolInstance());
+}
+
+void Tracking::setOrbit()
+{
+  pal::FunctionOfPos<pal::AccPair> *tmp = new pal::FunctionOfPos<pal::AccPair>(config.getSimToolInstance());
+  tmp->simToolClosedOrbit(config.getSimToolInstance());
+  orbit = tmp;
 }
 
 

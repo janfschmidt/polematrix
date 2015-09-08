@@ -84,17 +84,19 @@ int main(int argc, char *argv[])
   
   t.config.load( configfile );
   t.config.outpath = outpath; // NOT in config file
-
   
-  // config print summary
+  t.config.printSummary();
 
-  pal::SimToolInstance sim(pal::madx, pal::offline, t.config.simFile.string());
-  pal::AccLattice lattice("polematrix",sim);
-  pal::FunctionOfPos<pal::AccPair> orbit(sim);
-  orbit.simToolClosedOrbit(sim);
+  //tool/mode/file muss in constructor gesetzt werden
+  //muss weiterexistieren für alle initialisierungen, NICHT für ganze lebensdauer von lattice/orbit etc
+  //lattice&orbit müssen in Tracking const sein, möglichst nicht kopieren
+  
+  //trajectory müsste beim thread-starten .simToolTrajectory(sim) aufrufen
+  // => sim muss weiterleben (in tracking oder config oder task?)
+  // => trajectory muss in task leben (nicht pointer) da individuell verschieden
 
-  t.setModel(&sim,&lattice,&orbit);
-
+  t.setModel();
+  
   try{
     t.start();
   }

@@ -1,7 +1,7 @@
 #include "Configuration.hpp"
 
-Configuration::Configuration(std::string pathIn) : E_rest(0.000511), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
-//E_rest(GSL_CONST_MKSA_MASS_ELECTRON*pow(GSL_CONST_MKSA_SPEED_OF_LIGHT,2)/GSL_CONST_MKSA_ELECTRON_CHARGE/1e9)
+Configuration::Configuration(std::string pathIn)
+  : E_rest(0.000511), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
   //setPath(pathIn);
   outpath = pathIn;
@@ -13,8 +13,14 @@ Configuration::Configuration(std::string pathIn) : E_rest(0.000511), a_gyro(0.00
   dE = 0;
   s_start.zeros();
   s_start[2] = 1;
+
+  palattice = new pal::SimToolInstance(pal::madx, pal::offline, "");
 }
 
+Configuration::~Configuration()
+{
+  delete palattice;
+}
 
 
 double Configuration::gamma(double t) const
@@ -40,7 +46,10 @@ void Configuration::save(const std::string &filename) const
   tree.put("spintracking.s_start.x", s_start[0]);
   tree.put("spintracking.s_start.z", s_start[2]);
   tree.put("spintracking.s_start.s", s_start[1]);
-  tree.put("palattice.file", boost::replace_all_copy(simFile.string(), "\"", ""));
+  tree.put("palattice.simTool", palattice->tool_string());
+  tree.put("palattice.mode", palattice->mode_string());
+  tree.put("palattice.file", palattice->inFile());
+
   pt::xml_writer_settings<char> settings(' ', 4); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
 
@@ -61,8 +70,10 @@ void Configuration::load(const std::string &filename)
     s_start[0] = tree.get<double>("spintracking.s_start.x");
     s_start[2] = tree.get<double>("spintracking.s_start.z");
     s_start[1] = tree.get<double>("spintracking.s_start.s");
-    simFile = tree.get<std::string>("palattice.file");
-  } catch (pt::ptree_error &e) {
+    
+    setSimToolInstance(tree);    
+  }
+  catch (pt::ptree_error &e) {
     std::cout << "Error loading configuration file:" << std::endl
 	      << e.what() << std::endl;
     exit(1);
@@ -77,3 +88,58 @@ void Configuration::load(const std::string &filename)
   return;
 }
 
+void Configuration::printSummary() const
+{
+  std::stringstream s;
+
+  s << "-----------------------------------------------------------------" << std::endl;
+  s << "Tracking " << nParticles << " Spins" << std::endl
+    << "time      " <<  t_start << " s   -------------------->   " << t_stop << " s" << std::endl
+    << "energy    " << gamma(t_start)*E_rest << " GeV   ----- " << dE << " GeV/s ----->   " << gamma(t_stop)*E_rest << " GeV" << std::endl
+    << "spin tune " << agamma(t_start) << "   -------------------->   " << agamma(t_stop) << std::endl;
+  s << "start polarization: Px = " << s_start[0] << ", Ps = " << s_start[1] << ", Pz = " << s_start[2] << std::endl;
+  s << "-----------------------------------------------------------------" << std::endl;
+
+  std::cout << s.str();
+}
+
+
+pal::SimTool Configuration::toolFromTree(pt::ptree tree, std::string key) const
+{
+  std::string tmp = tree.get<std::string>(key);
+  if (tmp == "madx")
+    return pal::madx;
+  else if (tmp == "elegant")
+    return pal::elegant;
+  else {
+    throw pt::ptree_error("Invalid pal::SimTool "+tmp);
+  }
+}
+
+pal::SimToolMode Configuration::modeFromTree(pt::ptree tree, std::string key) const
+{
+  std::string tmp = tree.get<std::string>(key);
+  if (tmp == "online")
+    return pal::online;
+  else if (tmp == "offline")
+    return pal::offline;
+  else
+    throw pt::ptree_error("Invalid pal::SimToolMode "+tmp);
+}
+
+void Configuration::setSimToolInstance(pt::ptree &tree)
+{
+  pal::SimTool tool = toolFromTree(tree, "palattice.simTool");
+  pal::SimToolMode mode = modeFromTree(tree, "palattice.mode");
+  std::string file = tree.get<std::string>("palattice.file");
+
+  //do not change SimToolInstance if nothing has to be changed
+  if (tool==palattice->tool && mode==palattice->mode && file==palattice->inFile()) {
+    std::cout << "DEBUG: Configuration::setSimToolInstance(): no changes" << std::endl;
+    return;
+  }
+
+  delete palattice;
+  palattice = new pal::SimToolInstance(tool, mode, file);
+
+}

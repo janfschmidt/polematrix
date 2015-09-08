@@ -9,23 +9,33 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
+#include <libpalattice/SimTools.hpp>
 
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 class Configuration
 {
+private:
+  //palattice
+  pal::SimToolInstance *palattice;
+
+  pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
+  pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
+  void setSimToolInstance(pt::ptree &tree);
+
+  
 public:
   fs::path outpath;
-  
+
+  //spintracking
   arma::colvec3 s_start;
   double t_start;          // time / s
   double t_stop;
   double dt_out;           // output(!) step width / s
   double E0;               // energy at t=0 / GeV
   double dE;               // dE/dt / GeV/s
-  unsigned int nParticles; // number of tracked particles
-  fs::path simFile;       // lattice simulation file for pal::SimToolInstance
+  unsigned int nParticles; // number of tracked particles  
 
   //constants / internal configuration (constructor)
   const double E_rest;               // electron rest energy / GeV
@@ -36,11 +46,9 @@ public:
   const std::string confOutFileName; // file name for config output file (written by Tracking::start())
 
   Configuration(std::string path=".");
-  ~Configuration() {}
+  ~Configuration();
 
-  //std::string outpath() const {return _outpath;}
-  //void setPath(std::string path);
-  
+  pal::SimToolInstance& getSimToolInstance() const {return *palattice;}  
   fs::path subDirectory(std::string folder) const {return outpath/folder;}
   fs::path spinDirectory() const {return outpath/spinDirName;}
   fs::path polFile() const {return outpath/polFileName;}
@@ -48,6 +56,8 @@ public:
   double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start;}
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}
+
+  void printSummary() const;
 
   double gamma(double t) const;
   double agamma(double t) const;
@@ -57,6 +67,8 @@ public:
   void load(const std::string &filename);
   
 };
+
+
 
 
 #endif
