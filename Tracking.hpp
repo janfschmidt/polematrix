@@ -8,6 +8,7 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <list>
 #include "Configuration.hpp"
 #include "TrackingTask.hpp"
 
@@ -17,8 +18,10 @@ private:
   std::vector<TrackingTask> queue;
   std::vector<std::thread> threadPool;
   std::vector<TrackingTask>::iterator queueIt;
+  std::list<std::vector<TrackingTask>::const_iterator> runningTasks; // to display progress
   std::mutex mutex;
   void processQueue();
+  void printProgress() const;
 
   //pal::SimToolInstance *sim;
   const pal::AccLattice *lattice;
@@ -30,6 +33,7 @@ private:
 
 public:
   Configuration config;
+  bool showProgressBar;
 
   Tracking(unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
   ~Tracking();

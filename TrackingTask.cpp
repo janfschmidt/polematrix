@@ -58,7 +58,7 @@ std::string SpinMotion::printLine(unsigned int w, const double &key) const
      <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< key
      <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
      <<std::setw(w)<< this->at(key)[0] <<std::setw(w)<< this->at(key)[2] <<std::setw(w)<< this->at(key)[1]
-     <<std::setw(w)<< arma::norm(this->at(key)) << std::endl;
+     <<std::setw(w)<< arma::norm(this->at(key));
   return ss.str();
 }
 
@@ -69,7 +69,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
      <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
      <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
      <<std::setw(w)<< s[0] <<std::setw(w)<< s[2] <<std::setw(w)<< s[1]
-     <<std::setw(w)<< arma::norm(s) << std::endl;
+     <<std::setw(w)<< arma::norm(s);
   return ss.str();
 }
 
@@ -79,7 +79,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, const Configuration &c)
-  : particleId(id), config(c), w(14)
+  : particleId(id), config(c), w(14), completed(false)
 {
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
@@ -91,11 +91,13 @@ void TrackingTask::run()
 {
   outfileOpen();
   
-  std::cout << "* start tracking particle " << particleId << std::endl;
+  //std::cout << "* start tracking particle " << particleId << std::endl;
 
   matrixTracking();
   
   outfileClose();
+
+  completed = true;
 }
 
 
@@ -196,7 +198,8 @@ void TrackingTask::outfileOpen()
 void TrackingTask::outfileClose()
 {
   outfile->close();
-  std::cout << "* Wrote " << storage.size() << " steps to " << outfileName() << "." << std::endl;
+  std::cout << "* Wrote " << storage.size() << " steps to " << outfileName()
+	    <<std::setw(40)<<std::left<< "." << std::endl;
 }
 
 
@@ -211,4 +214,24 @@ void TrackingTask::storeStep(const double &t, const arma::colvec3 &s, const doub
 {
   storage.insert(std::pair<double,arma::colvec3>(t,s));
   outfileAdd(t,s,gamma);
+}
+
+
+std::string TrackingTask::getProgressBar() const
+{
+  std::stringstream bar;
+  double stepsTotal = 20;
+  unsigned int steps = (1.0 * stepsTotal * storage.size() / config.outSteps()) + 0.5;
+  unsigned int i=0;
+
+  bar << "particle " << particleId << " [";
+  
+  for (; i<steps; i++)
+    bar << "=";
+  for (; i<stepsTotal; i++)
+    bar << " ";
+    
+  bar << "] " << steps/stepsTotal*100 << "%";
+  
+  return bar.str();
 }

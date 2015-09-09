@@ -51,12 +51,15 @@ public:
   std::string outfileName() const;            // output file name
 
   SpinMotion getStorage() const {return storage;}
+  std::string getProgressBar() const;
+  bool isCompleted() const {return completed;}
   
 private:
   arma::mat33 one;
   SpinMotion storage;                         // store results
   std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
   unsigned int w;                             // output column width (print)
+  bool completed;                             // tracking completed
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
   void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile

@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL)
+Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProgressBar(false)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -53,6 +53,13 @@ void Tracking::start()
     t = std::thread(&Tracking::processQueue,this);
   }
 
+  //start extra thread for progress bars
+  if (showProgressBar) {
+  sleep(1);
+  std::thread progress(&Tracking::printProgress,this);
+  progress.join();
+  }
+
   // wait for threads to finish
   for (std::thread& t : threadPool) {
     t.join();
@@ -79,6 +86,7 @@ void Tracking::processQueue()
     else {
       myTask = queueIt;
       queueIt++;
+      runningTasks.push_back(myTask); // to display progress
       mutex.unlock();
       myTask->lattice=lattice;
       myTask->orbit=orbit;
@@ -88,12 +96,31 @@ void Tracking::processQueue()
       catch (TrackError &e) {
 	std::cout << "ERROR: " << e.what() << " (thread_id " << std::this_thread::get_id()
 		  << ", particle " << myTask->particleId << ")"<< std::endl;
+	mutex.lock();
+	runningTasks.remove(myTask); // to display progress
+	mutex.unlock();
 	return;
       }
+      mutex.lock();
+      runningTasks.remove(myTask); // to display progress
+      mutex.unlock();
     }//else
   }//while
 }
 
+
+void Tracking::printProgress() const
+{
+  std::list<std::vector<TrackingTask>::const_iterator> tmp;
+  while (runningTasks.size() > 0) {
+    tmp = runningTasks;
+    for (std::vector<TrackingTask>::const_iterator task : tmp) {
+      std::cout << task->getProgressBar() << "   ";
+    }
+    std::cout <<"\r"<< std::flush;
+    sleep(1);
+  }
+}
 
 void Tracking::setLattice()
 {

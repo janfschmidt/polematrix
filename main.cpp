@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
   confs.add_options()  
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
+    ("verbose,v", "show progress bar during tracking")
     ;
   
   po::options_description hidden("Hidden options");
@@ -86,6 +87,9 @@ int main(int argc, char *argv[])
   t.config.outpath = outpath; // NOT in config file
   
   t.config.printSummary();
+
+  if (args.count("verbose"))
+    t.showProgressBar = true;
 
   //tool/mode/file muss in constructor gesetzt werden
   //muss weiterexistieren für alle initialisierungen, NICHT für ganze lebensdauer von lattice/orbit etc

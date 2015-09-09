@@ -56,6 +56,7 @@ public:
   double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start;}
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}
+  unsigned int outSteps() const {return (t_stop-t_start)/dt_out;}
 
   void printSummary() const;
 
