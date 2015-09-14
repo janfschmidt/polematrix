@@ -13,6 +13,7 @@ Configuration::Configuration(std::string pathIn)
   dE = 0;
   s_start.zeros();
   s_start[2] = 1;
+  gammaMode = linear;
 
   palattice = new pal::SimToolInstance(pal::madx, pal::offline, "");
 }
@@ -34,6 +35,7 @@ double Configuration::agamma(double t) const
 }
 
 
+
 void Configuration::save(const std::string &filename) const
 {
   pt::ptree tree;
@@ -50,12 +52,18 @@ void Configuration::save(const std::string &filename) const
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
 
-  pt::xml_writer_settings<char> settings(' ', 4); //indentation
+  if (gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
+  else if (gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
+
+  pt::xml_writer_settings<char> settings(' ', 2); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
 
   std::cout << "* current configuration saved in " << filename << std::endl;
   return;
 }
+
+
+
 
 void Configuration::load(const std::string &filename)
 {
@@ -71,22 +79,35 @@ void Configuration::load(const std::string &filename)
     s_start[2] = tree.get<double>("spintracking.s_start.z");
     s_start[1] = tree.get<double>("spintracking.s_start.s");
     
-    setSimToolInstance(tree);    
+    setSimToolInstance(tree);
+    setGammaMode(tree); //optional, but fails if invalid value
   }
   catch (pt::ptree_error &e) {
     std::cout << "Error loading configuration file:" << std::endl
 	      << e.what() << std::endl;
     exit(1);
   }
-    
+
+  
   // optional config with default values
   nParticles = tree.get("spintracking.numParticles", 1);
+  try {
+  palattice->setNumParticles(nParticles);
+  }
+  catch (pal::palatticeError &e) {
+    std::cout << "ignoring numParticles for madx tracking: " <<std::endl << e.what() << std::endl;
+  }
+  
   t_start = tree.get("spintracking.t_start", 0.0);
   dt_out = tree.get("spintracking.dt_out", (t_stop-t_start)/default_steps);
-
+  
+  
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
 }
+
+
+
 
 void Configuration::printSummary() const
 {
@@ -102,6 +123,7 @@ void Configuration::printSummary() const
 
   std::cout << s.str();
 }
+
 
 
 pal::SimTool Configuration::toolFromTree(pt::ptree tree, std::string key) const
@@ -142,4 +164,16 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
   delete palattice;
   palattice = new pal::SimToolInstance(tool, mode, file);
 
+}
+
+void Configuration::setGammaMode(pt::ptree &tree)
+{
+  std::string s = tree.get<std::string>("spintracking.gammaMode", "linear");
+  
+  if (s == "linear")
+    gammaMode = linear;
+  else if (s == "simtool")
+    gammaMode = simtool;
+  else
+    throw pt::ptree_error("Invalid gammaMode "+s);
 }

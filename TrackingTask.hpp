@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include <map>
 #include <memory>
+#include <functional>
 #define ARMA_NO_DEBUG
 #include <armadillo>
 #include <libpalattice/AccLattice.hpp>
@@ -31,6 +32,20 @@ public:
 
 class TrackingTask
 {
+private:
+  arma::mat33 one;
+  SpinMotion storage;                         // store results
+  std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
+  unsigned int w;                             // output column width (print)
+  bool completed;                             // tracking completed
+  pal::FunctionOfPos<double> gammaSimTool;
+  
+  void outfileOpen();                         // open output file and write header
+  void outfileClose();                        // write footer and close output file
+  void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
+  void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
+
+  
 public:
   const unsigned int particleId;
   const Configuration &config;
@@ -44,26 +59,20 @@ public:
   
   void run();                                 //run tracking task
   void matrixTracking();
+  
+  double (TrackingTask::*gamma)(double) const;
+  double gammaFromConfig(double t) const {return config.gamma(t);}
+  double gammaFromSimTool(double pos) const {return gammaSimTool.interp(pos);}
 
   inline arma::mat33 rotxMatrix(double angle) const;
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
-  double gamma() const;
+  
   std::string outfileName() const;            // output file name
 
   SpinMotion getStorage() const {return storage;}
   std::string getProgressBar() const;
   bool isCompleted() const {return completed;}
   
-private:
-  arma::mat33 one;
-  SpinMotion storage;                         // store results
-  std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
-  unsigned int w;                             // output column width (print)
-  bool completed;                             // tracking completed
-  void outfileOpen();                         // open output file and write header
-  void outfileClose();                        // write footer and close output file
-  void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
-  void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
 };
 
 

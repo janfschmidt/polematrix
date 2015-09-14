@@ -19,8 +19,8 @@ Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProg
 
 Tracking::~Tracking()
 {
-  delete lattice;
-  delete orbit;
+  if (lattice!=NULL) delete lattice;
+  if (orbit!=NULL) delete orbit;
 }
 
 

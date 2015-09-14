@@ -2,6 +2,7 @@
 #include <iomanip>
 #include <cmath>
 #include <stdexcept>
+#include <gsl/gsl_spline.h>
 #include "TrackingTask.hpp"
 
 
@@ -79,16 +80,30 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, const Configuration &c)
-  : particleId(id), config(c), w(14), completed(false)
+  : w(14), completed(false), gammaSimTool(config.getSimToolInstance(), gsl_interp_akima), particleId(id), config(c)
 {
+  lattice = NULL;
+  orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
+
+  switch (config.gammaMode) {
+  case simtool:
+    gamma = &TrackingTask::gammaFromSimTool;
+    break;
+  default:
+    gamma = &TrackingTask::gammaFromConfig;
+  }
 }
 
 
 
 void TrackingTask::run()
 {
+  if (config.gammaMode == simtool) {
+    gammaSimTool.simToolTrajectory( config.getSimToolInstance(), particleId );
+  }
+  
   outfileOpen();
   
   //std::cout << "* start tracking particle " << particleId << std::endl;

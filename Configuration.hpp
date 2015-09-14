@@ -14,6 +14,9 @@
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
+
+enum GammaMode{linear, simtool};
+
 class Configuration
 {
 private:
@@ -23,6 +26,7 @@ private:
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
   void setSimToolInstance(pt::ptree &tree);
+  void setGammaMode(pt::ptree &tree);
 
   
 public:
@@ -35,7 +39,8 @@ public:
   double dt_out;           // output(!) step width / s
   double E0;               // energy at t=0 / GeV
   double dE;               // dE/dt / GeV/s
-  unsigned int nParticles; // number of tracked particles  
+  unsigned int nParticles; // number of tracked particles
+  GammaMode gammaMode;
 
   //constants / internal configuration (constructor)
   const double E_rest;               // electron rest energy / GeV
