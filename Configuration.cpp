@@ -4,29 +4,30 @@ Configuration::Configuration(std::string pathIn)
   : E_rest(0.000511), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
   //setPath(pathIn);
-  outpath = pathIn;
-  nParticles = 1;
+  _outpath = pathIn;
+  _nParticles = 1;
 
-  t_start = t_stop = 0.;
-  dt_out = 1e-5;
-  E0 = 1;
-  dE = 0;
-  s_start.zeros();
-  s_start[2] = 1;
-  gammaMode = linear;
+  _t_start = _t_stop = 0.;
+  _dt_out = 1e-5;
+  _E0 = 1;
+  _dE = 0;
+  _s_start.zeros();
+  _s_start[2] = 1;
+  _gammaMode = linear;
 
-  palattice = new pal::SimToolInstance(pal::madx, pal::offline, "");
+  // palattice = std::make_shared<pal::SimToolInstance> (pal::madx, pal::offline, "");
+  palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));  
 }
 
 Configuration::~Configuration()
 {
-  delete palattice;
+  //  delete palattice;
 }
 
 
 double Configuration::gamma(double t) const
 {
-  return (E0 + dE * t) / E_rest;
+  return (E0() + dE() * t) / E_rest;
 }
 
 double Configuration::agamma(double t) const
@@ -39,21 +40,21 @@ double Configuration::agamma(double t) const
 void Configuration::save(const std::string &filename) const
 {
   pt::ptree tree;
-  tree.put("spintracking.numParticles", nParticles);
-  tree.put("spintracking.t_start", t_start);
-  tree.put("spintracking.t_stop", t_stop);
-  tree.put("spintracking.dt_out", dt_out);
-  tree.put("spintracking.E0", E0);
-  tree.put("spintracking.dE", dE);
-  tree.put("spintracking.s_start.x", s_start[0]);
-  tree.put("spintracking.s_start.z", s_start[2]);
-  tree.put("spintracking.s_start.s", s_start[1]);
+  tree.put("spintracking.numParticles", _nParticles);
+  tree.put("spintracking.t_start", _t_start);
+  tree.put("spintracking.t_stop", _t_stop);
+  tree.put("spintracking.dt_out", _dt_out);
+  tree.put("spintracking.E0", _E0);
+  tree.put("spintracking.dE", _dE);
+  tree.put("spintracking.s_start.x", _s_start[0]);
+  tree.put("spintracking.s_start.z", _s_start[2]);
+  tree.put("spintracking.s_start.s", _s_start[1]);
   tree.put("palattice.simTool", palattice->tool_string());
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
 
-  if (gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
-  else if (gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
+  if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
+  else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
 
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
@@ -72,12 +73,12 @@ void Configuration::load(const std::string &filename)
 
   //obligatory config
   try {
-    t_stop = tree.get<double>("spintracking.t_stop"); 
-    E0 = tree.get<double>("spintracking.E0");
-    dE = tree.get<double>("spintracking.dE");
-    s_start[0] = tree.get<double>("spintracking.s_start.x");
-    s_start[2] = tree.get<double>("spintracking.s_start.z");
-    s_start[1] = tree.get<double>("spintracking.s_start.s");
+    _t_stop = tree.get<double>("spintracking.t_stop"); 
+    _E0 = tree.get<double>("spintracking.E0");
+    _dE = tree.get<double>("spintracking.dE");
+    _s_start[0] = tree.get<double>("spintracking.s_start.x");
+    _s_start[2] = tree.get<double>("spintracking.s_start.z");
+    _s_start[1] = tree.get<double>("spintracking.s_start.s");
     
     setSimToolInstance(tree);
     setGammaMode(tree); //optional, but fails if invalid value
@@ -90,16 +91,16 @@ void Configuration::load(const std::string &filename)
 
   
   // optional config with default values
-  nParticles = tree.get("spintracking.numParticles", 1);
+  _nParticles = tree.get("spintracking.numParticles", 1);
   try {
-  palattice->setNumParticles(nParticles);
+  palattice->setNumParticles(_nParticles);
   }
   catch (pal::palatticeError &e) {
     std::cout << "ignoring numParticles for madx tracking: " <<std::endl << e.what() << std::endl;
   }
   
-  t_start = tree.get("spintracking.t_start", 0.0);
-  dt_out = tree.get("spintracking.dt_out", (t_stop-t_start)/default_steps);
+  _t_start = tree.get("spintracking.t_start", 0.0);
+  _dt_out = tree.get("spintracking.dt_out", (t_stop()-t_start())/default_steps);
   
   
   std::cout << "* configuration loaded from " << filename << std::endl;
@@ -114,11 +115,11 @@ void Configuration::printSummary() const
   std::stringstream s;
 
   s << "-----------------------------------------------------------------" << std::endl;
-  s << "Tracking " << nParticles << " Spins" << std::endl
-    << "time      " <<  t_start << " s   -------------------->   " << t_stop << " s" << std::endl
-    << "energy    " << gamma(t_start)*E_rest << " GeV   ----- " << dE << " GeV/s ----->   " << gamma(t_stop)*E_rest << " GeV" << std::endl
-    << "spin tune " << agamma(t_start) << "   -------------------->   " << agamma(t_stop) << std::endl;
-  s << "start polarization: Px = " << s_start[0] << ", Ps = " << s_start[1] << ", Pz = " << s_start[2] << std::endl;
+  s << "Tracking " << _nParticles << " Spins" << std::endl
+    << "time      " <<  _t_start << " s   -------------------->   " << _t_stop << " s" << std::endl
+    << "energy    " << gamma(_t_start)*E_rest << " GeV   ----- " << _dE << " GeV/s ----->   " << gamma(_t_stop)*E_rest << " GeV" << std::endl
+    << "spin tune " << agamma(_t_start) << "   -------------------->   " << agamma(_t_stop) << std::endl;
+  s << "start polarization: Px = " << _s_start[0] << ", Ps = " << _s_start[1] << ", Pz = " << _s_start[2] << std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
   std::cout << s.str();
@@ -161,8 +162,10 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
     return;
   }
 
-  delete palattice;
-  palattice = new pal::SimToolInstance(tool, mode, file);
+  // delete palattice;
+  // palattice = new pal::SimToolInstance(tool, mode, file);
+  palattice.reset(new pal::SimToolInstance(tool, mode, file));
+ 
 
 }
 
@@ -171,9 +174,9 @@ void Configuration::setGammaMode(pt::ptree &tree)
   std::string s = tree.get<std::string>("spintracking.gammaMode", "linear");
   
   if (s == "linear")
-    gammaMode = linear;
+    _gammaMode = linear;
   else if (s == "simtool")
-    gammaMode = simtool;
+    _gammaMode = simtool;
   else
     throw pt::ptree_error("Invalid gammaMode "+s);
 }

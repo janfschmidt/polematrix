@@ -1,5 +1,5 @@
 CC=g++
-CCFLAGS=-std=c++11 -O3 -Wall -Wl,--no-as-needed #-g -O0 #last 2 for valgrind
+CCFLAGS=-std=c++11 -O0 -g -Wall #-Wl,--no-as-needed - to fix gcc bug https://bugs.launchpad.net/ubuntu/+source/gcc-defaults/+bug/1228201
 INSTALL_PATH=/usr/local/
 PROG_NAME=polematrix
 ALL_O=main.o TrackingTask.o Tracking.o Configuration.o
@@ -9,7 +9,7 @@ all: $(PROG_NAME)
 .PHONY: all
 
 $(PROG_NAME): $(ALL_O)
-	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -pthread -lboost_program_options -lboost_filesystem -lboost_system -lpalattice -lgsl -lgslcblas -lm
+	$(CC) $(CCFLAGS) -o $@ $(ALL_O) -lopenblas -llapack -larmadillo -lpthread -lboost_program_options -lboost_filesystem -lboost_system -lpalattice -lgsl -lgslcblas -lm
 
 main.o: main.cpp TrackingTask.hpp Configuration.hpp
 	$(CC) $(CCFLAGS) -c $<

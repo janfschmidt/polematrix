@@ -40,7 +40,7 @@ public:
 
   void start();                  // start tracking (processing queued tasks)
 
-  unsigned int numParticles() const {return config.nParticles;}
+  unsigned int numParticles() const {return config.nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
   //pal::SimToolInstance* getSimToolInstance() const {return sim;}
   const pal::AccLattice* getLattice() const {return lattice;}

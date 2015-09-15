@@ -79,15 +79,15 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 
-TrackingTask::TrackingTask(unsigned int id, const Configuration &c)
-  : w(14), completed(false), gammaSimTool(config.getSimToolInstance(), gsl_interp_akima), particleId(id), config(c)
+TrackingTask::TrackingTask(unsigned int id, Configuration &c)
+  : w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), particleId(id), config(c)
 {
   lattice = NULL;
   orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
 
-  switch (config.gammaMode) {
+  switch (config.gammaMode()) {
   case simtool:
     gamma = &TrackingTask::gammaFromSimTool;
     break;
@@ -100,7 +100,7 @@ TrackingTask::TrackingTask(unsigned int id, const Configuration &c)
 
 void TrackingTask::run()
 {
-  if (config.gammaMode == simtool) {
+  if (config.gammaMode() == simtool) {
     gammaSimTool.simToolTrajectory( config.getSimToolInstance(), particleId );
   }
   
@@ -118,7 +118,7 @@ void TrackingTask::run()
 
 void TrackingTask::matrixTracking()
 {
-  arma::colvec3 s = config.s_start;
+  arma::colvec3 s = config.s_start();
   pal::AccTriple omega;
   double pos = config.pos_start();
   double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;

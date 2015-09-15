@@ -48,11 +48,11 @@ private:
   
 public:
   const unsigned int particleId;
-  const Configuration &config;
+  Configuration &config;
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   
-  TrackingTask(unsigned int id, const Configuration &c);
+  TrackingTask(unsigned int id, Configuration &c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}

@@ -21,27 +21,27 @@ class Configuration
 {
 private:
   //palattice
-  pal::SimToolInstance *palattice;
+  std::shared_ptr<pal::SimToolInstance> palattice;
 
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
   void setSimToolInstance(pt::ptree &tree);
   void setGammaMode(pt::ptree &tree);
 
-  
-public:
-  fs::path outpath;
+  fs::path _outpath;
 
   //spintracking
-  arma::colvec3 s_start;
-  double t_start;          // time / s
-  double t_stop;
-  double dt_out;           // output(!) step width / s
-  double E0;               // energy at t=0 / GeV
-  double dE;               // dE/dt / GeV/s
-  unsigned int nParticles; // number of tracked particles
-  GammaMode gammaMode;
+  arma::colvec3 _s_start;
+  double _t_start;          // time / s
+  double _t_stop;
+  double _dt_out;           // output(!) step width / s
+  double _E0;               // energy at t=0 / GeV
+  double _dE;               // dE/dt / GeV/s
+  unsigned int _nParticles; // number of tracked particles
+  GammaMode _gammaMode;
 
+  
+  public:
   //constants / internal configuration (constructor)
   const double E_rest;               // electron rest energy / GeV
   const double a_gyro;               // electron gyromagnetic anomaly a = (g-2)/2
@@ -51,17 +51,41 @@ public:
   const std::string confOutFileName; // file name for config output file (written by Tracking::start())
 
   Configuration(std::string path=".");
+  // Configuration(const Configuration &other);
+  // Configuration &operator=(const Configuration &rhs);
   ~Configuration();
 
-  pal::SimToolInstance& getSimToolInstance() const {return *palattice;}  
-  fs::path subDirectory(std::string folder) const {return outpath/folder;}
-  fs::path spinDirectory() const {return outpath/spinDirName;}
-  fs::path polFile() const {return outpath/polFileName;}
-  fs::path confOutFile() const {return outpath/confOutFileName;}
-  double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start;}
-  double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop;}
-  double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out;}
-  unsigned int outSteps() const {return (t_stop-t_start)/dt_out;}
+  //getter
+  fs::path outpath() const {return _outpath;}
+  arma::colvec3 s_start() const {return _s_start;}
+  double t_start() const {return _t_start;}
+  double t_stop() const {return _t_stop;}
+  double dt_out() const {return _dt_out;}
+  double E0() const {return _E0;}
+  double dE() const {return _dE;}
+  unsigned int nParticles() const {return _nParticles;}
+  GammaMode gammaMode() const {return _gammaMode;}
+  //setter
+  void set_outpath(fs::path p) {_outpath=p;}
+  void set_s_start(arma::colvec3 s) {_s_start=s;}
+  void set_t_start(double t) {_t_start=t;}
+  void set_t_stop(double t) {_t_stop=t;}
+  void set_dt_out(double dt) {_dt_out=dt;}
+  void set_E0(double E) {_E0=E;}
+  void set_dE(double dEin) {_dE=dEin;}
+  void set_nParticles(unsigned int n) {_nParticles=n;}
+  void set_gammaMode(GammaMode g) {_gammaMode=g;}
+
+
+  pal::SimToolInstance& getSimToolInstance() {return *palattice;}  
+  fs::path subDirectory(std::string folder) const {return outpath()/folder;}
+  fs::path spinDirectory() const {return outpath()/spinDirName;}
+  fs::path polFile() const {return outpath()/polFileName;}
+  fs::path confOutFile() const {return outpath()/confOutFileName;}
+  double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start();}
+  double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop();}
+  double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out();}
+  unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
 
   void printSummary() const;
 

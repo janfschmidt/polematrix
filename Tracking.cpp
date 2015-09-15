@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProgressBar(false)
+Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -29,16 +29,16 @@ void Tracking::start()
   if (lattice==NULL || orbit==NULL)
     throw TrackError("ERROR: Cannot start tracking, if model is not specified (Lattice, Orbit).");
 
-  if (config.t_stop <= config.t_start) {
+  if (config.t_stop() <= config.t_start()) {
     std::stringstream msg;
-    msg << "ERROR: Cannot track backwards: t_stop=" << config.t_stop << " < t_start=" << config.t_start;
+    msg << "ERROR: Cannot track backwards: t_stop=" << config.t_stop() << " < t_start=" << config.t_start();
     throw TrackError(msg.str());
   }
 
   // fill queue
-  for (unsigned int i=0; i<config.nParticles; i++) {
-    TrackingTask toll(i,config);
-    queue.push_back(std::move(toll));
+  for (unsigned int i=0; i<config.nParticles(); i++) {
+    // TrackingTask toll(i,config);
+    queue.push_back(std::move(TrackingTask(i,config)));
   }
   // set iterator to begin of queue
   queueIt = queue.begin();
