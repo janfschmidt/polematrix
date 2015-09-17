@@ -40,6 +40,8 @@ int main(int argc, char *argv[])
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
     ("no-progressbar,n", "do not show progress bar during tracking")
+    ("all,a", "write all output (e.g. lattice and orbit)")
+    ("reset-turns,r", "reset number of tracking turns in SimTool before execution")
     ;
   
   po::options_description hidden("Hidden options");
@@ -91,6 +93,10 @@ int main(int argc, char *argv[])
   if (args.count("no-progressbar"))
     t.showProgressBar = false;
 
+  bool resetTurns=false;
+  if (args.count("reset-turns"))
+    resetTurns=true;
+
   //tool/mode/file muss in constructor gesetzt werden
   //muss weiterexistieren für alle initialisierungen, NICHT für ganze lebensdauer von lattice/orbit etc
   //lattice&orbit müssen in Tracking const sein, möglichst nicht kopieren
@@ -99,7 +105,7 @@ int main(int argc, char *argv[])
   // => sim muss weiterleben (in tracking oder config oder task?)
   // => trajectory muss in task leben (nicht pointer) da individuell verschieden
 
-  t.setModel();
+  t.setModel(resetTurns);
   
   try{
     t.start();
@@ -110,6 +116,11 @@ int main(int argc, char *argv[])
   }
   
   t.savePolarization();
+
+  if (args.count("all")) {
+    t.saveLattice();
+    t.saveOrbit();
+  }
 
   return 0;
 }

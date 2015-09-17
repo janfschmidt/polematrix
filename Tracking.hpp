@@ -23,9 +23,8 @@ private:
   void processQueue();
   void printProgress() const;
 
-  //pal::SimToolInstance *sim;
-  const pal::AccLattice *lattice;
-  const pal::FunctionOfPos<pal::AccPair> *orbit;
+  pal::AccLattice lattice;
+  pal::FunctionOfPos<pal::AccPair> orbit;
 
   SpinMotion polarization;
   void calcPolarization();  //calculate polarization: average over all spin vectors for each time step
@@ -36,22 +35,23 @@ public:
   bool showProgressBar;
 
   Tracking(unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
-  ~Tracking();
+  ~Tracking() {}
 
   void start();                  // start tracking (processing queued tasks)
 
   unsigned int numParticles() const {return config.nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
-  //pal::SimToolInstance* getSimToolInstance() const {return sim;}
-  const pal::AccLattice* getLattice() const {return lattice;}
-  const pal::FunctionOfPos<pal::AccPair>* getOrbit() const {return orbit;}
+  const pal::AccLattice& getLattice() const {return lattice;}
+  const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return orbit;}
 
-  void setModel() {setLattice(); setOrbit();}
+  void setModel(bool resetTurns=false);
   void setLattice();
   void setOrbit();
 
   std::map<double,arma::colvec3> getPolarization() const {return polarization;}
   void savePolarization();
+  void saveLattice() const {lattice.print( (config.outpath()/"lattice.dat").string() );}
+  void saveOrbit() const {orbit.print( (config.outpath()/"closedorbit.dat").string() );}
 };
 
 

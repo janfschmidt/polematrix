@@ -15,13 +15,7 @@ Configuration::Configuration(std::string pathIn)
   _s_start[2] = 1;
   _gammaMode = linear;
 
-  // palattice = std::make_shared<pal::SimToolInstance> (pal::madx, pal::offline, "");
   palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));  
-}
-
-Configuration::~Configuration()
-{
-  //  delete palattice;
 }
 
 
@@ -100,8 +94,7 @@ void Configuration::load(const std::string &filename)
   }
   
   _t_start = tree.get("spintracking.t_start", 0.0);
-  _dt_out = tree.get("spintracking.dt_out", (t_stop()-t_start())/default_steps);
-  
+  _dt_out = tree.get("spintracking.dt_out", duration()/default_steps);
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;

@@ -101,7 +101,7 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 void TrackingTask::run()
 {
   if (config.gammaMode() == simtool) {
-    gammaSimTool.simToolTrajectory( config.getSimToolInstance(), particleId );
+    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId, "p" );
   }
   
   outfileOpen();

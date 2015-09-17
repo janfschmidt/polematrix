@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : lattice("tut", 0, pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -17,16 +17,11 @@ Tracking::Tracking(unsigned int nThreads) : lattice(NULL), orbit(NULL), showProg
   }
 }
 
-Tracking::~Tracking()
-{
-  if (lattice!=NULL) delete lattice;
-  if (orbit!=NULL) delete orbit;
-}
 
 
 void Tracking::start()
 { 
-  if (lattice==NULL || orbit==NULL)
+  if (lattice.size()==0 || orbit.size()==0)
     throw TrackError("ERROR: Cannot start tracking, if model is not specified (Lattice, Orbit).");
 
   if (config.t_stop() <= config.t_start()) {
@@ -38,7 +33,7 @@ void Tracking::start()
   // fill queue
   for (unsigned int i=0; i<config.nParticles(); i++) {
     // TrackingTask toll(i,config);
-    queue.push_back(std::move(TrackingTask(i,config)));
+    queue.emplace_back( TrackingTask(i,config) );
   }
   // set iterator to begin of queue
   queueIt = queue.begin();
@@ -88,8 +83,8 @@ void Tracking::processQueue()
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
       mutex.unlock();
-      myTask->lattice=lattice;
-      myTask->orbit=orbit;
+      myTask->lattice=&lattice;
+      myTask->orbit=&orbit;
       try {
 	myTask->run(); // run next queued TrackingTask
       }
@@ -122,16 +117,35 @@ void Tracking::printProgress() const
   }
 }
 
+void Tracking::setModel(bool resetTurns)
+{
+  if (resetTurns)
+    config.getSimToolInstance().setTurns(0);
+  
+  setLattice();
+  setOrbit();
+
+  //set number of turns for SimTool based on tracking time
+  if (config.gammaMode() == simtool) {
+    unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
+    std::cout << "DEBUG tracking turns=" << turns << std::endl;
+    config.getSimToolInstance().setTurns(turns);
+  }
+  else {
+    config.getSimToolInstance().setTurns(0);
+  }
+
+}
+
 void Tracking::setLattice()
 {
-  lattice = new pal::AccLattice("polematrix", config.getSimToolInstance());
+  lattice = pal::AccLattice("polematrix", config.getSimToolInstance());
 }
 
 void Tracking::setOrbit()
 {
-  pal::FunctionOfPos<pal::AccPair> *tmp = new pal::FunctionOfPos<pal::AccPair>(config.getSimToolInstance());
-  tmp->simToolClosedOrbit(config.getSimToolInstance());
-  orbit = tmp;
+  orbit = pal::FunctionOfPos<pal::AccPair>( config.getSimToolInstance() );
+  orbit.simToolClosedOrbit( config.getSimToolInstance() );
 }
 
 

@@ -51,9 +51,6 @@ private:
   const std::string confOutFileName; // file name for config output file (written by Tracking::start())
 
   Configuration(std::string path=".");
-  // Configuration(const Configuration &other);
-  // Configuration &operator=(const Configuration &rhs);
-  ~Configuration();
 
   //getter
   fs::path outpath() const {return _outpath;}
@@ -65,6 +62,8 @@ private:
   double dE() const {return _dE;}
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
+  pal::SimToolInstance& getSimToolInstance() {return *palattice;}
+  
   //setter
   void set_outpath(fs::path p) {_outpath=p;}
   void set_s_start(arma::colvec3 s) {_s_start=s;}
@@ -76,8 +75,7 @@ private:
   void set_nParticles(unsigned int n) {_nParticles=n;}
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
 
-
-  pal::SimToolInstance& getSimToolInstance() {return *palattice;}  
+  double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}
   fs::path spinDirectory() const {return outpath()/spinDirName;}
   fs::path polFile() const {return outpath()/polFileName;}
