@@ -8,6 +8,13 @@ Tracking::Tracking(unsigned int nThreads) : lattice("tut", 0, pal::end), orbit(0
   if (nThreads == 0)
     nThreads = 1;
 
+  // if (nThreads < 4)
+  //   progressBarWidth = 20;
+  // else if (nThreads < 6)
+    progressBarWidth = 10;
+  // else
+  //   progressBarWidth = 0;
+
   // set iterator to begin of queue
   queueIt = queue.begin();
 
@@ -32,7 +39,6 @@ void Tracking::start()
 
   // fill queue
   for (unsigned int i=0; i<config.nParticles(); i++) {
-    // TrackingTask toll(i,config);
     queue.emplace_back( TrackingTask(i,config) );
   }
   // set iterator to begin of queue
@@ -109,8 +115,13 @@ void Tracking::printProgress() const
   std::list<std::vector<TrackingTask>::const_iterator> tmp;
   while (runningTasks.size() > 0) {
     tmp = runningTasks;
+    unsigned int n=0;
     for (std::vector<TrackingTask>::const_iterator task : tmp) {
-      std::cout << task->getProgressBar() << "   ";
+      n++;
+      if (n<=4)
+	std::cout << task->getProgressBar(progressBarWidth) << "   ";
+      else
+	std::cout << task->getProgressBar(0) << "   ";
     }
     std::cout <<"\r"<< std::flush;
     sleep(1);

@@ -6,6 +6,7 @@ Configuration::Configuration(std::string pathIn)
   //setPath(pathIn);
   _outpath = pathIn;
   _nParticles = 1;
+  _saveGamma.assign(1, false);
 
   _t_start = _t_stop = 0.;
   _dt_out = 1e-5;
@@ -46,6 +47,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("palattice.simTool", palattice->tool_string());
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
+  tree.put("palattice.saveGamma", saveGammaList());
 
   if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
@@ -73,6 +75,7 @@ void Configuration::load(const std::string &filename)
     _s_start[0] = tree.get<double>("spintracking.s_start.x");
     _s_start[2] = tree.get<double>("spintracking.s_start.z");
     _s_start[1] = tree.get<double>("spintracking.s_start.s");
+    _s_start = arma::normalise(_s_start);
     
     setSimToolInstance(tree);
     setGammaMode(tree); //optional, but fails if invalid value
@@ -85,19 +88,26 @@ void Configuration::load(const std::string &filename)
 
   
   // optional config with default values
-  _nParticles = tree.get("spintracking.numParticles", 1);
+  set_nParticles( tree.get("spintracking.numParticles", 1) );
+  _t_start = tree.get("spintracking.t_start", 0.0);
+  _dt_out = tree.get("spintracking.dt_out", duration()/default_steps);
+  set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
+  
+  std::cout << "* configuration loaded from " << filename << std::endl;
+  return;
+}
+
+
+void Configuration::set_nParticles(unsigned int n)
+{
+  _nParticles=n;
+  _saveGamma.assign(_nParticles, false);
   try {
-  palattice->setNumParticles(_nParticles);
+    palattice->setNumParticles(_nParticles);
   }
   catch (pal::palatticeError &e) {
     std::cout << "ignoring numParticles for madx tracking: " <<std::endl << e.what() << std::endl;
   }
-  
-  _t_start = tree.get("spintracking.t_start", 0.0);
-  _dt_out = tree.get("spintracking.dt_out", duration()/default_steps);
-  
-  std::cout << "* configuration loaded from " << filename << std::endl;
-  return;
 }
 
 
@@ -112,7 +122,7 @@ void Configuration::printSummary() const
     << "time      " <<  _t_start << " s   -------------------->   " << _t_stop << " s" << std::endl
     << "energy    " << gamma(_t_start)*E_rest << " GeV   ----- " << _dE << " GeV/s ----->   " << gamma(_t_stop)*E_rest << " GeV" << std::endl
     << "spin tune " << agamma(_t_start) << "   -------------------->   " << agamma(_t_stop) << std::endl;
-  s << "start polarization: Px = " << _s_start[0] << ", Ps = " << _s_start[1] << ", Pz = " << _s_start[2] << std::endl;
+  s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
   std::cout << s.str();
@@ -172,4 +182,32 @@ void Configuration::setGammaMode(pt::ptree &tree)
     _gammaMode = simtool;
   else
     throw pt::ptree_error("Invalid gammaMode "+s);
+}
+
+
+void Configuration::set_saveGamma(std::string particleList)
+{
+ std::stringstream ss(particleList);
+  unsigned int tmp;
+  while ( (ss >> tmp) ) {
+    try {
+    _saveGamma.at(tmp) = true;
+    }
+    catch (std::out_of_range) {
+      std::cout << "* ignore saveGamma config option of particle ID " << tmp
+		<< ", which is out of range" << std::endl;
+    }
+      
+    if (ss.peek() == ',')
+      ss.ignore();
+  }
+}
+
+std::string Configuration::saveGammaList() const
+{
+  std::stringstream s;
+  for (auto i=0u; i<_saveGamma.size(); i++) {
+    if (_saveGamma[i]) s << i << ",";
+  }
+  return s.str();
 }

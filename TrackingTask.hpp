@@ -61,8 +61,9 @@ public:
   void matrixTracking();
   
   double (TrackingTask::*gamma)(double) const;
-  double gammaFromConfig(double t) const {return config.gamma(t);}
-  double gammaFromSimTool(double pos) const {return gammaSimTool.interp(pos);}
+  double gammaFromConfig(double pos) const {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
+  double gammaFromSimTool(double pos) const {return gammaSimTool.interpPeriodic(pos);}
+  void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
@@ -70,7 +71,7 @@ public:
   std::string outfileName() const;            // output file name
 
   SpinMotion getStorage() const {return storage;}
-  std::string getProgressBar() const;
+  std::string getProgressBar(unsigned int barWidth=20) const;
   bool isCompleted() const {return completed;}
   
 };

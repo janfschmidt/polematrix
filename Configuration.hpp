@@ -5,6 +5,7 @@
 #include <armadillo>
 #include <gsl/gsl_const_mksa.h>
 #include <fstream>
+#include <vector>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -27,6 +28,7 @@ private:
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
   void setSimToolInstance(pt::ptree &tree);
   void setGammaMode(pt::ptree &tree);
+  std::vector<bool> _saveGamma;
 
   fs::path _outpath;
 
@@ -41,7 +43,7 @@ private:
   GammaMode _gammaMode;
 
   
-  public:
+public:
   //constants / internal configuration (constructor)
   const double E_rest;               // electron rest energy / GeV
   const double a_gyro;               // electron gyromagnetic anomaly a = (g-2)/2
@@ -63,17 +65,20 @@ private:
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
+  bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
+  std::string saveGammaList() const;
   
   //setter
   void set_outpath(fs::path p) {_outpath=p;}
-  void set_s_start(arma::colvec3 s) {_s_start=s;}
+  void set_s_start(arma::colvec3 s) {_s_start=arma::normalise(s);}
   void set_t_start(double t) {_t_start=t;}
   void set_t_stop(double t) {_t_stop=t;}
   void set_dt_out(double dt) {_dt_out=dt;}
   void set_E0(double E) {_E0=E;}
   void set_dE(double dEin) {_dE=dEin;}
-  void set_nParticles(unsigned int n) {_nParticles=n;}
+  void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
+  void set_saveGamma(std::string particleList);
 
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}

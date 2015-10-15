@@ -101,7 +101,9 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 void TrackingTask::run()
 {
   if (config.gammaMode() == simtool) {
-    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId, "p" );
+    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
+    gammaSimTool.init(); // initialize interpolation
+    saveGammaSimTool();
   }
   
   outfileOpen();
@@ -122,10 +124,11 @@ void TrackingTask::matrixTracking()
   pal::AccTriple omega;
   double pos = config.pos_start();
   double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
+  double pos_start = config.pos_start();
   double pos_stop = config.pos_stop();
   double dpos_out = config.dpos_out();
   double pos_nextOut = pos + dpos_out;
-  double gamma;
+  double gammaVar;
 
   // set current iterator and position
   pal::const_AccIterator it=lattice->nextCIt( orbit->posInTurn(pos) );
@@ -134,10 +137,10 @@ void TrackingTask::matrixTracking()
 
   //  for (unsigned int i=0; i<this->particleId*123456789; i++) {
   while (pos < pos_stop) {
-    gamma = config.gamma(t);
+    gammaVar = (this->*gamma)(pos-pos_start);
     omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
-    omega.x *= gamma;
-    omega.z *= gamma;
+    omega.x *= gammaVar;
+    omega.z *= gammaVar;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
 
     s = rotMatrix(omega) * s; // spin rotation
@@ -147,7 +150,7 @@ void TrackingTask::matrixTracking()
     //s = s/std::sqrt(std::pow(s(0),2) + std::pow(s(1),2) + std::pow(s(2),2));
 
     if (pos >= pos_nextOut) {//output
-      storeStep(t,s,gamma);
+      storeStep(t,s,gammaVar);
       pos_nextOut += dpos_out;
     }
 
@@ -186,6 +189,17 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
   return rot;
 }
 
+
+void TrackingTask::saveGammaSimTool()
+{
+  if ( !config.saveGamma(particleId) )
+    return;
+  
+  gammaSimTool.info.add("polematrix particle ID", particleId);
+  std::stringstream file;
+  file << "gammaSimTool.p" << particleId;
+  gammaSimTool.print( (config.outpath()/file.str()).string() );
+}
 
 
 std::string TrackingTask::outfileName() const
@@ -232,21 +246,25 @@ void TrackingTask::storeStep(const double &t, const arma::colvec3 &s, const doub
 }
 
 
-std::string TrackingTask::getProgressBar() const
+std::string TrackingTask::getProgressBar(unsigned int barWidth) const
 {
   std::stringstream bar;
-  double stepsTotal = 20;
-  unsigned int steps = (1.0 * stepsTotal * storage.size() / config.outSteps()) + 0.5;
-  unsigned int i=0;
 
-  bar << "particle " << particleId << " [";
-  
-  for (; i<steps; i++)
-    bar << "=";
-  for (; i<stepsTotal; i++)
-    bar << " ";
-    
-  bar << "] " << steps/stepsTotal*100 << "%";
+  bar << particleId << ":";
+
+  if (barWidth!=0) {
+    unsigned int steps = (1.0 * barWidth * storage.size() / config.outSteps()) + 0.5;
+    unsigned int i=0;
+    bar << "[";
+    for (; i<steps; i++)
+      bar << "=";
+    for (; i<barWidth; i++)
+      bar << " ";
+    bar << "]";
+  }
+  bar <<" "<< std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config.outSteps()*100 << "%";
   
   return bar.str();
 }
+
+
