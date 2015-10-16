@@ -3,7 +3,6 @@
 Configuration::Configuration(std::string pathIn)
   : E_rest(0.000511), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
-  //setPath(pathIn);
   _outpath = pathIn;
   _nParticles = 1;
   _saveGamma.assign(1, false);
@@ -51,6 +50,7 @@ void Configuration::save(const std::string &filename) const
 
   if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
+  else if (_gammaMode==simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
 
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
@@ -165,11 +165,7 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
     return;
   }
 
-  // delete palattice;
-  // palattice = new pal::SimToolInstance(tool, mode, file);
   palattice.reset(new pal::SimToolInstance(tool, mode, file));
- 
-
 }
 
 void Configuration::setGammaMode(pt::ptree &tree)
@@ -180,6 +176,9 @@ void Configuration::setGammaMode(pt::ptree &tree)
     _gammaMode = linear;
   else if (s == "simtool")
     _gammaMode = simtool;
+  else if (s == "simtool+linear")
+    _gammaMode = simtool_plus_linear;
+  
   else
     throw pt::ptree_error("Invalid gammaMode "+s);
 }

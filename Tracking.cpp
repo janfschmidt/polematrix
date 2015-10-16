@@ -8,13 +8,6 @@ Tracking::Tracking(unsigned int nThreads) : lattice("tut", 0, pal::end), orbit(0
   if (nThreads == 0)
     nThreads = 1;
 
-  // if (nThreads < 4)
-  //   progressBarWidth = 20;
-  // else if (nThreads < 6)
-    progressBarWidth = 10;
-  // else
-  //   progressBarWidth = 0;
-
   // set iterator to begin of queue
   queueIt = queue.begin();
 
@@ -60,6 +53,9 @@ void Tracking::start()
   std::thread progress(&Tracking::printProgress,this);
   progress.join();
   }
+  else {
+    std::cout << "* start tracking..." << std::endl;
+  }
 
   // wait for threads to finish
   for (std::thread& t : threadPool) {
@@ -68,7 +64,9 @@ void Tracking::start()
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
-  std::cout << "Tracking took " << duration.count() << " s." << std::endl;
+  std::cout << "-----------------------------------------------------------------" << std::endl;
+  std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << duration.count() << " s." << std::endl;
+  std::cout << "-----------------------------------------------------------------" << std::endl;
 
   calcPolarization();
 }
@@ -113,13 +111,19 @@ void Tracking::processQueue()
 void Tracking::printProgress() const
 {
   std::list<std::vector<TrackingTask>::const_iterator> tmp;
+  unsigned int barWidth;
+  if (runningTasks.size() < 5)
+    barWidth = 20;
+  else
+    barWidth = 15;
+  
   while (runningTasks.size() > 0) {
     tmp = runningTasks;
     unsigned int n=0;
     for (std::vector<TrackingTask>::const_iterator task : tmp) {
       n++;
-      if (n<=4)
-	std::cout << task->getProgressBar(progressBarWidth) << "   ";
+      if (n<5)
+	std::cout << task->getProgressBar(barWidth) << "   ";
       else
 	std::cout << task->getProgressBar(0) << "   ";
     }
@@ -139,7 +143,7 @@ void Tracking::setModel(bool resetTurns)
   //set number of turns for SimTool based on tracking time
   if (config.gammaMode() == simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
-    std::cout << "DEBUG tracking turns=" << turns << std::endl;
+    std::cout << "* tracking " << turns <<" turns" << std::endl;
     config.getSimToolInstance().setTurns(turns);
   }
   else {

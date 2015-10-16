@@ -16,19 +16,19 @@ namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 
-enum GammaMode{linear, simtool};
+enum GammaMode{linear, simtool, simtool_plus_linear};
 
 class Configuration
 {
 private:
   //palattice
   std::shared_ptr<pal::SimToolInstance> palattice;
+  std::vector<bool> _saveGamma;
 
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
   void setSimToolInstance(pt::ptree &tree);
   void setGammaMode(pt::ptree &tree);
-  std::vector<bool> _saveGamma;
 
   fs::path _outpath;
 
@@ -66,7 +66,6 @@ public:
   GammaMode gammaMode() const {return _gammaMode;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
-  std::string saveGammaList() const;
   
   //setter
   void set_outpath(fs::path p) {_outpath=p;}
@@ -89,6 +88,7 @@ public:
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop();}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out();}
   unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
+  std::string saveGammaList() const;
 
   void printSummary() const;
 

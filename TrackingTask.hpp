@@ -38,7 +38,8 @@ private:
   std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
-  pal::FunctionOfPos<double> gammaSimTool;
+  pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
+  double gammaCentralSimTool;                // gamma central from elegant (set energy)
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
@@ -61,8 +62,11 @@ public:
   void matrixTracking();
   
   double (TrackingTask::*gamma)(double) const;
+  //gamma modes:
   double gammaFromConfig(double pos) const {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
-  double gammaFromSimTool(double pos) const {return gammaSimTool.interpPeriodic(pos);}
+  double gammaFromSimTool(double pos) const {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
+  double gammaFromSimToolPlusConfig(double pos) const {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
+  
   void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;

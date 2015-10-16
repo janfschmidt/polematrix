@@ -33,7 +33,6 @@ private:
 public:
   Configuration config;
   bool showProgressBar;
-  unsigned int progressBarWidth;
 
   Tracking(unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
   ~Tracking() {}

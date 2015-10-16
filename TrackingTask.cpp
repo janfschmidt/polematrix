@@ -86,10 +86,14 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
+  gammaCentralSimTool = 0.;
 
   switch (config.gammaMode()) {
   case simtool:
     gamma = &TrackingTask::gammaFromSimTool;
+    break;
+  case simtool_plus_linear:
+    gamma = &TrackingTask::gammaFromSimToolPlusConfig;
     break;
   default:
     gamma = &TrackingTask::gammaFromConfig;
@@ -100,10 +104,11 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 
 void TrackingTask::run()
 {
-  if (config.gammaMode() == simtool) {
+  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
     gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
     gammaSimTool.init(); // initialize interpolation
     saveGammaSimTool();
+    gammaCentralSimTool = lattice->info.getGamma(config.getSimToolInstance().tool);
   }
   
   outfileOpen();
@@ -114,6 +119,8 @@ void TrackingTask::run()
   
   outfileClose();
 
+  gammaSimTool.clear(); //free memory
+  
   completed = true;
 }
 
@@ -124,7 +131,6 @@ void TrackingTask::matrixTracking()
   pal::AccTriple omega;
   double pos = config.pos_start();
   double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
-  double pos_start = config.pos_start();
   double pos_stop = config.pos_stop();
   double dpos_out = config.dpos_out();
   double pos_nextOut = pos + dpos_out;
@@ -135,16 +141,14 @@ void TrackingTask::matrixTracking()
   pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(it);
   t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
 
-  //  for (unsigned int i=0; i<this->particleId*123456789; i++) {
   while (pos < pos_stop) {
-    gammaVar = (this->*gamma)(pos-pos_start);
+    gammaVar = (this->*gamma)(pos);
     omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
     omega.x *= gammaVar;
     omega.z *= gammaVar;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
 
     s = rotMatrix(omega) * s; // spin rotation
-    //std::cout << rotMatrix(omega) << std::endl;
 
     //renormalize
     //s = s/std::sqrt(std::pow(s(0),2) + std::pow(s(1),2) + std::pow(s(2),2));
@@ -196,8 +200,8 @@ void TrackingTask::saveGammaSimTool()
     return;
   
   gammaSimTool.info.add("polematrix particle ID", particleId);
-  std::stringstream file;
-  file << "gammaSimTool.p" << particleId;
+  std::stringstream file, fileinterp;
+  file << "gammaSimTool_" <<std::setw(4)<<std::setfill('0')<< particleId << ".dat";
   gammaSimTool.print( (config.outpath()/file.str()).string() );
 }
 
@@ -262,7 +266,7 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
       bar << " ";
     bar << "]";
   }
-  bar <<" "<< std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config.outSteps()*100 << "%";
+  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config.outSteps()*100 << "%";
   
   return bar.str();
 }
