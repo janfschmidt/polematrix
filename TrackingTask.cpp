@@ -104,13 +104,6 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 
 void TrackingTask::run()
 {
-  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
-    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
-    gammaSimTool.init(); // initialize interpolation
-    saveGammaSimTool();
-    gammaCentralSimTool = lattice->info.getGamma(config.getSimToolInstance().tool);
-  }
-  
   outfileOpen();
   
   //std::cout << "* start tracking particle " << particleId << std::endl;
@@ -119,9 +112,19 @@ void TrackingTask::run()
   
   outfileClose();
 
-  gammaSimTool.clear(); //free memory
+  gammaSimTool.clear(); //save memory
   
   completed = true;
+}
+
+void TrackingTask::initGammaSimTool()
+{
+  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
+    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
+    gammaSimTool.init(); // initialize interpolation
+    saveGammaSimTool();
+    gammaCentralSimTool = config.getSimToolInstance().readGammaCentral();
+  }
 }
 
 

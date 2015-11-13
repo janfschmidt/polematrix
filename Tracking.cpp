@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice("tut", 0, pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : error(false), lattice("tut", 0, pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -22,11 +22,11 @@ Tracking::Tracking(unsigned int nThreads) : lattice("tut", 0, pal::end), orbit(0
 void Tracking::start()
 { 
   if (lattice.size()==0 || orbit.size()==0)
-    throw TrackError("ERROR: Cannot start tracking, if model is not specified (Lattice, Orbit).");
+    throw TrackError("Cannot start tracking, if model is not specified (Lattice, Orbit).");
 
   if (config.t_stop() <= config.t_start()) {
     std::stringstream msg;
-    msg << "ERROR: Cannot track backwards: t_stop=" << config.t_stop() << " < t_start=" << config.t_start();
+    msg << "Cannot track backwards: t_stop=" << config.t_stop() << " < t_start=" << config.t_start();
     throw TrackError(msg.str());
   }
 
@@ -65,7 +65,10 @@ void Tracking::start()
   auto stop = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
   std::cout << "-----------------------------------------------------------------" << std::endl;
-  std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << duration.count() << " s." << std::endl;
+  if (error)
+    std::cout << "An error occured during tracking! Stopped after " << duration.count() << " s." << std::endl;
+  else
+    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << duration.count() << " s." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
 
   calcPolarization();
@@ -86,16 +89,20 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
-      mutex.unlock();
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
+      myTask->initGammaSimTool(); // has to be mutexed, because all particles are read from the same sdds files
+      mutex.unlock();
       try {
 	myTask->run(); // run next queued TrackingTask
       }
-      catch (TrackError &e) {
-	std::cout << "ERROR: " << e.what() << " (thread_id " << std::this_thread::get_id()
+      //cancel thread in error case
+      catch (std::exception &e) {
+	std::cout << "ERROR:"<< std::endl
+		  << e.what() << " (thread_id " << std::this_thread::get_id()
 		  << ", particle " << myTask->particleId << ")"<< std::endl;
 	mutex.lock();
+	error = true;
 	runningTasks.remove(myTask); // to display progress
 	mutex.unlock();
 	return;

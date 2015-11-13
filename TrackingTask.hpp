@@ -66,7 +66,8 @@ public:
   double gammaFromConfig(double pos) const {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
   double gammaFromSimTool(double pos) const {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
   double gammaFromSimToolPlusConfig(double pos) const {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
-  
+
+  void initGammaSimTool();
   void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;

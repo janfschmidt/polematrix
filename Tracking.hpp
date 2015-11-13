@@ -20,6 +20,7 @@ private:
   std::vector<TrackingTask>::iterator queueIt;
   std::list<std::vector<TrackingTask>::const_iterator> runningTasks; // to display progress
   std::mutex mutex;
+  bool error;
   void processQueue();
   void printProgress() const;
 
