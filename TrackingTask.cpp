@@ -80,7 +80,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, Configuration &c)
-  : w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), particleId(id), config(c)
+  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId)
 {
   lattice = NULL;
   orbit = NULL;
@@ -95,6 +95,9 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   case simtool_plus_linear:
     gamma = &TrackingTask::gammaFromSimToolPlusConfig;
     break;
+  case radiation:
+    gamma = &TrackingTask::gammaRadiation;
+    break;
   default:
     gamma = &TrackingTask::gammaFromConfig;
   }
@@ -104,6 +107,10 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 
 void TrackingTask::run()
 {
+  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
+    gammaSimTool.init(); // initialize interpolation
+    saveGammaSimTool();
+  }
   outfileOpen();
   
   //std::cout << "* start tracking particle " << particleId << std::endl;
@@ -117,14 +124,16 @@ void TrackingTask::run()
   completed = true;
 }
 
-void TrackingTask::initGammaSimTool()
+void TrackingTask::initGamma()
 {
   if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
     gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
-    gammaSimTool.init(); // initialize interpolation
-    saveGammaSimTool();
     gammaCentralSimTool = config.getSimToolInstance().readGammaCentral();
   }
+  else if (config.gammaMode()==radiation) {
+    syliModel.init(lattice, config);
+  }
+  //else: no init needed
 }
 
 
@@ -133,22 +142,19 @@ void TrackingTask::matrixTracking()
   arma::colvec3 s = config.s_start();
   pal::AccTriple omega;
   double pos = config.pos_start();
-  double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
   double pos_stop = config.pos_stop();
   double dpos_out = config.dpos_out();
   double pos_nextOut = pos + dpos_out;
-  double gammaVar;
 
-  // set current iterator and position
-  pal::const_AccIterator it=lattice->nextCIt( orbit->posInTurn(pos) );
-  pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(it);
-  t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
+  // set start lattice element and position
+  currentElement = lattice->nextCIt( orbit->posInTurn(pos) );
+  pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(currentElement);
 
   while (pos < pos_stop) {
-    gammaVar = (this->*gamma)(pos);
-    omega = it->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
-    omega.x *= gammaVar;
-    omega.z *= gammaVar;
+    currentGamma = (this->*gamma)(pos);
+    omega = currentElement->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
+    omega.x *= currentGamma;
+    omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
 
     s = rotMatrix(omega) * s; // spin rotation
@@ -157,14 +163,13 @@ void TrackingTask::matrixTracking()
     //s = s/std::sqrt(std::pow(s(0),2) + std::pow(s(1),2) + std::pow(s(2),2));
 
     if (pos >= pos_nextOut) {//output
-      storeStep(t,s,gammaVar);
+      storeStep(pos,s);
       pos_nextOut += dpos_out;
     }
 
     // step to next element
-    pos += lattice->distanceNext(it);
-    t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
-    it = lattice->revolve(it);
+    pos += lattice->distanceNext(currentElement);
+    currentElement = lattice->revolve(currentElement);
   }
 }
 
@@ -239,17 +244,18 @@ void TrackingTask::outfileClose()
 }
 
 
-void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s, const double &gamma)
+void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
 {
-  *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< gamma << std::endl;
+  *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< currentGamma << std::endl;
 }
 
 
 
-void TrackingTask::storeStep(const double &t, const arma::colvec3 &s, const double &gamma)
+void TrackingTask::storeStep(const double &pos, const arma::colvec3 &s)
 {
+  double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
   storage.insert(std::pair<double,arma::colvec3>(t,s));
-  outfileAdd(t,s,gamma);
+  outfileAdd(t,s);
 }
 
 
@@ -274,4 +280,11 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
   return bar.str();
 }
 
+
+double TrackingTask::gammaRadiation(const double &pos)
+{
+  //Rampe: Sollenergie gamma_0 aktualisieren (config.gamma()) !!
+  syliModel.update(currentElement->second, pos);
+  return syliModel.gamma();
+}
 

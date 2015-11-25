@@ -63,12 +63,13 @@ void Tracking::start()
   }
 
   auto stop = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
+  auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
+  auto mins = std::chrono::duration_cast<std::chrono::minutes>(stop-start);
   std::cout << "-----------------------------------------------------------------" << std::endl;
   if (error)
-    std::cout << "An error occured during tracking! Stopped after " << duration.count() << " s." << std::endl;
+    std::cout << "An error occured during tracking! Stopped after " << secs.count() << " s = "<< mins.count() << "min." << std::endl;
   else
-    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << duration.count() << " s." << std::endl;
+    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << secs.count() << " s = "<< mins.count() << "min." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
 
   calcPolarization();
@@ -91,7 +92,7 @@ void Tracking::processQueue()
       runningTasks.push_back(myTask); // to display progress
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
-      myTask->initGammaSimTool(); // has to be mutexed, because all particles are read from the same sdds files
+      myTask->initGamma(); // has to be mutexed, because sdds import seems to be not thread save :(
       mutex.unlock();
       try {
 	myTask->run(); // run next queued TrackingTask
@@ -123,16 +124,17 @@ void Tracking::printProgress() const
     barWidth = 20;
   else
     barWidth = 15;
+  //shorter looks ugly
   
   while (runningTasks.size() > 0) {
     tmp = runningTasks;
     unsigned int n=0;
     for (std::vector<TrackingTask>::const_iterator task : tmp) {
-      n++;
-      if (n<5)
-	std::cout << task->getProgressBar(barWidth) << "   ";
+      if (n<2)
+	std::cout << task->getProgressBar(barWidth) << " ";
       else
-	std::cout << task->getProgressBar(0) << "   ";
+	std::cout << task->getProgressBar(0) << " ";
+      n++;
     }
     std::cout <<"\r"<< std::flush;
     sleep(1);
@@ -151,6 +153,7 @@ void Tracking::setModel(bool resetTurns)
   if (config.gammaMode() == simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
     std::cout << "* tracking " << turns <<" turns" << std::endl;
+    config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
   }
   else {

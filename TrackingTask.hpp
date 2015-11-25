@@ -12,6 +12,7 @@
 #include <libpalattice/FunctionOfPos.hpp>
 #include <libpalattice/types.hpp>
 #include "Configuration.hpp"
+#include "RadiationModel.hpp"
 
 
 // spin tracking result container (3d spin vector as function of time)
@@ -32,6 +33,12 @@ public:
 
 class TrackingTask
 {
+public:
+  const unsigned int particleId;
+  Configuration &config;
+  const pal::AccLattice *lattice;
+  const pal::FunctionOfPos<pal::AccPair> *orbit;
+  
 private:
   arma::mat33 one;
   SpinMotion storage;                         // store results
@@ -39,20 +46,20 @@ private:
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
-  double gammaCentralSimTool;                // gamma central from elegant (set energy)
+  double gammaCentralSimTool;                 // gamma central from elegant (set energy)
+  longitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
+  
+  //variables for current tracking step
+  pal::const_AccIterator currentElement;      // position in lattice
+  double currentGamma;                        // gamma
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
-  void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
-  void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
+  void outfileAdd(const double &t, const arma::colvec3 &s);  // append s(t) to outfile
+  void storeStep(const double &pos, const arma::colvec3 &s); // append s(t) to storage and outfile
 
   
 public:
-  const unsigned int particleId;
-  Configuration &config;
-  const pal::AccLattice *lattice;
-  const pal::FunctionOfPos<pal::AccPair> *orbit;
-  
   TrackingTask(unsigned int id, Configuration &c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
@@ -61,13 +68,14 @@ public:
   void run();                                 //run tracking task
   void matrixTracking();
   
-  double (TrackingTask::*gamma)(double) const;
+  double (TrackingTask::*gamma)(const double&);
   //gamma modes:
-  double gammaFromConfig(double pos) const {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
-  double gammaFromSimTool(double pos) const {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
-  double gammaFromSimToolPlusConfig(double pos) const {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
+  double gammaFromConfig(const double &pos) {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
+  double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
+  double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
+  double gammaRadiation(const double &pos);
 
-  void initGammaSimTool();
+  void initGamma();
   void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;
