@@ -124,15 +124,16 @@ void Configuration::set_nParticles(unsigned int n)
 void Configuration::printSummary() const
 {
   std::stringstream s;
+  unsigned int w=8;
 
   s << "-----------------------------------------------------------------" << std::endl;
   s << "Tracking " << _nParticles << " Spins" << std::endl
-    << "time      " <<  _t_start << " s   -------------------->   " << _t_stop << " s" << std::endl;
+    << "time      " <<std::setw(w-2)<<  _t_start << " s   -------------------->   " <<std::setw(w-2)<< _t_stop << " s" << std::endl;
   if(_gammaMode == simtool)
     s << "energy from " << palattice->tool_string() << std::endl;
   else
-    s << "energy    " << gamma_start()*E_rest_GeV << " GeV   ----- " << _dE << " GeV/s ----->   " << gamma_stop()*E_rest_GeV << " GeV" << std::endl
-    << "spin tune " << agamma_start() << "   -------------------->   " << agamma_stop() << std::endl;
+    s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
+      << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 

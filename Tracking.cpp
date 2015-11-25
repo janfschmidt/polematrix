@@ -69,7 +69,7 @@ void Tracking::start()
   if (error)
     std::cout << "An error occured during tracking! Stopped after " << secs.count() << " s = "<< mins.count() << "min." << std::endl;
   else
-    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << secs.count() << " s = "<< mins.count() << "min." << std::endl;
+    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << secs.count() << " s = "<< mins.count() << " min." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
 
   calcPolarization();
@@ -90,10 +90,10 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
+      mutex.unlock();
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
-      myTask->initGamma(); // has to be mutexed, because sdds import seems to be not thread save :(
-      mutex.unlock();
+      myTask->initGamma(); // [TEST IF WORKING NOW!] has to be mutexed, because sdds import seems to be not thread save :(
       try {
 	myTask->run(); // run next queued TrackingTask
       }
@@ -131,7 +131,7 @@ void Tracking::printProgress() const
     unsigned int n=0;
     for (std::vector<TrackingTask>::const_iterator task : tmp) {
       if (n<2)
-	std::cout << task->getProgressBar(barWidth) << " ";
+	std::cout << task->getProgressBar(barWidth) << "  ";
       else
 	std::cout << task->getProgressBar(0) << " ";
       n++;

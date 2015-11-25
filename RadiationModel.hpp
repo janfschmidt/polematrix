@@ -2,6 +2,7 @@
 #include <cmath>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/poisson_distribution.hpp>
+#include <boost/random/normal_distribution.hpp>
 #include <boost/random/piecewise_linear_distribution.hpp>
 #include "libpalattice/AccLattice.hpp"
 #include "Configuration.hpp"
@@ -25,76 +26,50 @@ public:
 };
 
 
-class longitudinalPhaseSpaceModel {
+class LongitudinalPhaseSpaceModel {
 protected:
+  int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
   const pal::AccLattice* lattice;
   unsigned int nCavities;
   double _q;       //overvoltage factor
   double _ac;      //momentum compaction factor
   unsigned int _h; //harmonic number
-  double _gamma_0; //center energy
-  double dGamma_ref; //energy gain per turn for reference phase (= radiation energy loss per turn), in unit of gamma
+  double _gamma0;  // reference energy in units of gamma
+  double _gammaU0; // cavity amplitude U0 in units of gamma
   
   double phase;    //current synchrotron phase
   double _gamma;   //current energy
   double lastPos;  //total distance currently traveled in m (to calc distance since last step)
 
+  void updateCavityVoltage()
+  {
+    _gammaU0 = q() * lattice->Erev_keV_syli(gamma0()) / E_rest_keV;
+  }
+
+
 public:
   const double E_rest_keV;
   
-  longitudinalPhaseSpaceModel(int seed)
-    : radModel(seed),lattice(NULL), E_rest_keV(511) {lastPos=_q=_ac=_h=phase=_gamma=dGamma_ref=0;}
+  LongitudinalPhaseSpaceModel(int _seed)
+    : seed(_seed),radModel(seed),lattice(NULL), E_rest_keV(511) {lastPos=_q=_ac=_h=phase=_gamma=_gamma0=_gammaU0=0;}
   double q() const {return _q;}
-  double ac() const {return _ac;}
+  double gammaU0() const {return _gammaU0;}
+  double alphac() const {return _ac;}
   unsigned int h() const {return _h;}
   double gamma() const {return _gamma;}
-  double gammaCentral() const {return _gamma_0;}
+  double gamma0() const {return _gamma0;}
   
-  void set_q(double x) {_q=x;}
+  
+  void set_q(double x) {_q=x; updateCavityVoltage();}
   void set_ac(double x) {_ac=x;}
   void set_h(unsigned int x) {_h=x;}
-
+  void set_gamma0(double x) {_gamma0=x; updateCavityVoltage();}
+  
   double stepDistance(const double& pos) const {return pos - lastPos;}
-  double delta() const {return (gamma()-gammaCentral())/gammaCentral();}
-
-  void init(const pal::AccLattice* l, const Configuration& config)
-  {
-    //gamma & pos start from config
-    lastPos = config.pos_start();
-    _gamma = config.gamma_start();
-    lattice = l;
-    nCavities = lattice->size(pal::cavity);
-    set_gammaCentral(gamma());
-    //load from config: q,ac,h (oder SimTool? oder config entscheidet woher?)
-    _q=10; _ac=0.0601; _h=274;
-    phase = M_PI - std::asin(1/q()); //electron beam: stable phase on falling slope of sine
-  }
-  
-  void set_gammaCentral(const double& gamma)
-  {
-    _gamma_0 = gamma;
-    dGamma_ref = lattice->Erev_keV_syli(gamma) / E_rest_keV;
-  }
+  double delta() const {return (gamma()-gamma0())/gamma0();}
 
   
-  void update(const pal::AccElement* element, const double& pos)
-  {
-    phase += (stepDistance(pos)/lattice->circumference()) * h() * (ac()-std::pow(gamma(),-2)) * delta();
-
-    if(element->type == pal::dipole) {
-      double tmp = radModel.radiatedEnergy(element, gamma()) / E_rest_keV;
-      //std::cout << "dipole: "<< tmp <<"\t"<< phase << std::endl;
-      _gamma -= tmp;
-    }
-
-    else if(element->type == pal::cavity) {
-      double tmp = q()*dGamma_ref * std::sin(phase) / nCavities;
-      // std::cout << "cavity: "<< tmp  <<"\t"<< phase<< std::endl;
-      // std::cout << nCavities <<" cavities, U0="<< q()*dGamma_ref*E_rest_keV << " keV" << std::endl;
-      _gamma += tmp;
-    }
-    
-    lastPos = pos;
-  }
+  void init(const pal::AccLattice* l, const Configuration& config);
+  void update(const pal::AccElement* element, const double& pos);
 };

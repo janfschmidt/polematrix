@@ -47,7 +47,7 @@ private:
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
   double gammaCentralSimTool;                 // gamma central from elegant (set energy)
-  longitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
+  LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
   
   //variables for current tracking step
   pal::const_AccIterator currentElement;      // position in lattice
