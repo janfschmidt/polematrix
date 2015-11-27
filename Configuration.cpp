@@ -50,7 +50,7 @@ void Configuration::save(const std::string &filename) const
   if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
 
-  pt::xml_writer_settings<char> settings(' ', 2); //indentation
+  pt::xml_writer_settings<std::string> settings(' ', 2); //indentation
   pt::write_xml(filename, tree, std::locale(), settings);
 
   std::cout << "* current configuration saved in " << filename << std::endl;
@@ -75,7 +75,7 @@ void Configuration::load(const std::string &filename)
     _s_start[1] = tree.get<double>("spintracking.s_start.s");
     
     setSimToolInstance(tree);
-    setGammaMode(tree); //optional, but fails if invalid value
+    setGammaMode(tree); //optional, but throws if invalid value
   }
   catch (pt::ptree_error &e) {
     std::cout << "Error loading configuration file:" << std::endl
@@ -87,7 +87,7 @@ void Configuration::load(const std::string &filename)
   // optional config with default values
   _nParticles = tree.get("spintracking.numParticles", 1);
   try {
-  palattice->setNumParticles(_nParticles);
+    palattice->setNumParticles(_nParticles);
   }
   catch (pal::palatticeError &e) {
     std::cout << "ignoring numParticles for madx tracking: " <<std::endl << e.what() << std::endl;
