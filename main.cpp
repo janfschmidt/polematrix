@@ -106,6 +106,11 @@ int main(int argc, char *argv[])
   // => trajectory muss in task leben (nicht pointer) da individuell verschieden
 
   t.setModel(resetTurns);
+
+  if (args.count("all")) {
+    t.saveLattice();
+    t.saveOrbit();
+  }
   
   try{
     t.start();
@@ -116,11 +121,6 @@ int main(int argc, char *argv[])
   }
   
   t.savePolarization();
-
-  if (args.count("all")) {
-    t.saveLattice();
-    t.saveOrbit();
-  }
 
   return 0;
 }

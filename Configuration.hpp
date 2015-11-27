@@ -5,6 +5,7 @@
 #include <armadillo>
 #include <gsl/gsl_const_mksa.h>
 #include <fstream>
+#include <vector>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -15,13 +16,14 @@ namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 
-enum GammaMode{linear, simtool};
+enum GammaMode{linear, simtool, simtool_plus_linear, radiation};
 
 class Configuration
 {
 private:
   //palattice
   std::shared_ptr<pal::SimToolInstance> palattice;
+  std::vector<bool> _saveGamma;
 
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
@@ -39,11 +41,13 @@ private:
   double _dE;               // dE/dt / GeV/s
   unsigned int _nParticles; // number of tracked particles
   GammaMode _gammaMode;
+  int _seed;                 // random number seed for gammaMode "radiation"
 
   
-  public:
+public:
   //constants / internal configuration (constructor)
-  const double E_rest;               // electron rest energy / GeV
+  const double E_rest_GeV;           // electron rest energy / GeV
+  const double E_rest_keV;           // electron rest energy / keV
   const double a_gyro;               // electron gyromagnetic anomaly a = (g-2)/2
   const unsigned int default_steps;  // number of output steps if not specified by dt_out
   const std::string spinDirName;     // directory name for tracking output files (outpath/spinDirName)
@@ -62,18 +66,22 @@ private:
   double dE() const {return _dE;}
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
+  int seed() const {return _seed;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
+  bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
   
   //setter
   void set_outpath(fs::path p) {_outpath=p;}
-  void set_s_start(arma::colvec3 s) {_s_start=s;}
+  void set_s_start(arma::colvec3 s) {_s_start=arma::normalise(s);}
   void set_t_start(double t) {_t_start=t;}
   void set_t_stop(double t) {_t_stop=t;}
   void set_dt_out(double dt) {_dt_out=dt;}
   void set_E0(double E) {_E0=E;}
   void set_dE(double dEin) {_dE=dEin;}
-  void set_nParticles(unsigned int n) {_nParticles=n;}
+  void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
+  void set_saveGamma(std::string particleList);
+  void set_seed(int s) {_seed=s;}
 
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}
@@ -83,7 +91,12 @@ private:
   double pos_start() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_start();}
   double pos_stop() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * t_stop();}
   double dpos_out() const {return GSL_CONST_MKSA_SPEED_OF_LIGHT * dt_out();}
+  double gamma_start() const {return gamma(t_start());}
+  double gamma_stop() const {return gamma(t_stop());}
+  double agamma_start() const {return agamma(t_start());}
+  double agamma_stop() const {return agamma(t_stop());}
   unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
+  std::string saveGammaList() const;
 
   void printSummary() const;
 
@@ -93,7 +106,9 @@ private:
   // save & load configuration to/from file
   void save(const std::string &filename) const;
   void load(const std::string &filename);
-  
+
+protected:
+  int randomSeed() const;
 };
 
 

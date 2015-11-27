@@ -12,6 +12,7 @@
 #include <libpalattice/FunctionOfPos.hpp>
 #include <libpalattice/types.hpp>
 #include "Configuration.hpp"
+#include "RadiationModel.hpp"
 
 
 // spin tracking result container (3d spin vector as function of time)
@@ -32,26 +33,33 @@ public:
 
 class TrackingTask
 {
-private:
-  arma::mat33 one;
-  SpinMotion storage;                         // store results
-  std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
-  unsigned int w;                             // output column width (print)
-  bool completed;                             // tracking completed
-  pal::FunctionOfPos<double> gammaSimTool;
-  
-  void outfileOpen();                         // open output file and write header
-  void outfileClose();                        // write footer and close output file
-  void outfileAdd(const double &t, const arma::colvec3 &s, const double &agamma); // append s(t) to outfile
-  void storeStep(const double &t, const arma::colvec3 &s, const double &agamma);  // append s(t) to storage and outfile
-
-  
 public:
   const unsigned int particleId;
   Configuration &config;
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   
+private:
+  arma::mat33 one;
+  SpinMotion storage;                         // store results
+  std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
+  unsigned int w;                             // output column width (print)
+  bool completed;                             // tracking completed
+  pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
+  double gammaCentralSimTool;                 // gamma central from elegant (set energy)
+  LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
+  
+  //variables for current tracking step
+  pal::const_AccIterator currentElement;      // position in lattice
+  double currentGamma;                        // gamma
+  
+  void outfileOpen();                         // open output file and write header
+  void outfileClose();                        // write footer and close output file
+  void outfileAdd(const double &t, const arma::colvec3 &s);  // append s(t) to outfile
+  void storeStep(const double &pos, const arma::colvec3 &s); // append s(t) to storage and outfile
+
+  
+public:
   TrackingTask(unsigned int id, Configuration &c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
@@ -60,9 +68,15 @@ public:
   void run();                                 //run tracking task
   void matrixTracking();
   
-  double (TrackingTask::*gamma)(double) const;
-  double gammaFromConfig(double t) const {return config.gamma(t);}
-  double gammaFromSimTool(double pos) const {return gammaSimTool.interp(pos);}
+  double (TrackingTask::*gamma)(const double&);
+  //gamma modes:
+  double gammaFromConfig(const double &pos) {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
+  double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
+  double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
+  double gammaRadiation(const double &pos);
+
+  void initGamma();
+  void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
@@ -70,7 +84,7 @@ public:
   std::string outfileName() const;            // output file name
 
   SpinMotion getStorage() const {return storage;}
-  std::string getProgressBar() const;
+  std::string getProgressBar(unsigned int barWidth=20) const;
   bool isCompleted() const {return completed;}
   
 };
