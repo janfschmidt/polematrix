@@ -1,17 +1,25 @@
 #include "RadiationModel.hpp"
+#include "gsl/gsl_sf_synchrotron.h"
 
+  // photon spectrum. used for probabilities of photon energies
 double SynchrotronRadiationModel::nPhoton(double u_per_uc) const
 {
-  double term;
-  double h=0.4;
-  double result = std::exp(-u_per_uc)/2.0;
-  unsigned int r = 1;
-  do {
-    term = std::exp(-u_per_uc*std::cosh(r*h)) * std::cosh(r*h*5./3.) / std::cosh(r*h);
-    result += term;
-    r++;
-  } while (term/result > 1e-5);
-  return result;
+  // This is an implementation of the integrated modified bessel function K_5/3
+  // from V. O. Kostroun "Simple numerical Evaluation of modified bessel functions of fractional order [...]"
+  // -----
+  // double term;
+  // double h=0.4;
+  // double result = std::exp(-u_per_uc)/2.0;
+  // unsigned int r = 1;
+  // do {
+  //   term = std::exp(-u_per_uc*std::cosh(r*h)) * std::cosh(r*h*5./3.) / std::cosh(r*h);
+  //   result += term;
+  //   r++;
+  // } while (term/result > 1e-5);
+  // return result;
+
+  // Implementation from GSL
+  return gsl_sf_synchrotron_1(u_per_uc)/u_per_uc;
 }
 
 SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), rng(seed)
@@ -21,6 +29,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
   for(double u=1e-10; u<=10.; u*=2) {
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
+    std::cout << u <<"\t"<< nPhoton(u) << std::endl;
   }
   // std::cout << intervals.size() <<" energy spectrum sampling points"<< std::endl;
   photonEnergy = boost::random::piecewise_linear_distribution<>(intervals.begin(), intervals.end(), weights.begin());
@@ -52,7 +61,7 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l, const Configura
   //initial phase space coordinate
   boost::random::mt11213b initrng(seed);
   //sigma_phase -> bunch length
-  boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/q()), 0.3);     //electron beam: stable phase on falling slope of sine
+  boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/q()), 0.6);     //electron beam: stable phase on falling slope of sine
   //J_s (& wieder R aus lattice)
   boost::random::normal_distribution<> gammaDistribution(gamma0(), std::pow(gamma0(),2)*std::sqrt(3.84e-13/(1.994*11.)));
   double tmp = gammaDistribution(initrng);
@@ -65,11 +74,11 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l, const Configura
 
 void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
 {
-  phase += (stepDistance(pos)/lattice->circumference()) * h() * (alphac()-std::pow(gamma(),-2)) * delta();
+  phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * h() * (alphac()-std::pow(gamma(),-2)) * delta();
   
   if(element->type == pal::dipole) {
     double tmp = radModel.radiatedEnergy(element, gamma()) / E_rest_keV;
-    //std::cout << "dipole: "<< tmp <<"\t"<< phase << std::endl;
+    //std::cout << tmp << std::endl;
     _gamma -= tmp;
   }
 

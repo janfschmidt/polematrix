@@ -13,8 +13,8 @@ protected:
   int seed;
   boost::random::mt11213b rng;
   boost::random::piecewise_linear_distribution<> photonEnergy;
-  //boost::random::poisson_distribution photonsPerDipole;
 
+  // photon spectrum. used for probabilities of photon energies
   double nPhoton(double u_per_uc) const;
 
 public:

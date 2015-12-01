@@ -90,10 +90,11 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
-      mutex.unlock();
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
-      myTask->initGamma(); // [TEST IF WORKING NOW!] has to be mutexed, because sdds import seems to be not thread save :(
+      // simtool: sdds import "almost thread save" since SDDSToolKit-devel-3.3.1-2, but still an issue
+      myTask->initGamma();
+      mutex.unlock();
       try {
 	myTask->run(); // run next queued TrackingTask
       }
