@@ -31,10 +31,8 @@ protected:
   int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
   const pal::AccLattice* lattice;
+  const Configuration &config;
   unsigned int nCavities;
-  double _q;       //overvoltage factor
-  double _ac;      //momentum compaction factor
-  unsigned int _h; //harmonic number
   double _gamma0;  // reference energy in units of gamma
   double _gammaU0; // cavity amplitude U0 in units of gamma
   
@@ -44,32 +42,26 @@ protected:
 
   void updateCavityVoltage()
   {
-    _gammaU0 = q() * lattice->Erev_keV_syli(gamma0()) / E_rest_keV;
+    _gammaU0 = config.q() * lattice->Erev_keV_syli(gamma0()) / E_rest_keV;
   }
 
 
 public:
   const double E_rest_keV;
   
-  LongitudinalPhaseSpaceModel(int _seed)
-    : seed(_seed),radModel(seed),lattice(NULL), E_rest_keV(511) {lastPos=_q=_ac=_h=phase=_gamma=_gamma0=_gammaU0=0;}
-  double q() const {return _q;}
+  LongitudinalPhaseSpaceModel(int _seed, const Configuration &c)
+    : seed(_seed),radModel(seed),lattice(NULL), config(c), E_rest_keV(511) {lastPos=phase=_gamma=_gamma0=_gammaU0=0;}
   double gammaU0() const {return _gammaU0;}
-  double alphac() const {return _ac;}
-  unsigned int h() const {return _h;}
   double gamma() const {return _gamma;}
   double gamma0() const {return _gamma0;}
   
   
-  void set_q(double x) {_q=x; updateCavityVoltage();}
-  void set_ac(double x) {_ac=x;}
-  void set_h(unsigned int x) {_h=x;}
   void set_gamma0(double x) {_gamma0=x; updateCavityVoltage();}
   
   double stepDistance(const double& pos) const {return pos - lastPos;}
   double delta() const {return (gamma()-gamma0())/gamma0();}
 
   
-  void init(const pal::AccLattice* l, const Configuration& config);
+  void init(const pal::AccLattice* l);
   void update(const pal::AccElement* element, const double& pos);
 };

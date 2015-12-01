@@ -35,7 +35,7 @@ class TrackingTask
 {
 public:
   const unsigned int particleId;
-  Configuration &config;
+  Configuration &config; //not const, because SimToolInstance status can be changed
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   

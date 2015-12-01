@@ -41,7 +41,12 @@ private:
   double _dE;               // dE/dt / GeV/s
   unsigned int _nParticles; // number of tracked particles
   GammaMode _gammaMode;
-  int _seed;                 // random number seed for gammaMode "radiation"
+
+  //radiation (used with gammaMode radiation only)
+  int _seed;                // random number seed
+  double _q;                 // over voltage factor
+  double _alphac;           // momentum compaction factor
+  unsigned int _h;           // harmonic number (number of buckets, h = f_rf/f_rev)
 
   
 public:
@@ -67,6 +72,9 @@ public:
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
   int seed() const {return _seed;}
+  double q() const {return _q;}
+  double alphac() const {return _alphac;}
+  unsigned int h() const {return _h;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
   
@@ -82,6 +90,9 @@ public:
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
   void set_saveGamma(std::string particleList);
   void set_seed(int s) {_seed=s;}
+  void set_q(double q) {_q=q;}
+  void set_alphac(double ac) {_alphac = ac;}
+  void set_h(unsigned int h) {_h=h;}
 
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}

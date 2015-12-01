@@ -48,22 +48,20 @@ double SynchrotronRadiationModel::radiatedEnergy(const pal::AccElement* element,
 
 
 
-void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l, const Configuration& config)
-{
+void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
+{  
   //gamma & pos start from config
   lastPos = config.pos_start();
   lattice = l;
   nCavities = lattice->size(pal::cavity);
   set_gamma0(config.gamma_start());
-  //load from config: q,ac,h (oder SimTool? oder config entscheidet woher?)
-  set_q(10); _ac=0.0601; _h=274;
 
-  //initial phase space coordinate
-  boost::random::mt11213b initrng(seed);
   //sigma_phase -> bunch length
-  boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/q()), 0.6);     //electron beam: stable phase on falling slope of sine
+  boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/config.q()), 0.6);     //electron beam: stable phase on falling slope of sine
   //J_s (& wieder R aus lattice)
   boost::random::normal_distribution<> gammaDistribution(gamma0(), std::pow(gamma0(),2)*std::sqrt(3.84e-13/(1.994*11.)));
+    //initial phase space coordinate
+  boost::random::mt11213b initrng(seed);
   double tmp = gammaDistribution(initrng);
   updateCavityVoltage();
   _gamma =  tmp;
@@ -74,7 +72,7 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l, const Configura
 
 void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
 {
-  phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * h() * (alphac()-std::pow(gamma(),-2)) * delta();
+  phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac()-std::pow(gamma(),-2)) * delta();
   
   if(element->type == pal::dipole) {
     double tmp = radModel.radiatedEnergy(element, gamma()) / E_rest_keV;

@@ -80,7 +80,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, Configuration &c)
-  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId)
+  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId, config)
 {
   lattice = NULL;
   orbit = NULL;
@@ -131,7 +131,7 @@ void TrackingTask::initGamma()
     gammaCentralSimTool = config.getSimToolInstance().readGammaCentral();
   }
   else if (config.gammaMode()==radiation) {
-    syliModel.init(lattice, config);
+    syliModel.init(lattice);
   }
   //else: no init needed
 }
