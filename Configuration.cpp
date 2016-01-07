@@ -22,7 +22,6 @@ Configuration::Configuration(std::string pathIn)
   _h = 0.;
 
   palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));
-  getSimToolInstance().set_sddsMode(true);
 }
 
 
@@ -188,7 +187,6 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
   }
 
   palattice.reset(new pal::SimToolInstance(tool, mode, file));
-  getSimToolInstance().set_sddsMode(true);
 }
 
 void Configuration::setGammaMode(pt::ptree &tree)

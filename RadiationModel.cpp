@@ -29,7 +29,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
   for(double u=1e-10; u<=10.; u*=2) {
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
-    std::cout << u <<"\t"<< nPhoton(u) << std::endl;
+    //std::cout << u <<"\t"<< nPhoton(u) << std::endl;
   }
   // std::cout << intervals.size() <<" energy spectrum sampling points"<< std::endl;
   photonEnergy = boost::random::piecewise_linear_distribution<>(intervals.begin(), intervals.end(), weights.begin());

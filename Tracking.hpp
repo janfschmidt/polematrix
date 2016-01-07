@@ -45,7 +45,7 @@ public:
   const pal::AccLattice& getLattice() const {return lattice;}
   const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return orbit;}
 
-  void setModel(bool resetTurns=false);
+  void setModel();
   void setLattice();
   void setOrbit();
 

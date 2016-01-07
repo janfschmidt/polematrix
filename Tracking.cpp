@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : error(false), lattice("tut", 0, pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -142,30 +142,23 @@ void Tracking::printProgress() const
   }
 }
 
-void Tracking::setModel(bool resetTurns)
+void Tracking::setModel()
 {
-  if (resetTurns)
-    config.getSimToolInstance().setTurns(0);
-  
   setLattice();
   setOrbit();
 
   //set number of turns for SimTool based on tracking time
   if (config.gammaMode() == simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
-    std::cout << "* tracking " << turns <<" turns" << std::endl;
+    std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
     config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
   }
-  else {
-    config.getSimToolInstance().setTurns(0);
-  }
-
 }
 
 void Tracking::setLattice()
 {
-  lattice = pal::AccLattice("polematrix", config.getSimToolInstance());
+  lattice = pal::AccLattice(config.getSimToolInstance());
 }
 
 void Tracking::setOrbit()
