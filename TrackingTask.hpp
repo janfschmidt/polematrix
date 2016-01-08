@@ -52,6 +52,8 @@ private:
   //variables for current tracking step
   pal::const_AccIterator currentElement;      // position in lattice
   double currentGamma;                        // gamma
+
+  arma::running_stat<double> gammaStat;       // gamma statistics
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
