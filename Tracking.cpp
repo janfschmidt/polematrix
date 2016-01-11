@@ -154,6 +154,25 @@ void Tracking::setModel()
     config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
   }
+
+  //set physical quantities from SimTool if not set by config
+  if (config.gammaMode() == radiation) {
+    if (config.q()==0.) {
+      config.set_q(lattice.overvoltageFactor(config.gamma_start()));
+      std::cout << "* set overvoltage factor from lattice"
+		<< ": q=" << config.q() << std::endl;
+	}
+    if (config.h()==0) {
+      config.set_h(lattice.harmonicNumber());
+      std::cout << "* set harmonic number from lattice"
+		<< ": h=" << config.h() << std::endl;
+    }
+    if (config.alphac()==0.) {
+      config.set_alphac(config.getSimToolInstance().readAlphaC());
+      std::cout << "* set momentum compaction factor from " << config.getSimToolInstance().tool_string()
+		<< ": alphac=" << config.alphac() << std::endl;
+    }
+  }
 }
 
 void Tracking::setLattice()

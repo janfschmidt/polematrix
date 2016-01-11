@@ -19,7 +19,7 @@ Configuration::Configuration(std::string pathIn)
   _seed = randomSeed();
   _q = 0.;
   _alphac = 0.;
-  _h = 0.;
+  _h = 0;
 
   palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));
 }
@@ -106,9 +106,9 @@ void Configuration::load(const std::string &filename)
   set_dt_out( tree.get("spintracking.dt_out", duration()/default_steps) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
-  set_alphac( tree.get("radiation.momentum_compaction_factor", getSimToolInstance().readAlphaC()) );
-  set_q( tree.get("radiation.overvoltage_factor", 10) );
-  set_h( tree.get("radiation.harmonic_number", 274) );
+  set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
+  set_q( tree.get("radiation.overvoltage_factor", 0.0) );
+  set_h( tree.get("radiation.harmonic_number", 0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
