@@ -57,6 +57,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.overvoltage_factor", q());
   tree.put("radiation.momentum_compaction_factor", alphac());
   tree.put("radiation.harmonic_number", h());
+  tree.put("radiation.bending_radius", R());
+  tree.put("radiation.longitudinal_damping_partition_number", Js());
   
   if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
@@ -109,6 +111,8 @@ void Configuration::load(const std::string &filename)
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
   set_q( tree.get("radiation.overvoltage_factor", 0.0) );
   set_h( tree.get("radiation.harmonic_number", 0) );
+  set_R( tree.get("radiation.bending_radius", 0.0) );
+  set_Js( tree.get("radiation.longitudinal_damping_partition_number", 0.0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;

@@ -47,6 +47,8 @@ private:
   double _q;                 // over voltage factor
   double _alphac;           // momentum compaction factor
   unsigned int _h;           // harmonic number (number of buckets, h = f_rf/f_rev)
+  double _R;                // (mean) dipole bending radius / m
+  double _Js;               // longitudinal damping partition number
 
   
 public:
@@ -75,6 +77,8 @@ public:
   double q() const {return _q;}
   double alphac() const {return _alphac;}
   unsigned int h() const {return _h;}
+  double R() const {return _R;}
+  double Js() const {return _Js;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
   
@@ -93,6 +97,8 @@ public:
   void set_q(double q) {_q=q;}
   void set_alphac(double ac) {_alphac = ac;}
   void set_h(unsigned int h) {_h=h;}
+  void set_R(double R) {_R=R;}
+  void set_Js(double Js) {_Js=Js;}
 
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}

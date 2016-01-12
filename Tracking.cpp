@@ -167,10 +167,20 @@ void Tracking::setModel()
       std::cout << "* set harmonic number from lattice"
 		<< ": h=" << config.h() << std::endl;
     }
+    if (config.R()==0.) {
+      config.set_R(lattice.integralDipoleRadius());
+      std::cout << "* set dipole bending radius from lattice"
+		<< ": R=" << config.R() << std::endl;
+    }
     if (config.alphac()==0.) {
       config.set_alphac(config.getSimToolInstance().readAlphaC());
       std::cout << "* set momentum compaction factor from " << config.getSimToolInstance().tool_string()
 		<< ": alphac=" << config.alphac() << std::endl;
+    }
+    if (config.Js()==0.) {
+      config.set_Js(config.getSimToolInstance().readDampingPartitionNumber_syli().s);
+      std::cout << "* set long. damping partition number from " << config.getSimToolInstance().tool_string()
+		<< ": Js=" << config.Js() << std::endl;
     }
   }
 }

@@ -59,7 +59,7 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
   //sigma_phase -> bunch length
   boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/config.q()), 0.6);     //electron beam: stable phase on falling slope of sine
   //J_s (& wieder R aus lattice)
-  boost::random::normal_distribution<> gammaDistribution(gamma0(), std::pow(gamma0(),2)*std::sqrt(3.84e-13/(1.994*11.)));
+  boost::random::normal_distribution<> gammaDistribution(gamma0(), std::pow(gamma0(),2)*std::sqrt(3.84e-13/(config.Js()*config.R())));
     //initial phase space coordinate
   boost::random::mt11213b initrng(seed);
   double tmp = gammaDistribution(initrng);
@@ -81,7 +81,7 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
   }
 
   else if(element->type == pal::cavity) {
-    double tmp =  gammaU0() * std::sin(phase) / nCavities;
+    double tmp =  gammaU0()/nCavities * std::sin(phase);
     // std::cout << "cavity: "<< tmp  <<"\t"<< phase<< std::endl;
     // std::cout << nCavities <<" cavities, U0="<< q()*dGamma_ref*E_rest_keV << " keV" << std::endl;
     _gamma += tmp;

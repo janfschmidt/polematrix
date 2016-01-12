@@ -31,7 +31,7 @@ protected:
   int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
   const pal::AccLattice* lattice;
-  const Configuration &config;
+  Configuration &config;
   unsigned int nCavities;
   double _gamma0;  // reference energy in units of gamma
   double _gammaU0; // cavity amplitude U0 in units of gamma
@@ -49,7 +49,7 @@ protected:
 public:
   const double E_rest_keV;
   
-  LongitudinalPhaseSpaceModel(int _seed, const Configuration &c)
+  LongitudinalPhaseSpaceModel(int _seed, Configuration &c)
     : seed(_seed),radModel(seed),lattice(NULL), config(c), E_rest_keV(511) {lastPos=phase=_gamma=_gamma0=_gammaU0=0;}
   double gammaU0() const {return _gammaU0;}
   double gamma() const {return _gamma;}
