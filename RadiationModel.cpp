@@ -50,42 +50,63 @@ double SynchrotronRadiationModel::radiatedEnergy(const pal::AccElement* element,
 
 void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
 {  
-  //gamma & pos start from config
+  //gamma0 & pos start from config
   lastPos = config.pos_start();
   lattice = l;
   nCavities = lattice->size(pal::cavity);
   set_gamma0(config.gamma_start());
 
-  //sigma_phase -> bunch length
-  boost::random::normal_distribution<> phaseDistribution(M_PI-std::asin(1/config.q()), 0.6);     //electron beam: stable phase on falling slope of sine
-  //J_s (& wieder R aus lattice)
-  boost::random::normal_distribution<> gammaDistribution(gamma0(), std::pow(gamma0(),2)*std::sqrt(3.84e-13/(config.Js()*config.R())));
-    //initial phase space coordinate
+  // init statistical distributions:
+  boost::random::normal_distribution<> phaseDistribution(ref_phase(), sigma_phase());
+  boost::random::normal_distribution<> gammaDistribution(gamma0(), sigma_gamma());
+  // std::cout << "ref_phase=" << ref_phase() << "\nsigma_phase=" << sigma_phase()
+  // 	    << "\nsigma_gamma=" << sigma_gamma() << "\nfreq=" << synchrotronFreq() << std::endl;
+  
+  //initial phase space coordinate for this particle
   boost::random::mt11213b initrng(seed);
-  double tmp = gammaDistribution(initrng);
-  updateCavityVoltage();
-  _gamma =  tmp;
-  phase = phaseDistribution(initrng);
-  //std::cout << phase <<"\t"<< gamma() << std::endl;
+  _gamma =  gammaDistribution(initrng);
+  _phase = phaseDistribution(initrng);
+  //std::cout << phase() <<"\t"<< gamma() << std::endl;
 }
 
 
 void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
 {
-  phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac()-std::pow(gamma(),-2)) * delta();
+  _phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac()-std::pow(gamma(),-2)) * delta();
   
   if(element->type == pal::dipole) {
-    double tmp = radModel.radiatedEnergy(element, gamma()) / E_rest_keV;
+    double tmp = radModel.radiatedEnergy(element, gamma()) / config.E_rest_keV;
     //std::cout << tmp << std::endl;
     _gamma -= tmp;
   }
 
   else if(element->type == pal::cavity) {
-    double tmp =  gammaU0()/nCavities * std::sin(phase);
-    // std::cout << "cavity: "<< tmp  <<"\t"<< phase<< std::endl;
+    double tmp =  gammaU0()/nCavities * std::sin(phase());
+    // std::cout << "cavity: "<< tmp  <<"\t"<< phase()<< std::endl;
     // std::cout << nCavities <<" cavities, U0="<< q()*dGamma_ref*E_rest_keV << " keV" << std::endl;
     _gamma += tmp;
   }
     
   lastPos = pos;
+}
+
+// bunch length, calculated as time, converted to rf-phase (factor 2pi cancels)
+double LongitudinalPhaseSpaceModel::sigma_phase() const
+{
+  return config.alphac()/synchrotronFreq() * sigma_gamma()/gamma0()
+    * config.h()*GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference();
+}
+
+// energy spread in units of gamma
+double LongitudinalPhaseSpaceModel::sigma_gamma() const
+{
+  return std::pow(gamma0(),2) * std::sqrt( 3.84e-13/(config.Js()*config.R()) );
+}
+
+// synchrotron frequency in Hz
+double LongitudinalPhaseSpaceModel::synchrotronFreq() const
+{
+  return GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference()
+    * std::sqrt( -U0_keV()*config.h() / (2*M_PI*gamma0()*config.E_rest_keV)
+		 * std::cos(ref_phase())*config.alphac() );
 }
