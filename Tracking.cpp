@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : error(false), lattice("tut", 0, pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -90,10 +90,11 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
-      mutex.unlock();
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
-      myTask->initGamma(); // [TEST IF WORKING NOW!] has to be mutexed, because sdds import seems to be not thread save :(
+      // simtool: sdds import "almost thread save" since SDDSToolKit-devel-3.3.1-2, but still an issue
+      myTask->initGamma();
+      mutex.unlock();
       try {
 	myTask->run(); // run next queued TrackingTask
       }
@@ -141,30 +142,52 @@ void Tracking::printProgress() const
   }
 }
 
-void Tracking::setModel(bool resetTurns)
+void Tracking::setModel()
 {
-  if (resetTurns)
-    config.getSimToolInstance().setTurns(0);
-  
   setLattice();
   setOrbit();
 
   //set number of turns for SimTool based on tracking time
   if (config.gammaMode() == simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
-    std::cout << "* tracking " << turns <<" turns" << std::endl;
+    std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
     config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
   }
-  else {
-    config.getSimToolInstance().setTurns(0);
-  }
 
+  //set physical quantities from SimTool if not set by config
+  if (config.gammaMode() == radiation) {
+    if (config.q()==0.) {
+      config.set_q(lattice.overvoltageFactor(config.gamma_start()));
+      std::cout << "* set overvoltage factor from lattice"
+		<< ": q=" << config.q() << std::endl;
+	}
+    if (config.h()==0) {
+      config.set_h(lattice.harmonicNumber());
+      std::cout << "* set harmonic number from lattice"
+		<< ": h=" << config.h() << std::endl;
+    }
+    if (config.R()==0.) {
+      config.set_R(lattice.integralDipoleRadius());
+      std::cout << "* set dipole bending radius from lattice"
+		<< ": R=" << config.R() << std::endl;
+    }
+    if (config.alphac()==0.) {
+      config.set_alphac(config.getSimToolInstance().readAlphaC());
+      std::cout << "* set momentum compaction factor from " << config.getSimToolInstance().tool_string()
+		<< ": alphac=" << config.alphac() << std::endl;
+    }
+    if (config.Js()==0.) {
+      config.set_Js(config.getSimToolInstance().readDampingPartitionNumber_syli().s);
+      std::cout << "* set long. damping partition number from " << config.getSimToolInstance().tool_string()
+		<< ": Js=" << config.Js() << std::endl;
+    }
+  }
 }
 
 void Tracking::setLattice()
 {
-  lattice = pal::AccLattice("polematrix", config.getSimToolInstance());
+  lattice = pal::AccLattice(config.getSimToolInstance());
 }
 
 void Tracking::setOrbit()

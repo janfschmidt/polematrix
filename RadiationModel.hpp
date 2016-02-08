@@ -13,8 +13,8 @@ protected:
   int seed;
   boost::random::mt11213b rng;
   boost::random::piecewise_linear_distribution<> photonEnergy;
-  //boost::random::poisson_distribution photonsPerDipole;
 
+  // photon spectrum. used for probabilities of photon energies
   double nPhoton(double u_per_uc) const;
 
 public:
@@ -31,45 +31,42 @@ protected:
   int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
   const pal::AccLattice* lattice;
+  Configuration &config;
   unsigned int nCavities;
-  double _q;       //overvoltage factor
-  double _ac;      //momentum compaction factor
-  unsigned int _h; //harmonic number
   double _gamma0;  // reference energy in units of gamma
   double _gammaU0; // cavity amplitude U0 in units of gamma
   
-  double phase;    //current synchrotron phase
+  double _phase;   //current synchrotron phase
   double _gamma;   //current energy
   double lastPos;  //total distance currently traveled in m (to calc distance since last step)
 
-  void updateCavityVoltage()
-  {
-    _gammaU0 = q() * lattice->Erev_keV_syli(gamma0()) / E_rest_keV;
-  }
+  void updateCavityVoltage() {_gammaU0 = U0_keV() / config.E_rest_keV;}
 
 
 public:
-  const double E_rest_keV;
-  
-  LongitudinalPhaseSpaceModel(int _seed)
-    : seed(_seed),radModel(seed),lattice(NULL), E_rest_keV(511) {lastPos=_q=_ac=_h=phase=_gamma=_gamma0=_gammaU0=0;}
-  double q() const {return _q;}
+  LongitudinalPhaseSpaceModel(int _seed, Configuration &c)
+    : seed(_seed),radModel(seed),lattice(NULL), config(c) {lastPos=_phase=_gamma=_gamma0=_gammaU0=0;}
   double gammaU0() const {return _gammaU0;}
-  double alphac() const {return _ac;}
-  unsigned int h() const {return _h;}
-  double gamma() const {return _gamma;}
   double gamma0() const {return _gamma0;}
+  double phase() const {return _phase;}
+  double gamma() const {return _gamma;}
   
-  
-  void set_q(double x) {_q=x; updateCavityVoltage();}
-  void set_ac(double x) {_ac=x;}
-  void set_h(unsigned int x) {_h=x;}
   void set_gamma0(double x) {_gamma0=x; updateCavityVoltage();}
   
   double stepDistance(const double& pos) const {return pos - lastPos;}
   double delta() const {return (gamma()-gamma0())/gamma0();}
 
-  
-  void init(const pal::AccLattice* l, const Configuration& config);
+  void init(const pal::AccLattice* l);
   void update(const pal::AccElement* element, const double& pos);
+
+  //cavity voltage in keV
+  double U0_keV() const {return config.q() * lattice->Erev_keV_syli(gamma0());}
+
+  //reference phase -> stable phase for given overvoltage q
+  // (! electron beam: stable phase on falling slope of sine !)
+  double ref_phase() const {return M_PI - std::asin( 1/config.q() );}
+  
+  double sigma_phase() const;     //bunch length as phase in units of radian
+  double sigma_gamma() const;     //energy spread in units of gamma
+  double synchrotronFreq() const; //synchrotron frequency in Hz
 };

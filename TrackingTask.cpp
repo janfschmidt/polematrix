@@ -80,7 +80,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, Configuration &c)
-  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId)
+  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId, config)
 {
   lattice = NULL;
   orbit = NULL;
@@ -131,7 +131,7 @@ void TrackingTask::initGamma()
     gammaCentralSimTool = config.getSimToolInstance().readGammaCentral();
   }
   else if (config.gammaMode()==radiation) {
-    syliModel.init(lattice, config);
+    syliModel.init(lattice);
   }
   //else: no init needed
 }
@@ -159,13 +159,11 @@ void TrackingTask::matrixTracking()
 
     s = rotMatrix(omega) * s; // spin rotation
 
-    //renormalize
-    //s = s/std::sqrt(std::pow(s(0),2) + std::pow(s(1),2) + std::pow(s(2),2));
-
     if (pos >= pos_nextOut) {//output
       storeStep(pos,s);
       pos_nextOut += dpos_out;
     }
+    gammaStat(currentGamma);
 
     // step to next element
     pos += lattice->distanceNext(currentElement);
@@ -238,6 +236,10 @@ void TrackingTask::outfileOpen()
 
 void TrackingTask::outfileClose()
 {
+  *outfile << "# gamma statistics:" << std::endl
+	   << "# mean:  " << gammaStat.mean() << std::endl
+	   << "# stddev: " << gammaStat.stddev(1) << std::endl;
+    
   outfile->close();
   std::cout << "* Wrote " << storage.size() << " steps to " << outfileName()
 	    <<std::setw(40)<<std::left<< "." << std::endl;

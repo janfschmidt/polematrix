@@ -35,7 +35,7 @@ class TrackingTask
 {
 public:
   const unsigned int particleId;
-  Configuration &config;
+  Configuration &config; //not const, because SimToolInstance status can be changed
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   
@@ -52,6 +52,8 @@ private:
   //variables for current tracking step
   pal::const_AccIterator currentElement;      // position in lattice
   double currentGamma;                        // gamma
+
+  arma::running_stat<double> gammaStat;       // gamma statistics
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file

@@ -2,7 +2,7 @@
 #include "Configuration.hpp"
 
 Configuration::Configuration(std::string pathIn)
-  : E_rest_GeV(0.000511), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(200), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
+  : E_rest_GeV(0.000511), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(1000), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
   _outpath = pathIn;
   _nParticles = 1;
@@ -15,10 +15,13 @@ Configuration::Configuration(std::string pathIn)
   _s_start.zeros();
   _s_start[2] = 1;
   _gammaMode = linear;
+  
   _seed = randomSeed();
+  _q = 0.;
+  _alphac = 0.;
+  _h = 0;
 
   palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));
-  getSimToolInstance().set_sddsMode(true);
 }
 
 
@@ -51,6 +54,11 @@ void Configuration::save(const std::string &filename) const
   tree.put("palattice.file", palattice->inFile());
   tree.put("palattice.saveGamma", saveGammaList());
   tree.put("radiation.seed", seed());
+  tree.put("radiation.overvoltage_factor", q());
+  tree.put("radiation.momentum_compaction_factor", alphac());
+  tree.put("radiation.harmonic_number", h());
+  tree.put("radiation.bending_radius", R());
+  tree.put("radiation.longitudinal_damping_partition_number", Js());
   
   if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
@@ -100,6 +108,11 @@ void Configuration::load(const std::string &filename)
   set_dt_out( tree.get("spintracking.dt_out", duration()/default_steps) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
+  set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
+  set_q( tree.get("radiation.overvoltage_factor", 0.0) );
+  set_h( tree.get("radiation.harmonic_number", 0) );
+  set_R( tree.get("radiation.bending_radius", 0.0) );
+  set_Js( tree.get("radiation.longitudinal_damping_partition_number", 0.0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
@@ -178,7 +191,6 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
   }
 
   palattice.reset(new pal::SimToolInstance(tool, mode, file));
-  getSimToolInstance().set_sddsMode(true);
 }
 
 void Configuration::setGammaMode(pt::ptree &tree)
