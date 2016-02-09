@@ -86,7 +86,7 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
-  gammaCentralSimTool = 0.;
+  gammaSimToolCentral = 0.;
 
   switch (config.gammaMode()) {
   case simtool:
@@ -124,11 +124,12 @@ void TrackingTask::run()
   completed = true;
 }
 
-void TrackingTask::initGamma()
+void TrackingTask::initGamma(double gammaCentral)
 {
   if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
+    // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
     gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
-    gammaCentralSimTool = config.getSimToolInstance().readGammaCentral();
+    gammaSimToolCentral = gammaCentral;
   }
   else if (config.gammaMode()==radiation) {
     syliModel.init(lattice);

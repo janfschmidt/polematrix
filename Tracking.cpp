@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::end), orbit(0., gsl_interp_akima_periodic), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -67,12 +67,14 @@ void Tracking::start()
   auto mins = std::chrono::duration_cast<std::chrono::minutes>(stop-start);
   std::cout << "-----------------------------------------------------------------" << std::endl;
   if (error)
-    std::cout << "An error occured during tracking! Stopped after " << secs.count() << " s = "<< mins.count() << "min." << std::endl;
+    std::cout << "An error occured during tracking!\nAt least one Spin was not tracked successfully.\nStopped after ";
   else
-    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took " << secs.count() << " s = "<< mins.count() << " min." << std::endl;
+    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took ";
+  std::cout << secs.count() << " s = "<< mins.count() << " min." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
-
-  calcPolarization();
+  
+  if (!error)
+    calcPolarization();
 }
 
 
@@ -90,19 +92,18 @@ void Tracking::processQueue()
       myTask = queueIt;
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
+      mutex.unlock();
       myTask->lattice=&lattice;
       myTask->orbit=&orbit;
-      // simtool: sdds import "almost thread save" since SDDSToolKit-devel-3.3.1-2, but still an issue
-      myTask->initGamma();
-      mutex.unlock();
       try {
+	myTask->initGamma(gammaCentral);  // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
 	myTask->run(); // run next queued TrackingTask
       }
       //cancel thread in error case
       catch (std::exception &e) {
-	std::cout << "ERROR:"<< std::endl
-		  << e.what() << " (thread_id " << std::this_thread::get_id()
-		  << ", particle " << myTask->particleId << ")"<< std::endl;
+	std::cout << "ERROR @ particle " << myTask->particleId
+		  << " (thread_id "<< std::this_thread::get_id() <<"):"<< std::endl
+		  << e.what() << std::endl;
 	mutex.lock();
 	error = true;
 	runningTasks.remove(myTask); // to display progress
@@ -148,7 +149,7 @@ void Tracking::setModel()
   setOrbit();
 
   //set number of turns for SimTool based on tracking time
-  if (config.gammaMode() == simtool) {
+  if (config.gammaMode() == simtool || config.gammaMode()==simtool_plus_linear) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
     std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
     config.getSimToolInstance().verbose = true;
@@ -156,6 +157,9 @@ void Tracking::setModel()
   }
 
   //set physical quantities from SimTool if not set by config
+  if (config.gammaMode() == simtool || config.gammaMode()==simtool_plus_linear) {
+    gammaCentral = config.getSimToolInstance().readGammaCentral();
+  }
   if (config.gammaMode() == radiation) {
     if (config.q()==0.) {
       config.set_q(lattice.overvoltageFactor(config.gamma_start()));

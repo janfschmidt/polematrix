@@ -46,7 +46,7 @@ private:
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
-  double gammaCentralSimTool;                 // gamma central from elegant (set energy)
+  double gammaSimToolCentral;                 // gamma central from elegant (set energy)
   LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
   
   //variables for current tracking step
@@ -74,10 +74,10 @@ public:
   //gamma modes:
   double gammaFromConfig(const double &pos) {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
   double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
-  double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaCentralSimTool + gammaFromConfig(pos); }
+  double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaSimToolCentral + gammaFromConfig(pos); }
   double gammaRadiation(const double &pos);
 
-  void initGamma();
+  void initGamma(double gammaSimTool);
   void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;
