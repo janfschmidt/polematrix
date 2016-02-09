@@ -1,4 +1,5 @@
 #include <chrono>
+#include <boost/version.hpp>
 #include "Configuration.hpp"
 
 Configuration::Configuration(std::string pathIn)
@@ -65,8 +66,11 @@ void Configuration::save(const std::string &filename) const
   else if (_gammaMode==simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
   else if (_gammaMode==radiation) tree.put("spintracking.gammaMode", "radiation");
 
-
+  #if BOOST_VERSION < 105600
+  pt::xml_writer_settings<char> settings(' ', 2); //indentation
+  #else
   pt::xml_writer_settings<std::string> settings(' ', 2); //indentation
+  #endif
   pt::write_xml(filename, tree, std::locale(), settings);
 
   std::cout << "* current configuration saved in " << filename << std::endl;
