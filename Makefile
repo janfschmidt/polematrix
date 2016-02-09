@@ -1,5 +1,5 @@
 CC=g++
-CCFLAGS=-std=c++11 -O0 -g -Wall #-Wl,--no-as-needed - to fix gcc bug https://bugs.launchpad.net/ubuntu/+source/gcc-defaults/+bug/1228201
+CCFLAGS=-std=c++11 -O2 -g -Wall #-Wl,--no-as-needed - to fix gcc bug https://bugs.launchpad.net/ubuntu/+source/gcc-defaults/+bug/1228201
 INSTALL_PATH=/usr/local/
 PROG_NAME=polematrix
 ALL_O=main.o TrackingTask.o Tracking.o Configuration.o RadiationModel.o
