@@ -50,8 +50,8 @@ private:
   LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
   
   //variables for current tracking step
-  pal::const_AccIterator currentElement;      // position in lattice
-  double currentGamma;                        // gamma
+  pal::AccLattice::const_iterator currentElement; // position in lattice
+  double currentGamma;                            // gamma
 
   arma::running_stat<double> gammaStat;       // gamma statistics
   

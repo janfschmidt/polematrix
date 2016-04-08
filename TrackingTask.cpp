@@ -80,7 +80,8 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, Configuration &c)
-  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId, config)
+  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId, config), currentElement(pal::AccLattice().begin())
+    // pal::AccLattice::const_iterator currentElement is initialized with empty lattice (dirty)!
 {
   lattice = NULL;
   orbit = NULL;
@@ -148,12 +149,12 @@ void TrackingTask::matrixTracking()
   double pos_nextOut = pos + dpos_out;
 
   // set start lattice element and position
-  currentElement = lattice->nextCIt( orbit->posInTurn(pos) );
-  pos = (orbit->turn(pos)-1)*lattice->circumference() + lattice->pos(currentElement);
+  currentElement = lattice->behind( orbit->posInTurn(pos), pal::Anchor::end );
+  pos = (orbit->turn(pos)-1)*lattice->circumference() + currentElement.pos();
 
   while (pos < pos_stop) {
     currentGamma = (this->*gamma)(pos);
-    omega = currentElement->second->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
+    omega = currentElement.element()->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
     omega.x *= currentGamma;
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
@@ -167,8 +168,8 @@ void TrackingTask::matrixTracking()
     gammaStat(currentGamma);
 
     // step to next element
-    pos += lattice->distanceNext(currentElement);
-    currentElement = lattice->revolve(currentElement);
+    pos += currentElement.distanceNext();
+    currentElement.revolve();
   }
 }
 
@@ -287,7 +288,7 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
 double TrackingTask::gammaRadiation(const double &pos)
 {
   //Rampe: Sollenergie gamma_0 aktualisieren (config.gamma()) !!
-  syliModel.update(currentElement->second, pos);
+  syliModel.update(currentElement.element(), pos);
   return syliModel.gamma();
 }
 

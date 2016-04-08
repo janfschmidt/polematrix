@@ -2,7 +2,7 @@
 #include "Tracking.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
