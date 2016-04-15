@@ -3,7 +3,7 @@
 #include "Configuration.hpp"
 
 Configuration::Configuration(std::string pathIn)
-  : E_rest_GeV(0.000511), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(1000), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
+  : E_rest_GeV(0.0005109989), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(1000), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
   _outpath = pathIn;
   _nParticles = 1;
@@ -15,7 +15,8 @@ Configuration::Configuration(std::string pathIn)
   _dE = 0;
   _s_start.zeros();
   _s_start[2] = 1;
-  _gammaMode = linear;
+  _gammaMode = GammaMode::linear;
+  _trajectoryMode = TrajectoryMode::closed_orbit;
   
   _seed = randomSeed();
   _q = 0.;
@@ -61,10 +62,13 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.bending_radius", R());
   tree.put("radiation.longitudinal_damping_partition_number", Js());
   
-  if (_gammaMode==linear) tree.put("spintracking.gammaMode", "linear");
-  else if (_gammaMode==simtool) tree.put("spintracking.gammaMode", "simtool");
-  else if (_gammaMode==simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
-  else if (_gammaMode==radiation) tree.put("spintracking.gammaMode", "radiation");
+  if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
+  else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
+  else if (_gammaMode==GammaMode::simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
+  else if (_gammaMode==GammaMode::radiation) tree.put("spintracking.gammaMode", "radiation");
+
+  if (_trajectoryMode==TrajectoryMode::closed_orbit) tree.put("spintracking.trajectoryMode", "closed orbit");
+  else if (_trajectoryMode==TrajectoryMode::simtool) tree.put("spintracking.trajectoryMode", "simtool");
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -97,7 +101,10 @@ void Configuration::load(const std::string &filename)
     set_s_start(tmp);
     
     setSimToolInstance(tree);
-    setGammaMode(tree); //optional, but throws if invalid value
+    
+    //optional, but throws if invalid value
+    setGammaMode(tree);
+    setTrajectoryMode(tree);
   }
   catch (pt::ptree_error &e) {
     std::cout << "Error loading configuration file:" << std::endl
@@ -146,7 +153,7 @@ void Configuration::printSummary() const
   s << "-----------------------------------------------------------------" << std::endl;
   s << "Tracking " << _nParticles << " Spins" << std::endl
     << "time      " <<std::setw(w-2)<<  _t_start << " s   -------------------->   " <<std::setw(w-2)<< _t_stop << " s" << std::endl;
-  if(_gammaMode == simtool)
+  if(_gammaMode == GammaMode::simtool)
     s << "energy from " << palattice->tool_string() << std::endl;
   else
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
@@ -202,16 +209,29 @@ void Configuration::setGammaMode(pt::ptree &tree)
   std::string s = tree.get<std::string>("spintracking.gammaMode", "linear");
   
   if (s == "linear")
-    _gammaMode = linear;
+    _gammaMode = GammaMode::linear;
   else if (s == "simtool")
-    _gammaMode = simtool;
+    _gammaMode = GammaMode::simtool;
   else if (s == "simtool+linear")
-    _gammaMode = simtool_plus_linear;
+    _gammaMode = GammaMode::simtool_plus_linear;
   else if (s == "radiation")
-    _gammaMode = radiation;
+    _gammaMode = GammaMode::radiation;
   
   else
     throw pt::ptree_error("Invalid gammaMode "+s);
+}
+
+void Configuration::setTrajectoryMode(pt::ptree &tree)
+{
+  std::string s = tree.get<std::string>("spintracking.trajectoryMode", "closed orbit");
+  
+  if (s == "closed orbit")
+    _trajectoryMode = TrajectoryMode::closed_orbit;
+  else if (s == "simtool")
+    _trajectoryMode = TrajectoryMode::simtool;
+  
+  else
+    throw pt::ptree_error("Invalid trajectoryMode "+s);
 }
 
 

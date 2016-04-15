@@ -46,6 +46,7 @@ private:
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
+  pal::FunctionOfPos<pal::AccPair> trajectorySimTool; //x(pos) & z(pos) from elegant
   double gammaSimToolCentral;                 // gamma central from elegant (set energy)
   LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
   
@@ -77,7 +78,13 @@ public:
   double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaSimToolCentral + gammaFromConfig(pos); }
   double gammaRadiation(const double &pos);
 
+  pal::AccPair (TrackingTask::*trajectory)(const double&);
+  //trajectory modes:
+  pal::AccPair trajectoryFromOrbit(const double &pos) {return orbit->interp( orbit->posInTurn(pos) );}
+  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config.pos_start());}
+
   void initGamma(double gammaSimTool);
+  void initTrajectory();
   void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;

@@ -80,7 +80,11 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, Configuration &c)
-  : particleId(id), config(c), w(14), completed(false), gammaSimTool(c.getSimToolInstance(), gsl_interp_akima), syliModel(config.seed()+particleId, config), currentElement(pal::AccLattice().begin())
+  : particleId(id), config(c), w(14), completed(false),
+    gammaSimTool(c.getSimToolInstance(), gsl_interp_akima),
+    trajectorySimTool(c.getSimToolInstance(), gsl_interp_akima),
+    syliModel(config.seed()+particleId, config),
+    currentElement(pal::AccLattice().begin())
     // pal::AccLattice::const_iterator currentElement is initialized with empty lattice (dirty)!
 {
   lattice = NULL;
@@ -90,17 +94,25 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   gammaSimToolCentral = 0.;
 
   switch (config.gammaMode()) {
-  case simtool:
+  case GammaMode::simtool:
     gamma = &TrackingTask::gammaFromSimTool;
     break;
-  case simtool_plus_linear:
+  case GammaMode::simtool_plus_linear:
     gamma = &TrackingTask::gammaFromSimToolPlusConfig;
     break;
-  case radiation:
+  case GammaMode::radiation:
     gamma = &TrackingTask::gammaRadiation;
     break;
   default:
     gamma = &TrackingTask::gammaFromConfig;
+  }
+
+  switch (config.trajectoryMode()) {
+  case TrajectoryMode::simtool:
+    trajectory = &TrackingTask::trajectoryFromSimTool;
+    break;
+  default:
+    trajectory = &TrackingTask::trajectoryFromOrbit;
   }
 }
 
@@ -108,9 +120,12 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 
 void TrackingTask::run()
 {
-  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
+  if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
     gammaSimTool.init(); // initialize interpolation
     saveGammaSimTool();
+  }
+  if (config.trajectoryMode()==TrajectoryMode::simtool) {
+    trajectorySimTool.init(); // initialize interpolation
   }
   outfileOpen();
   
@@ -127,16 +142,26 @@ void TrackingTask::run()
 
 void TrackingTask::initGamma(double gammaCentral)
 {
-  if (config.gammaMode()==simtool || config.gammaMode()==simtool_plus_linear) {
+  if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
     // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
     gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
     gammaSimToolCentral = gammaCentral;
   }
-  else if (config.gammaMode()==radiation) {
+  else if (config.gammaMode()==GammaMode::radiation) {
     syliModel.init(lattice);
   }
   //else: no init needed
 }
+
+void TrackingTask::initTrajectory()
+{
+  if (config.trajectoryMode()==TrajectoryMode::simtool) {
+    // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
+    trajectorySimTool.simToolTrajectory( config.getSimToolInstance(), particleId+1 );
+  }
+  //else: no init needed
+}
+
 
 
 void TrackingTask::matrixTracking()
@@ -154,7 +179,7 @@ void TrackingTask::matrixTracking()
 
   while (pos < pos_stop) {
     currentGamma = (this->*gamma)(pos);
-    omega = currentElement.element()->B_int( orbit->interp( orbit->posInTurn(pos) ) ) * config.a_gyro; // field of element
+    omega = currentElement.element()->B_int( (this->*trajectory)(pos) ) * config.a_gyro; // field of element
     omega.x *= currentGamma;
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
@@ -208,9 +233,11 @@ void TrackingTask::saveGammaSimTool()
     return;
   
   gammaSimTool.info.add("polematrix particle ID", particleId);
-  std::stringstream file, fileinterp;
-  file << "gammaSimTool_" <<std::setw(4)<<std::setfill('0')<< particleId << ".dat";
-  gammaSimTool.print( (config.outpath()/file.str()).string() );
+  trajectorySimTool.info.add("polematrix particle ID", particleId);
+  std::stringstream file;
+  file <<std::setw(4)<<std::setfill('0')<< particleId << ".dat";
+  gammaSimTool.print( (config.outpath()/"gammaSimTool_").string() + file.str() );
+  trajectorySimTool.print( (config.outpath()/"trajectorySimTool_").string() + file.str() );
 }
 
 
