@@ -97,6 +97,7 @@ void Tracking::processQueue()
       myTask->orbit=&orbit;
       try {
 	myTask->initGamma(gammaCentral);  // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
+	myTask->initTrajectory();
 	myTask->run(); // run next queued TrackingTask
       }
       //cancel thread in error case
@@ -149,7 +150,7 @@ void Tracking::setModel()
   setOrbit();
 
   //set number of turns for SimTool based on tracking time
-  if (config.gammaMode() == simtool || config.gammaMode()==simtool_plus_linear) {
+  if (config.gammaMode() == GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear || config.trajectoryMode() == TrajectoryMode::simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
     std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
     config.getSimToolInstance().verbose = true;
@@ -157,10 +158,10 @@ void Tracking::setModel()
   }
 
   //set physical quantities from SimTool if not set by config
-  if (config.gammaMode() == simtool || config.gammaMode()==simtool_plus_linear) {
+  if (config.gammaMode() == GammaMode::simtool || config.gammaMode() == GammaMode::simtool_plus_linear) {
     gammaCentral = config.getSimToolInstance().readGammaCentral();
   }
-  if (config.gammaMode() == radiation) {
+  if (config.gammaMode() == GammaMode::radiation) {
     if (config.q()==0.) {
       config.set_q(lattice.overvoltageFactor(config.gamma_start()));
       std::cout << "* set overvoltage factor from lattice"

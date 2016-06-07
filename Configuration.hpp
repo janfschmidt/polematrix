@@ -16,7 +16,8 @@ namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 
-enum GammaMode{linear, simtool, simtool_plus_linear, radiation};
+enum class GammaMode{linear, simtool, simtool_plus_linear, radiation};
+enum class TrajectoryMode{closed_orbit, simtool};
 
 class Configuration
 {
@@ -29,6 +30,7 @@ private:
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
   void setSimToolInstance(pt::ptree &tree);
   void setGammaMode(pt::ptree &tree);
+  void setTrajectoryMode(pt::ptree &tree);
 
   fs::path _outpath;
 
@@ -41,6 +43,7 @@ private:
   double _dE;               // dE/dt / GeV/s
   unsigned int _nParticles; // number of tracked particles
   GammaMode _gammaMode;
+  TrajectoryMode _trajectoryMode;
 
   //radiation (used with gammaMode radiation only)
   int _seed;                // random number seed
@@ -73,6 +76,7 @@ public:
   double dE() const {return _dE;}
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
+  TrajectoryMode trajectoryMode() const {return _trajectoryMode;}
   int seed() const {return _seed;}
   double q() const {return _q;}
   double alphac() const {return _alphac;}
@@ -92,6 +96,7 @@ public:
   void set_dE(double dEin) {_dE=dEin;}
   void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
+  void set_trajectoryMode(TrajectoryMode t) {_trajectoryMode=t;}
   void set_saveGamma(std::string particleList);
   void set_seed(int s) {_seed=s;}
   void set_q(double q) {_q=q;}
