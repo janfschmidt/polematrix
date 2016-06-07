@@ -52,6 +52,8 @@ private:
   unsigned int _h;           // harmonic number (number of buckets, h = f_rf/f_rev)
   double _R;                // (mean) dipole bending radius / m
   double _Js;               // longitudinal damping partition number
+  std::vector<bool> _savePhaseSpace;  // configure particles to write long. phase space to file
+  std::string _savePhaseSpaceElement; // Name of Lattice Element at which long. phase space is recorded
 
   
 public:
@@ -85,8 +87,13 @@ public:
   double Js() const {return _Js;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
+  bool savePhaseSpace(unsigned int particleId) const {return _savePhaseSpace.at(particleId);}
+  std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
   
   //setter
+protected:
+  void set_saveList(const std::string &particleList, std::vector<bool> &list, const std::string &optionName);
+public:
   void set_outpath(fs::path p) {_outpath=p;}
   void set_s_start(arma::colvec3 s) {_s_start=arma::normalise(s);}
   void set_t_start(double t) {_t_start=t;}
@@ -97,14 +104,19 @@ public:
   void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
   void set_trajectoryMode(TrajectoryMode t) {_trajectoryMode=t;}
-  void set_saveGamma(std::string particleList);
+  void set_saveGamma(std::string particleList) {set_saveList(particleList,_saveGamma,"saveGamma");}
   void set_seed(int s) {_seed=s;}
   void set_q(double q) {_q=q;}
   void set_alphac(double ac) {_alphac = ac;}
   void set_h(unsigned int h) {_h=h;}
   void set_R(double R) {_R=R;}
   void set_Js(double Js) {_Js=Js;}
+  void set_savePhaseSpaceElement(std::string name) {_savePhaseSpaceElement=name;}
+  void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
 
+protected:
+  std::string getSaveList(std::vector<bool> list) const;
+public:
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}
   fs::path spinDirectory() const {return outpath()/spinDirName;}
@@ -118,7 +130,8 @@ public:
   double agamma_start() const {return agamma(t_start());}
   double agamma_stop() const {return agamma(t_stop());}
   unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
-  std::string saveGammaList() const;
+  std::string saveGammaList() const {return getSaveList(_saveGamma);}
+  std::string savePhaseSpaceList() const {return getSaveList(_savePhaseSpace);}
 
   void printSummary() const;
 

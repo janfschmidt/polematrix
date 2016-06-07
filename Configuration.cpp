@@ -8,6 +8,7 @@ Configuration::Configuration(std::string pathIn)
   _outpath = pathIn;
   _nParticles = 1;
   _saveGamma.assign(1, false);
+  _savePhaseSpace.assign(1, false);
 
   _t_start = _t_stop = 0.;
   _dt_out = 1e-5;
@@ -22,6 +23,9 @@ Configuration::Configuration(std::string pathIn)
   _q = 0.;
   _alphac = 0.;
   _h = 0;
+  _R = 0.;
+  _Js = 0.;
+  _savePhaseSpaceElement = "";
 
   palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));
 }
@@ -61,6 +65,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.harmonic_number", h());
   tree.put("radiation.bending_radius", R());
   tree.put("radiation.longitudinal_damping_partition_number", Js());
+  tree.put("radiation.savePhaseSpace", savePhaseSpaceList());
+  tree.put("radiation.savePhaseSpaceElement", savePhaseSpaceElement());
   
   if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
@@ -124,6 +130,8 @@ void Configuration::load(const std::string &filename)
   set_h( tree.get("radiation.harmonic_number", 0) );
   set_R( tree.get("radiation.bending_radius", 0.0) );
   set_Js( tree.get("radiation.longitudinal_damping_partition_number", 0.0) );
+  set_savePhaseSpace( tree.get<std::string>("radiation.savePhaseSpace", "") );
+  set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpaceElement", "") );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
@@ -134,6 +142,7 @@ void Configuration::set_nParticles(unsigned int n)
 {
   _nParticles=n;
   _saveGamma.assign(_nParticles, false);
+  _savePhaseSpace.assign(_nParticles, false);
   try {
     palattice->setNumParticles(_nParticles);
   }
@@ -235,29 +244,61 @@ void Configuration::setTrajectoryMode(pt::ptree &tree)
 }
 
 
-void Configuration::set_saveGamma(std::string particleList)
+// parse particleIds from comma separated string
+// also ranges (e.g. 0-99) can be parsed
+void Configuration::set_saveList(const std::string &particleList, std::vector<bool> &list, const std::string &optionName)
 {
  std::stringstream ss(particleList);
   unsigned int tmp;
   while ( (ss >> tmp) ) {
     try {
-    _saveGamma.at(tmp) = true;
+      list.at(tmp) = true;
     }
     catch (std::out_of_range) {
-      std::cout << "* ignore saveGamma config option of particle ID " << tmp
+      std::cout << "* ignore "<<optionName<<" config option of particle ID " << tmp
 		<< ", which is out of range" << std::endl;
     }
-      
     if (ss.peek() == ',')
       ss.ignore();
+
+    // parse range
+    if (ss.peek() == '-') {
+      ss.ignore();
+      unsigned int max;
+      ss >> max;
+      if (ss.peek() == ',')
+	ss.ignore();
+      for (; tmp<=max; tmp++) {
+	try {
+	  list.at(tmp) = true;
+	}
+	catch (std::out_of_range) {
+	  std::cout << "* ignore "<<optionName<<" config option of particle IDs " << tmp <<"-"<<max
+		    << ", which are out of range" << std::endl;
+	  break;
+	}
+      }
+    }
+    
   }
 }
 
-std::string Configuration::saveGammaList() const
+
+std::string Configuration::getSaveList(std::vector<bool> list) const
 {
   std::stringstream s;
-  for (auto i=0u; i<_saveGamma.size(); i++) {
-    if (_saveGamma[i]) s << i << ",";
+  for (auto i=0u; i<list.size(); i++) {
+    if (list[i]) {
+      if (i==0u || !list[i-1] || !list[i+1]) {
+	s << i;
+	if (i<list.size()-1) {
+	  if (list[i+1])
+	    s << "-";
+	  else
+	    s << ",";
+	}
+      }
+    }
   }
   return s.str();
 }

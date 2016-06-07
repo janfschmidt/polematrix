@@ -43,6 +43,7 @@ private:
   arma::mat33 one;
   SpinMotion storage;                         // store results
   std::unique_ptr<std::ofstream> outfile;     // output file via pointer, std::ofstream not moveable in gcc 4.9
+  std::unique_ptr<std::ofstream> outfile_ps;  // output file for long. phase space (gammaMode radiation only)
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
@@ -60,6 +61,7 @@ private:
   void outfileClose();                        // write footer and close output file
   void outfileAdd(const double &t, const arma::colvec3 &s);  // append s(t) to outfile
   void storeStep(const double &pos, const arma::colvec3 &s); // append s(t) to storage and outfile
+  void outfileAdd_ps(const double &pos);                     // append long. phase space(t) to outfile_ps
 
   
 public:
@@ -91,6 +93,7 @@ public:
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;
   
   std::string outfileName() const;            // output file name
+  std::string phasespaceOutfileName() const; // phase space output file name
 
   SpinMotion getStorage() const {return storage;}
   std::string getProgressBar(unsigned int barWidth=20) const;

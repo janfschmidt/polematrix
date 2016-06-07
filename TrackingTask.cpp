@@ -91,6 +91,7 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
+  outfile_ps = std::unique_ptr<std::ofstream>(new std::ofstream());
   gammaSimToolCentral = 0.;
 
   switch (config.gammaMode()) {
@@ -195,6 +196,11 @@ void TrackingTask::matrixTracking()
     }
     gammaStat(currentGamma);
 
+    // long. phase space output
+    if (config.savePhaseSpace(particleId) && currentElement.element()->name == config.savePhaseSpaceElement()) {
+      outfileAdd_ps(pos);
+    }
+
     // step to next element
     pos += currentElement.distanceNext();
     currentElement.revolve();
@@ -251,6 +257,12 @@ std::string TrackingTask::outfileName() const
     ss << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
     return ( config.spinDirectory()/ss.str() ).string();
 }
+std::string TrackingTask::phasespaceOutfileName() const
+{
+  std::stringstream ss;
+    ss << "longPhaseSpace_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
+    return ( config.outpath()/ss.str() ).string();
+}
 
 
 
@@ -266,6 +278,15 @@ void TrackingTask::outfileOpen()
   if (config.gammaMode() == GammaMode::radiation)
     *outfile <<std::setw(w)<< "long.phase/rad";
   *outfile << std::endl;
+
+  if (config.savePhaseSpace(particleId)) {
+    outfile_ps->open(phasespaceOutfileName());
+    if (!outfile->is_open())
+      throw TrackFileError(phasespaceOutfileName());
+
+    *outfile_ps << "# longitudinal phase space at " << config.savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
+    *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "phase / rad" <<std::setw(w)<< "gamma" << std::endl;
+  }
 }
 
 
@@ -278,6 +299,11 @@ void TrackingTask::outfileClose()
   outfile->close();
   std::cout << "* Wrote " << storage.size() << " steps to " << outfileName()
 	    <<std::setw(40)<<std::left<< "." << std::endl;
+
+  if (config.savePhaseSpace(particleId)) {
+    outfile_ps->close();
+    std::cout << "* Wrote " << phasespaceOutfileName() << std::endl;
+  }
 }
 
 
@@ -287,6 +313,14 @@ void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
   if (config.gammaMode() == GammaMode::radiation)
     *outfile <<std::setw(w)<< syliModel.phase();
   *outfile << std::endl;
+}
+
+void TrackingTask::outfileAdd_ps(const double &pos)
+{
+  double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
+  *outfile_ps <<std::setw(w)<< t
+	      <<std::setw(w)<< syliModel.phase()
+	      <<std::setw(w)<< currentGamma << std::endl;
 }
 
 
