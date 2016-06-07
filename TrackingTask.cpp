@@ -136,6 +136,7 @@ void TrackingTask::run()
   outfileClose();
 
   gammaSimTool.clear(); //save memory
+  trajectorySimTool.clear();
   
   completed = true;
 }
