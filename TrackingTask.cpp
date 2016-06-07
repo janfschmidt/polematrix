@@ -159,9 +159,11 @@ void TrackingTask::matrixTracking()
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
 
-    s = rotMatrix(omega) * s; // spin rotation
+    // spin rotation
+    s = rotMatrix(omega) * s;
 
-    if (pos >= pos_nextOut) {//output
+    // output
+    if (pos >= pos_nextOut) {
       storeStep(pos,s);
       pos_nextOut += dpos_out;
     }
@@ -231,8 +233,11 @@ void TrackingTask::outfileOpen()
   outfile->open(outfileName());
   if (!outfile->is_open())
     throw TrackFileError(outfileName());
-  else
-    *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma" << std::endl;
+  
+  *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma";
+  if (config.gammaMode() == radiation)
+    *outfile <<std::setw(w)<< "long.phase/rad";
+  *outfile << std::endl;
 }
 
 
@@ -250,7 +255,10 @@ void TrackingTask::outfileClose()
 
 void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
 {
-  *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< currentGamma << std::endl;
+  *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< currentGamma;
+  if (config.gammaMode() == radiation)
+    *outfile <<std::setw(w)<< syliModel.phase();
+  *outfile << std::endl;
 }
 
 
