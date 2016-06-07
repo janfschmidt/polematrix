@@ -263,7 +263,7 @@ void TrackingTask::outfileOpen()
     throw TrackFileError(outfileName());
   
   *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma";
-  if (config.gammaMode() == radiation)
+  if (config.gammaMode() == GammaMode::radiation)
     *outfile <<std::setw(w)<< "long.phase/rad";
   *outfile << std::endl;
 }
@@ -284,7 +284,7 @@ void TrackingTask::outfileClose()
 void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
 {
   *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< currentGamma;
-  if (config.gammaMode() == radiation)
+  if (config.gammaMode() == GammaMode::radiation)
     *outfile <<std::setw(w)<< syliModel.phase();
   *outfile << std::endl;
 }
