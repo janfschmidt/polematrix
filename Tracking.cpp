@@ -149,13 +149,19 @@ void Tracking::setModel()
   setLattice();
   setOrbit();
 
+  //set energy in SimTool to E0 (ramp not considered!)
+  double p_MeV = config.E0()*1000.;
+  config.getSimToolInstance().setMomentum_MeV(p_MeV);
+
+  
   //set number of turns for SimTool based on tracking time
   if (config.gammaMode() == GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear || config.trajectoryMode() == TrajectoryMode::simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
-    std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
     config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
+    std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
   }
+  
 
   //set physical quantities from SimTool if not set by config
   if (config.gammaMode() == GammaMode::simtool || config.gammaMode() == GammaMode::simtool_plus_linear) {

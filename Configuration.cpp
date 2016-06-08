@@ -162,8 +162,12 @@ void Configuration::printSummary() const
   s << "-----------------------------------------------------------------" << std::endl;
   s << "Tracking " << _nParticles << " Spins" << std::endl
     << "time      " <<std::setw(w-2)<<  _t_start << " s   -------------------->   " <<std::setw(w-2)<< _t_stop << " s" << std::endl;
-  if(_gammaMode == GammaMode::simtool)
-    s << "energy from " << palattice->tool_string() << std::endl;
+  if(_gammaMode == GammaMode::simtool) {
+    s << "energy ";
+    if(palattice->tool==pal::SimTool::elegant)
+      s << E0()*1000. <<" MeV";
+    s << " from " << palattice->tool_string() << std::endl;
+  }
   else
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;

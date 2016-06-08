@@ -196,10 +196,7 @@ void TrackingTask::matrixTracking()
     }
     gammaStat(currentGamma);
 
-    // long. phase space output
-    if (config.savePhaseSpace(particleId) && currentElement.element()->name == config.savePhaseSpaceElement()) {
-      outfileAdd_ps(pos);
-    }
+    //long. phase space output is in TrackingTask::gammaRadiation() -> called above via (this->*gamma)(pos)
 
     // step to next element
     pos += currentElement.distanceNext();
@@ -274,18 +271,17 @@ void TrackingTask::outfileOpen()
   if (!outfile->is_open())
     throw TrackFileError(outfileName());
   
-  *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma";
-  if (config.gammaMode() == GammaMode::radiation)
-    *outfile <<std::setw(w)<< "long.phase/rad";
-  *outfile << std::endl;
+  *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma" << std::endl;
 
-  if (config.savePhaseSpace(particleId)) {
-    outfile_ps->open(phasespaceOutfileName());
-    if (!outfile->is_open())
-      throw TrackFileError(phasespaceOutfileName());
-
-    *outfile_ps << "# longitudinal phase space at " << config.savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
-    *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "phase / rad" <<std::setw(w)<< "gamma" << std::endl;
+  if (config.gammaMode()==GammaMode::radiation) {
+    if (config.savePhaseSpace(particleId)) {
+      outfile_ps->open(phasespaceOutfileName());
+      if (!outfile_ps->is_open())
+	throw TrackFileError(phasespaceOutfileName());
+      
+      *outfile_ps << "# longitudinal phase space at " << config.savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
+      *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "phase / rad" <<std::setw(w)<< "gamma" << std::endl;
+    }
   }
 }
 
@@ -300,7 +296,7 @@ void TrackingTask::outfileClose()
   std::cout << "* Wrote " << storage.size() << " steps to " << outfileName()
 	    <<std::setw(40)<<std::left<< "." << std::endl;
 
-  if (config.savePhaseSpace(particleId)) {
+  if (outfile_ps->is_open()) {
     outfile_ps->close();
     std::cout << "* Wrote " << phasespaceOutfileName() << std::endl;
   }
@@ -357,6 +353,11 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
 
 double TrackingTask::gammaRadiation(const double &pos)
 {
+  // long. phase space output
+  if (config.savePhaseSpace(particleId) && currentElement.element()->name == config.savePhaseSpaceElement()) {
+    outfileAdd_ps(pos);
+  }
+  
   //Rampe: Sollenergie gamma_0 aktualisieren (config.gamma()) !!
   syliModel.update(currentElement.element(), pos);
   return syliModel.gamma();
