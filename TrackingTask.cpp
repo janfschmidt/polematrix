@@ -121,22 +121,25 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 
 void TrackingTask::run()
 {
+  // initialize gamma interpolation
   if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
-    gammaSimTool.init(); // initialize interpolation
+    gammaSimTool.init();
     saveGammaSimTool();
   }
+  // initialize trajectory interpolation
   if (config.trajectoryMode()==TrajectoryMode::simtool) {
-    trajectorySimTool.init(); // initialize interpolation
+    trajectorySimTool.init();
   }
+  
   outfileOpen();
   
   //std::cout << "* start tracking particle " << particleId << std::endl;
-
   matrixTracking();
   
   outfileClose();
 
-  gammaSimTool.clear(); //save memory
+  // clear interpolation to save memory
+  gammaSimTool.clear();
   trajectorySimTool.clear();
   
   completed = true;

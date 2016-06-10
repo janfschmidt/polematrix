@@ -20,9 +20,10 @@ protected:
 public:
   SynchrotronRadiationModel(int _seed=1);
   int getSeed() const {return seed;}
-  // photon energy radiated within this element (e.g. Dipole) in keV
-  // at electron beam energy given by gamma
-  double radiatedEnergy(const pal::AccElement* element, const double& gamma);
+  // photon energy radiated within this element (e.g. Dipole) by an electron entering with energy gammaIn
+  // at a reference beam energy given by gamma0.
+  // returns energy in units of gamma
+  double radiatedEnergy(const pal::AccElement* element, const double& gamma0, const double& gammaIn);
 };
 
 
