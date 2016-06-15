@@ -29,7 +29,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
 { 
   std::vector<double> intervals; // energies u, normalized to critical energy
   std::vector<double> weights;   // number of photons emitted at these energies
-  for(double u=1e-10; u<=10.; u*=2) {  // ??? what is a reasonable range ???
+  for(double u=1e-20; u<=100.; u*=2) {  // ??? what is a reasonable range ???
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
   }
