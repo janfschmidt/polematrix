@@ -123,12 +123,12 @@ void TrackingTask::run()
 {
   // initialize gamma interpolation
   if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
-    gammaSimTool.init();
+    //gammaSimTool.init();  --> not used to improve performance, gamma is accessed by infrontof()
     saveGammaSimTool();
   }
   // initialize trajectory interpolation
   if (config.trajectoryMode()==TrajectoryMode::simtool) {
-    trajectorySimTool.init();
+    //trajectorySimTool.init();  --> not used to improve performance, trajectory is accessed by infrontof()
   }
   
   outfileOpen();
