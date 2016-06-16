@@ -85,6 +85,11 @@ int main(int argc, char *argv[])
   std::cout << "* " << t.numThreads() << " threads used." << std::endl;
   
   t.config.load( configfile );
+  // alternatively config can be set hardcoded- e.g.:
+  // t.config.nParticles = 2;
+  // t.config.s_start = {0.,0.,1.};
+  // t.config.t_start = 0.085;
+  
   t.config.set_outpath(outpath); // NOT in config file
   
   t.config.printSummary();
@@ -92,49 +97,32 @@ int main(int argc, char *argv[])
   if (args.count("no-progressbar"))
     t.showProgressBar = false;
 
-
-  //tool/mode/file muss in constructor gesetzt werden
-  //muss weiterexistieren für alle initialisierungen, NICHT für ganze lebensdauer von lattice/orbit etc
-  //lattice&orbit müssen in Tracking const sein, möglichst nicht kopieren
   
-  //trajectory müsste beim thread-starten .simToolTrajectory(sim) aufrufen
-  // => sim muss weiterleben (in tracking oder config oder task?)
-  // => trajectory muss in task leben (nicht pointer) da individuell verschieden
-
-  t.setModel();
+  // initialize model from simtool
+  try {
+    t.setModel();
+  }
+  catch (pal::palatticeError &e) {
+    std::cout << e.what() << std::endl << "Quit." << std::endl;
+    return 3;
+  }
 
   if (args.count("all")) {
     t.saveLattice();
     t.saveOrbit();
   }
-  
+
+
+  // start tracking
   try{
     t.start();
   }
   catch (TrackError &e) {
-    std::cout << e.what() << std::endl << "Quit.";
+    std::cout << e.what() << std::endl << "Quit." << std::endl;
     return 2;
   }
-  
+
   t.savePolarization();
 
   return 0;
 }
-
-
-
-
-  // t.config.s_start = {0,0.7,0.714};
-  // t.config.t_start = 0.;
-  // t.config.t_stop = 548e-8;
-  // t.config.E0 = 1.32194;
-  // t.config.dE = 0.;
-  // t.config.dt_out = 1e-9;
-
-  // t.config.nParticles = 2;
-  // t.config.s_start = {0.,0.,1.};
-  // t.config.t_start = 0.085;
-  // t.config.t_stop =  0.104;
-  // t.config.E0 = 1.2;
-  // t.config.dE = 6.0;
-  // t.config.dt_out = 2e-5;
