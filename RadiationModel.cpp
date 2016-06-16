@@ -92,12 +92,16 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
 
 void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
 {
-  _phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac()-std::pow(gamma(),-2)) * delta();
-  
+  // phase change from momentum compaction (1st + 2nd order!)
+  // calculate for whole turn and use percentage (by distance s)
+  _phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac() + config.alphac2()*delta()) * delta();
+
+
+  // energy loss in dipole: radiate
   if(element->type == pal::dipole) {
     _gamma -= radModel.radiatedEnergy(element, gamma0(), gamma());
   }
-
+  // energy gain in cavity
   else if(element->type == pal::cavity) {
     double tmp =  gammaU0()/nCavities * std::sin(phase());
     // std::cout << "cavity: "<< tmp  <<"\t"<< phase()<< std::endl;

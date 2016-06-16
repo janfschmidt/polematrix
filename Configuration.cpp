@@ -21,13 +21,13 @@ Configuration::Configuration(std::string pathIn)
   
   _seed = randomSeed();
   _q = 0.;
-  _alphac = 0.;
+  _alphac = _alphac2 = 0.;
   _h = 0;
   _R = 0.;
   _Js = 0.;
   _savePhaseSpaceElement = "";
 
-  palattice.reset(new pal::SimToolInstance(pal::madx, pal::offline, ""));
+  palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 }
 
 
@@ -62,6 +62,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.seed", seed());
   tree.put("radiation.overvoltage_factor", q());
   tree.put("radiation.momentum_compaction_factor", alphac());
+  tree.put("radiation.momentum_compaction_factor_2", alphac2());
   tree.put("radiation.harmonic_number", h());
   tree.put("radiation.bending_radius", R());
   tree.put("radiation.longitudinal_damping_partition_number", Js());
@@ -126,6 +127,7 @@ void Configuration::load(const std::string &filename)
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
+  set_alphac2( tree.get("radiation.momentum_compaction_factor_2", 0.0) );
   set_q( tree.get("radiation.overvoltage_factor", 0.0) );
   set_h( tree.get("radiation.harmonic_number", 0) );
   set_R( tree.get("radiation.bending_radius", 0.0) );

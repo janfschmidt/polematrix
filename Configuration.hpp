@@ -49,6 +49,7 @@ private:
   int _seed;                // random number seed
   double _q;                 // over voltage factor
   double _alphac;           // momentum compaction factor
+  double _alphac2;          // 2nd order momentum compaction factor
   unsigned int _h;           // harmonic number (number of buckets, h = f_rf/f_rev)
   double _R;                // (mean) dipole bending radius / m
   double _Js;               // longitudinal damping partition number
@@ -82,6 +83,7 @@ public:
   int seed() const {return _seed;}
   double q() const {return _q;}
   double alphac() const {return _alphac;}
+  double alphac2() const {return _alphac2;}
   unsigned int h() const {return _h;}
   double R() const {return _R;}
   double Js() const {return _Js;}
@@ -108,6 +110,7 @@ public:
   void set_seed(int s) {_seed=s;}
   void set_q(double q) {_q=q;}
   void set_alphac(double ac) {_alphac = ac;}
+  void set_alphac2(double ac2) {_alphac2 = ac2;}
   void set_h(unsigned int h) {_h=h;}
   void set_R(double R) {_R=R;}
   void set_Js(double Js) {_Js=Js;}
