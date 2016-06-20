@@ -16,7 +16,7 @@ namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
 
 
-enum class GammaMode{linear, simtool, simtool_plus_linear, radiation};
+enum class GammaMode{linear, simtool, simtool_plus_linear, simtool_no_interpolation, radiation};
 enum class TrajectoryMode{closed_orbit, simtool};
 
 class Configuration

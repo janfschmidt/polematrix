@@ -76,14 +76,15 @@ public:
   double (TrackingTask::*gamma)(const double&);
   //gamma modes:
   double gammaFromConfig(const double &pos) {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
-  double gammaFromSimTool(const double &pos) {return gammaSimTool.infrontof(pos-config.pos_start());}
+  double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
   double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaSimToolCentral + gammaFromConfig(pos); }
+  double gammaFromSimToolNoInterpolation(const double &pos) {return gammaSimTool.infrontof(pos-config.pos_start());}
   double gammaRadiation(const double &pos);
 
   pal::AccPair (TrackingTask::*trajectory)(const double&);
   //trajectory modes:
   pal::AccPair trajectoryFromOrbit(const double &pos) {return orbit->interp( orbit->posInTurn(pos) );}
-  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.infrontof(pos-config.pos_start());}
+  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config.pos_start());}
 
   void initGamma(double gammaSimTool);
   void initTrajectory();

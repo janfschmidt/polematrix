@@ -101,6 +101,9 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   case GammaMode::simtool_plus_linear:
     gamma = &TrackingTask::gammaFromSimToolPlusConfig;
     break;
+  case GammaMode::simtool_no_interpolation:
+    gamma = &TrackingTask::gammaFromSimToolNoInterpolation;
+    break;
   case GammaMode::radiation:
     gamma = &TrackingTask::gammaRadiation;
     break;
@@ -123,7 +126,11 @@ void TrackingTask::run()
 {
   // initialize gamma interpolation
   if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
-    //gammaSimTool.init();  --> not used to improve performance, gamma is accessed by infrontof()
+    gammaSimTool.init();
+    saveGammaSimTool();
+  }
+  else if (config.gammaMode()==GammaMode::simtool_no_interpolation) {
+    // no interpolation used
     saveGammaSimTool();
   }
   // initialize trajectory interpolation
@@ -147,11 +154,14 @@ void TrackingTask::run()
 
 void TrackingTask::initGamma(double gammaCentral)
 {
-  if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
-    // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-    gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
-    gammaSimToolCentral = gammaCentral;
-  }
+  if ( config.gammaMode()==GammaMode::simtool
+       || config.gammaMode()==GammaMode::simtool_plus_linear
+       || config.gammaMode()==GammaMode::simtool_no_interpolation )
+    {
+      // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
+      gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
+      gammaSimToolCentral = gammaCentral;
+    }
   else if (config.gammaMode()==GammaMode::radiation) {
     syliModel.init(lattice);
   }

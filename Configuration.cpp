@@ -72,6 +72,7 @@ void Configuration::save(const std::string &filename) const
   if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
   else if (_gammaMode==GammaMode::simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
+    else if (_gammaMode==GammaMode::simtool_no_interpolation) tree.put("spintracking.gammaMode", "simtool_no_interpolation");
   else if (_gammaMode==GammaMode::radiation) tree.put("spintracking.gammaMode", "radiation");
 
   if (_trajectoryMode==TrajectoryMode::closed_orbit) tree.put("spintracking.trajectoryMode", "closed orbit");
@@ -229,6 +230,8 @@ void Configuration::setGammaMode(pt::ptree &tree)
     _gammaMode = GammaMode::simtool;
   else if (s == "simtool+linear")
     _gammaMode = GammaMode::simtool_plus_linear;
+    else if (s == "simtool_no_interpolation")
+    _gammaMode = GammaMode::simtool_no_interpolation;
   else if (s == "radiation")
     _gammaMode = GammaMode::radiation;
   
