@@ -191,7 +191,7 @@ void Tracking::setModel()
     if (config.alphac2()==0.) {
       config.set_alphac2(config.getSimToolInstance().readAlphaC2());
       std::cout << "* set 2nd order momentum compaction factor from " << config.getSimToolInstance().tool_string()
-		<< ": alphac2=" << config.alphac() << std::endl;
+		<< ": alphac2=" << config.alphac2() << std::endl;
     }
     if (config.Js()==0.) {
       config.set_Js(config.getSimToolInstance().readDampingPartitionNumber_syli().s);
