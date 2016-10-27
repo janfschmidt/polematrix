@@ -51,10 +51,10 @@ double SynchrotronRadiationModel::radiatedEnergy(const pal::AccElement* element,
   unsigned int n = photonsPerDipole(rng);
 
   // for each photon: get radiated energy from photon energy distribution (normalized to critical energy)
-  // critical energy is calculated for reference energy gamma0, corrected here by (gamma/gamma0)^2:
-  // ()^3 due to gamma^3 and ()^-1 due to 1/R also depending on energy
+  // critical energy has to be corrected by gamma0/gamma, because 1/R decreases with gamma (R prop. to gamma),
+  // since the magnetic field is set for gamma0.
   for(auto photon=0u; photon<n; photon++) {
-    double dg = photonEnergy(rng) * element->syli_Ecrit_gamma(gamma0) * std::pow(g/gamma0, 2);
+    double dg = photonEnergy(rng) * element->syli_Ecrit_gamma(g) * gamma0/g;
     grad += dg;
     g -= dg;
   }
