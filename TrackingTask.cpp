@@ -293,7 +293,7 @@ void TrackingTask::outfileOpen()
 	throw TrackFileError(phasespaceOutfileName());
       
       *outfile_ps << "# longitudinal phase space at " << config.savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
-      *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "phase / rad" <<std::setw(w)<< "gamma" << std::endl;
+      *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "dphase / rad" <<std::setw(w)<< "dgamma/gamma0" << std::endl;
     }
   }
 }
@@ -328,8 +328,8 @@ void TrackingTask::outfileAdd_ps(const double &pos)
 {
   double t = pos/GSL_CONST_MKSA_SPEED_OF_LIGHT;
   *outfile_ps <<std::setw(w)<< t
-	      <<std::setw(w)<< syliModel.phase()
-	      <<std::setw(w)<< currentGamma << std::endl;
+	      <<std::setw(w)<< syliModel.phase() - syliModel.ref_phase()
+	      <<std::setw(w)<< (currentGamma - syliModel.gamma0())/syliModel.gamma0() << std::endl;
 }
 
 
