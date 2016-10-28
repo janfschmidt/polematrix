@@ -55,6 +55,8 @@ private:
   double _Js;               // longitudinal damping partition number
   std::vector<bool> _savePhaseSpace;  // configure particles to write long. phase space to file
   std::string _savePhaseSpaceElement; // Name of Lattice Element at which long. phase space is recorded
+  double _sigmaPhaseFactor; // start value for sigma_phase in units of equilibrium value
+  double _sigmaGammaFactor; // start value for sigma_gamma in units of equilibrium value
 
   
 public:
@@ -91,6 +93,8 @@ public:
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
   bool savePhaseSpace(unsigned int particleId) const {return _savePhaseSpace.at(particleId);}
   std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
+  double sigmaPhaseFactor() const {return _sigmaPhaseFactor;}
+  double sigmaGammaFactor() const {return _sigmaGammaFactor;}
   
   //setter
 protected:
@@ -116,6 +120,8 @@ public:
   void set_Js(double Js) {_Js=Js;}
   void set_savePhaseSpaceElement(std::string name) {_savePhaseSpaceElement=name;}
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
+  void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
+  void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
 
 protected:
   std::string getSaveList(std::vector<bool> list) const;

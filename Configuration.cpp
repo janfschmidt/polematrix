@@ -26,6 +26,8 @@ Configuration::Configuration(std::string pathIn)
   _R = 0.;
   _Js = 0.;
   _savePhaseSpaceElement = "";
+  _sigmaPhaseFactor = 1.;
+  _sigmaGammaFactor = 1.;
 
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 }
@@ -68,6 +70,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.longitudinal_damping_partition_number", Js());
   tree.put("radiation.savePhaseSpace", savePhaseSpaceList());
   tree.put("radiation.savePhaseSpaceElement", savePhaseSpaceElement());
+  tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
+  tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   
   if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
   else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
@@ -135,6 +139,8 @@ void Configuration::load(const std::string &filename)
   set_Js( tree.get("radiation.longitudinal_damping_partition_number", 0.0) );
   set_savePhaseSpace( tree.get<std::string>("radiation.savePhaseSpace", "") );
   set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpaceElement", "") );
+  set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
+  set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
