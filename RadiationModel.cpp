@@ -92,20 +92,16 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
 
 void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
 {
-  // phase change from momentum compaction (1st + 2nd order!)
-  // calculate for whole turn and use percentage (by distance s)
-  _phase += 2*M_PI*(stepDistance(pos)/lattice->circumference()) * config.h() * (config.alphac() + config.alphac2()*delta()) * delta();
-
-
-  // energy loss in dipole: radiate
   if(element->type == pal::dipole) {
+    // phase change from momentum compaction (1st + 2nd order!)
+    // calculate for whole turn and use percentage of bent length
+    _phase += 2*M_PI * config.h() * (config.alphac() + config.alphac2()*delta()) * delta()  * (element->length/lattice->bentLength());
+    // energy loss in dipole: radiate
     _gamma -= radModel.radiatedEnergy(element, gamma0(), gamma());
   }
-  // energy gain in cavity
   else if(element->type == pal::cavity) {
+    // energy gain in cavity
     double tmp =  gammaU0()/nCavities * std::sin(phase());
-    // std::cout << "cavity: "<< tmp  <<"\t"<< phase()<< std::endl;
-    // std::cout << nCavities <<" cavities, U0="<< q()*dGamma_ref*E_rest_keV << " keV" << std::endl;
     _gamma += tmp;
   }
     
@@ -115,14 +111,14 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
 // bunch length, calculated as time, converted to rf-phase (factor 2pi cancels)
 double LongitudinalPhaseSpaceModel::sigma_phase() const
 {
-  return config.alphac()/synchrotronFreq() * sigma_gamma()/gamma0()
+  return config.sigmaPhaseFactor() * config.alphac()/synchrotronFreq() * sigma_gamma()/gamma0()
     * config.h()*GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference();
 }
 
 // energy spread in units of gamma
 double LongitudinalPhaseSpaceModel::sigma_gamma() const
 {
-  return std::pow(gamma0(),2) * std::sqrt( 3.84e-13/(config.Js()*config.R()) );
+  return config.sigmaGammaFactor() * std::pow(gamma0(),2) * std::sqrt( 3.84e-13/(config.Js()*config.R()) );
 }
 
 // synchrotron frequency in Hz
