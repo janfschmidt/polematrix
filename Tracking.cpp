@@ -70,7 +70,7 @@ void Tracking::start()
     std::cout << "An error occured during tracking!\nAt least one Spin was not tracked successfully.\nStopped after ";
   else
     std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took ";
-  std::cout << secs.count() << " s = "<< mins.count() << " min." << std::endl;
+  std::cout << secs.count() << " s = "<< int(mins.count()+0.5) << " min." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
   
   if (!error)
@@ -164,10 +164,15 @@ void Tracking::setModel()
   
 
   //set physical quantities from SimTool if not set by config
-  if (config.gammaMode() == GammaMode::simtool || config.gammaMode() == GammaMode::simtool_plus_linear) {
+  if (config.gammaMode() == GammaMode::simtool
+      || config.gammaMode() == GammaMode::simtool_plus_linear) {
     gammaCentral = config.getSimToolInstance().readGammaCentral();
   }
-  if (config.gammaMode() == GammaMode::radiation) {
+  else if (config.gammaMode() == GammaMode::linear)
+    {
+      // no model setup needed
+    }
+  else {
     if (config.q()==0.) {
       config.set_q(lattice.overvoltageFactor(config.gamma_start()));
       std::cout << "* set overvoltage factor from lattice"

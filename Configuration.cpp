@@ -74,6 +74,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   
   if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
+  else if (_gammaMode==GammaMode::offset) tree.put("spintracking.gammaMode", "offset");
+  else if (_gammaMode==GammaMode::oscillation) tree.put("spintracking.gammaMode", "oscillation");
   else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
   else if (_gammaMode==GammaMode::simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
     else if (_gammaMode==GammaMode::simtool_no_interpolation) tree.put("spintracking.gammaMode", "simtool_no_interpolation");
@@ -232,6 +234,10 @@ void Configuration::setGammaMode(pt::ptree &tree)
   
   if (s == "linear")
     _gammaMode = GammaMode::linear;
+  else if (s == "offset")
+    _gammaMode = GammaMode::offset;
+    else if (s == "oscillation")
+    _gammaMode = GammaMode::oscillation;
   else if (s == "simtool")
     _gammaMode = GammaMode::simtool;
   else if (s == "simtool+linear")

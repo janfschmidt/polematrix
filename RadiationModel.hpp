@@ -56,6 +56,7 @@ public:
   
   double stepDistance(const double& pos) const {return pos - lastPos;}
   double delta() const {return (gamma()-gamma0())/gamma0();}
+  double gammaMinusGamma0() const {return gamma()-gamma0();}
 
   void init(const pal::AccLattice* l);
   void update(const pal::AccElement* element, const double& pos);

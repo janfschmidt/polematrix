@@ -107,6 +107,12 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   case GammaMode::radiation:
     gamma = &TrackingTask::gammaRadiation;
     break;
+  case GammaMode::offset:
+    gamma = &TrackingTask::gammaOffset;
+    break;
+      case GammaMode::oscillation:
+    gamma = &TrackingTask::gammaOscillation;
+    break;
   default:
     gamma = &TrackingTask::gammaFromConfig;
   }
@@ -162,7 +168,9 @@ void TrackingTask::initGamma(double gammaCentral)
       gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
       gammaSimToolCentral = gammaCentral;
     }
-  else if (config.gammaMode()==GammaMode::radiation) {
+  else if ( config.gammaMode()==GammaMode::radiation
+	    || config.gammaMode()==GammaMode::offset
+	    || config.gammaMode()==GammaMode::oscillation ) {
     syliModel.init(lattice);
   }
   //else: no init needed
@@ -306,12 +314,12 @@ void TrackingTask::outfileClose()
 	   << "# stddev: " << gammaStat.stddev(1) << std::endl;
     
   outfile->close();
-  std::cout << "* Wrote " << storage.size() << " steps to " << outfileName()
+  std::cout << "* " << storage.size() << " steps written to " << outfileName()
 	    <<std::setw(40)<<std::left<< "." << std::endl;
 
   if (outfile_ps->is_open()) {
     outfile_ps->close();
-    std::cout << "* Wrote " << phasespaceOutfileName() << std::endl;
+    std::cout << "* " << phasespaceOutfileName() << " written" << std::endl;
   }
 }
 

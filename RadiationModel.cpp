@@ -76,11 +76,13 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
   nCavities = lattice->size(pal::cavity);
   set_gamma0(config.gamma_start());
 
+  // std::cout << "gamma0=" << gamma0() << ", gammaU0()=" <<gammaU0() << ", q=" << config.q()
+  // 	    << "\nref_phase=" << ref_phase() << "\nsigma_phase=" << sigma_phase()
+  //  	    << "\nsigma_gamma=" << sigma_gamma() << "\nfreq=" << synchrotronFreq() << std::endl;
+
   // init statistical distributions:
   boost::random::normal_distribution<> phaseDistribution(ref_phase(), sigma_phase());
   boost::random::normal_distribution<> gammaDistribution(gamma0(), sigma_gamma());
-  // std::cout << "ref_phase=" << ref_phase() << "\nsigma_phase=" << sigma_phase()
-  // 	    << "\nsigma_gamma=" << sigma_gamma() << "\nfreq=" << synchrotronFreq() << std::endl;
   
   //initial phase space coordinate for this particle
   boost::random::mt11213b initrng(seed);
