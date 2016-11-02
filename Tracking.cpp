@@ -64,13 +64,12 @@ void Tracking::start()
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
-  auto mins = std::chrono::duration_cast<std::chrono::minutes>(stop-start);
   std::cout << "-----------------------------------------------------------------" << std::endl;
   if (error)
     std::cout << "An error occured during tracking!\nAt least one Spin was not tracked successfully.\nStopped after ";
   else
     std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took ";
-  std::cout << secs.count() << " s = "<< int(mins.count()+0.5) << " min." << std::endl;
+  std::cout << secs.count() << " s = "<< int(secs.count()/60.+0.5) << " min." << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
   
   if (!error)
