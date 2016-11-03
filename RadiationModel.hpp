@@ -42,6 +42,7 @@ protected:
   double lastPos;  //total distance currently traveled in m (to calc distance since last step)
 
   void updateCavityVoltage() {_gammaU0 = U0_keV() / config.E_rest_keV;}
+  double synchrotronFreq_formula(const double& gammaIn) const;
 
 
 public:
@@ -70,5 +71,10 @@ public:
   
   double sigma_phase() const;     //bunch length as phase in units of radian
   double sigma_gamma() const;     //energy spread in units of gamma
-  double synchrotronFreq() const; //synchrotron frequency in Hz
+  
+  //synchrotron frequency in Hz (for reference energy):
+  double synchrotronFreq() const {return synchrotronFreq_formula(gamma0());}
+  //synchrotron frequency  in Hz for current energy of this particle:
+  double synchrotronFreq_current() const {return synchrotronFreq_formula(gamma());}
+
 };

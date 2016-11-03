@@ -49,9 +49,9 @@ void Tracking::start()
 
   //start extra thread for progress bars
   if (showProgressBar) {
-  sleep(1);
-  std::thread progress(&Tracking::printProgress,this);
-  progress.join();
+    sleep(1);
+    std::thread progress(&Tracking::printProgress,this);
+    progress.join();
   }
   else {
     std::cout << "* start tracking..." << std::endl;
@@ -64,7 +64,8 @@ void Tracking::start()
 
   auto stop = std::chrono::high_resolution_clock::now();
   auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
-  std::cout << "-----------------------------------------------------------------" << std::endl;
+  std::cout << std::endl
+	    << "-----------------------------------------------------------------" << std::endl;
   if (error)
     std::cout << "An error occured during tracking!\nAt least one Spin was not tracked successfully.\nStopped after ";
   else
@@ -122,7 +123,8 @@ void Tracking::printProgress() const
 {
   std::list<std::vector<TrackingTask>::const_iterator> tmp;
   unsigned int barWidth;
-  if (runningTasks.size() < 5)
+  auto numTasks = runningTasks.size();
+  if ( numTasks < 5)
     barWidth = 20;
   else
     barWidth = 15;
@@ -132,10 +134,14 @@ void Tracking::printProgress() const
     tmp = runningTasks;
     unsigned int n=0;
     for (std::vector<TrackingTask>::const_iterator task : tmp) {
-      if (n<2)
+      if (n<2) // first 2 with progress bar
 	std::cout << task->getProgressBar(barWidth) << "  ";
-      else
+      else     // others percentage only
 	std::cout << task->getProgressBar(0) << " ";
+      n++;
+    }
+    while (n<numTasks) { // clear finished tasks
+      std::cout << "       ";
       n++;
     }
     std::cout <<"\r"<< std::flush;
@@ -242,5 +248,5 @@ void Tracking::savePolarization()
   file << polarization.print(w);
   
   file.close();
-  std::cout << "* Wrote polarization for " << polarization.size() << " steps to " << filename <<"."<< std::endl;
+  std::cout << "* Polarization written for " << polarization.size() << " steps to " << filename <<"."<< std::endl;
 }

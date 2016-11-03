@@ -39,6 +39,7 @@ int main(int argc, char *argv[])
   confs.add_options()  
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
+    ("verbose,v", "more output, e.g. each written spin file")
     ("no-progressbar,n", "do not show progress bar during tracking")
     ("all,a", "write all output (e.g. lattice and orbit)")
     ;
@@ -89,13 +90,17 @@ int main(int argc, char *argv[])
   // t.config.nParticles = 2;
   // t.config.s_start = {0.,0.,1.};
   // t.config.t_start = 0.085;
+
   
-  t.config.set_outpath(outpath); // NOT in config file
+  // options from command line, NOT stored in config file
+  t.config.set_outpath(outpath);
+  if (args.count("verbose"))
+    t.config.set_verbose(true);
+  if (args.count("no-progressbar"))
+    t.showProgressBar = false;
   
   t.config.printSummary();
 
-  if (args.count("no-progressbar"))
-    t.showProgressBar = false;
 
   
   // initialize model from simtool

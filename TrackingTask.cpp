@@ -145,8 +145,8 @@ void TrackingTask::run()
   }
   
   outfileOpen();
-  
-  //std::cout << "* start tracking particle " << particleId << std::endl;
+
+  // std::cout << "* start tracking particle " << particleId << std::endl;
   matrixTracking();
   
   outfileClose();
@@ -314,8 +314,10 @@ void TrackingTask::outfileClose()
 	   << "# stddev: " << gammaStat.stddev(1) << std::endl;
     
   outfile->close();
-  std::cout << "* " << storage.size() << " steps written to " << outfileName()
-	    <<std::setw(40)<<std::left<< "." << std::endl;
+  if (config.verbose()) {
+    std::cout << "* " << storage.size() << " steps written to " << outfileName()
+	      <<std::setw(40)<<std::left<< "." << std::endl;
+  }
 
   if (outfile_ps->is_open()) {
     outfile_ps->close();

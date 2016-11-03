@@ -32,7 +32,9 @@ private:
   void setGammaMode(pt::ptree &tree);
   void setTrajectoryMode(pt::ptree &tree);
 
+  //not in config file (cmdline options)
   fs::path _outpath;
+  bool _verbose;
 
   //spintracking
   arma::colvec3 _s_start;
@@ -73,6 +75,7 @@ public:
 
   //getter
   fs::path outpath() const {return _outpath;}
+  bool verbose() const {return _verbose;}
   arma::colvec3 s_start() const {return _s_start;}
   double t_start() const {return _t_start;}
   double t_stop() const {return _t_stop;}
@@ -101,6 +104,7 @@ protected:
   void set_saveList(const std::string &particleList, std::vector<bool> &list, const std::string &optionName);
 public:
   void set_outpath(fs::path p) {_outpath=p;}
+  void set_verbose(bool v=true) {_verbose=v;}
   void set_s_start(arma::colvec3 s) {_s_start=arma::normalise(s);}
   void set_t_start(double t) {_t_start=t;}
   void set_t_stop(double t) {_t_stop=t;}

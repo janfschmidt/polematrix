@@ -6,6 +6,7 @@ Configuration::Configuration(std::string pathIn)
   : E_rest_GeV(0.0005109989), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(1000), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
 {
   _outpath = pathIn;
+  _verbose = false;
   _nParticles = 1;
   _saveGamma.assign(1, false);
   _savePhaseSpace.assign(1, false);
@@ -183,6 +184,7 @@ void Configuration::printSummary() const
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
+  s << "output for each spin vector to " << spinDirectory().string() << std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
   std::cout << s.str();

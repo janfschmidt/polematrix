@@ -33,7 +33,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
   }
-  // std::cout << intervals.size() <<" energy spectrum sampling points"<< std::endl;
+  //std::cout << intervals.size() <<" energy spectrum sampling points"<< std::endl;
 
   // photon energy distribution
   photonEnergy = boost::random::piecewise_linear_distribution<>(intervals.begin(), intervals.end(), weights.begin());
@@ -76,9 +76,11 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
   nCavities = lattice->size(pal::cavity);
   set_gamma0(config.gamma_start());
 
-  // std::cout << "gamma0=" << gamma0() << ", gammaU0()=" <<gammaU0() << ", q=" << config.q()
-  // 	    << "\nref_phase=" << ref_phase() << "\nsigma_phase=" << sigma_phase()
-  //  	    << "\nsigma_gamma=" << sigma_gamma() << "\nfreq=" << synchrotronFreq() << std::endl;
+  // if (config.verbose()) {
+  //   std::cout <<"gamma0=" << gamma0() << ", sigma_gamma=" << sigma_gamma()
+  // 	      << "\nref_phase=" << ref_phase() << ", sigma_phase=" << sigma_phase()
+  // 	      << "\nq=" << config.q()<< ", syncr_freq=" << synchrotronFreq() << std::endl;
+  // }
 
   // init statistical distributions:
   boost::random::normal_distribution<> phaseDistribution(ref_phase(), sigma_phase());
@@ -88,7 +90,11 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
   boost::random::mt11213b initrng(seed);
   _gamma =  gammaDistribution(initrng);
   _phase = phaseDistribution(initrng);
-  //std::cout << phase() <<"\t"<< gamma() << std::endl;
+  
+  // if (config.verbose()) {
+  //   std::cout << "longitudinal phase space initialized with "
+  // 	      << "phase="<< phase() <<", gamma="<< gamma() << std::endl;
+  // }
 }
 
 
@@ -124,9 +130,9 @@ double LongitudinalPhaseSpaceModel::sigma_gamma() const
 }
 
 // synchrotron frequency in Hz
-double LongitudinalPhaseSpaceModel::synchrotronFreq() const
+double LongitudinalPhaseSpaceModel::synchrotronFreq_formula(const double& gammaIn) const
 {
   return GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference()
-    * std::sqrt( -U0_keV()*config.h() / (2*M_PI*gamma0()*config.E_rest_keV)
+    * std::sqrt( -U0_keV()*config.h() / (2*M_PI*gammaIn*config.E_rest_keV)
 		 * std::cos(ref_phase())*config.alphac() );
 }
