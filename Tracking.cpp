@@ -40,6 +40,7 @@ void Tracking::start()
   // write current config to file
   config.save( config.confOutFile().string() );
 
+  std::cout << "Start tracking "<<config.nParticles()<<" Spins..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
   //start threads
@@ -52,9 +53,6 @@ void Tracking::start()
     sleep(1);
     std::thread progress(&Tracking::printProgress,this);
     progress.join();
-  }
-  else {
-    std::cout << "* start tracking..." << std::endl;
   }
 
   // wait for threads to finish

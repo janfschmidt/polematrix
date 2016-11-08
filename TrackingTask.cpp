@@ -194,7 +194,7 @@ void TrackingTask::matrixTracking()
   double pos = config.pos_start();
   double pos_stop = config.pos_stop();
   double dpos_out = config.dpos_out();
-  double pos_nextOut = pos + dpos_out;
+  double pos_nextOut = pos;
 
   // set start lattice element and position
   currentElement = lattice->behind( orbit->posInTurn(pos), pal::Anchor::end );
