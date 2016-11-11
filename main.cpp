@@ -61,8 +61,15 @@ int main(int argc, char *argv[])
 
   po::variables_map args;
   //  po::store(po::parse_command_line(argc, argv, all), args);
-  po::store(po::command_line_parser(argc, argv).options(all).positional(pd).run(), args);
-  po::notify(args);
+  try {
+    po::store(po::command_line_parser(argc, argv).options(all).positional(pd).run(), args);
+    po::notify(args);
+  }
+  catch(po::unknown_option unknown){
+    std::cout << "Unknown option: " << unknown.get_option_name() << std::endl;
+    std::cout << "use -h for help." << std::endl;
+    return 1;
+  }
 
 
   // special program modes and abortion due to input errors
