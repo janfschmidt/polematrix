@@ -1,0 +1,6 @@
+#ifndef __POLEMATRIX__GITVERSION_HPP_
+#define __POLEMATRIX__GITVERSION_HPP_
+
+inline const std::string polemversion() {return "@PROG_VERSION@, git ID @GIT_HASH@ from @GIT_DATE@";}
+
+#endif

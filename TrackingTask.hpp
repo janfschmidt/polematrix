@@ -81,7 +81,7 @@ public:
   double gammaFromSimToolNoInterpolation(const double &pos) {return gammaSimTool.infrontof(pos-config.pos_start());}
   double gammaRadiation(const double &pos);
   double gammaOffset(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0();}
-  double gammaOscillation(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0()*cos(2*M_PI*syliModel.synchrotronFreq()*pos/GSL_CONST_MKSA_SPEED_OF_LIGHT + particleId);} // uses particleId for individual start phases
+  double gammaOscillation(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0()*cos(2*M_PI*syliModel.synchrotronFreq_current()*pos/GSL_CONST_MKSA_SPEED_OF_LIGHT + particleId);} // uses particleId for individual start phases
 
   pal::AccPair (TrackingTask::*trajectory)(const double&);
   //trajectory modes:

@@ -1,3 +1,4 @@
 *.o
 *~
-polematrix
+build/
+version.hpp

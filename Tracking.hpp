@@ -20,7 +20,7 @@ private:
   std::vector<TrackingTask>::iterator queueIt;
   std::list<std::vector<TrackingTask>::const_iterator> runningTasks; // to display progress
   std::mutex mutex;
-  bool error;
+  std::map<unsigned int,std::string> errors;
   void processQueue();
   void printProgress() const;
 
@@ -43,6 +43,7 @@ public:
 
   unsigned int numParticles() const {return config.nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
+  unsigned int numSuccessful() const {return numParticles() - errors.size();}
   const pal::AccLattice& getLattice() const {return lattice;}
   const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return orbit;}
 

@@ -1,8 +1,9 @@
 #include <iostream>
 #include "Tracking.hpp"
+#include "version.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : error(false), lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -64,14 +65,17 @@ void Tracking::start()
   auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
   std::cout << std::endl
 	    << "-----------------------------------------------------------------" << std::endl;
-  if (error)
-    std::cout << "An error occured during tracking!\nAt least one Spin was not tracked successfully.\nStopped after ";
-  else
-    std::cout << "Tracking "<<numParticles()<< " Spins done. Tracking took ";
+  if (errors.size()>0) {
+    std::cout << "ERRORS occured during tracking!" << std::endl;
+  }
+  std::cout << "Tracking "<<numSuccessful()<< " Spins done. Tracking took ";
   std::cout << secs.count() << " s = "<< int(secs.count()/60.+0.5) << " min." << std::endl;
+  std::cout << "Thanks for using polematrix " << polemversion() << std::endl;
+  for (auto& it : errors)
+    std::cout << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
   
-  if (!error)
+  if (numSuccessful() > 0)
     calcPolarization();
 }
 
@@ -101,13 +105,12 @@ void Tracking::processQueue()
       //cancel thread in error case
       catch (std::exception &e) {
 	std::cout << "ERROR @ particle " << myTask->particleId
-		  << " (thread_id "<< std::this_thread::get_id() <<"):"<< std::endl
+	  // << " (thread_id "<< std::this_thread::get_id() << ")"
+		  <<":"<< std::endl
 		  << e.what() << std::endl;
 	mutex.lock();
-	error = true;
-	runningTasks.remove(myTask); // to display progress
+	errors.emplace(myTask->particleId, e.what());
 	mutex.unlock();
-	return;
       }
       mutex.lock();
       runningTasks.remove(myTask); // to display progress
@@ -158,7 +161,10 @@ void Tracking::setModel()
 
   
   //set number of turns for SimTool based on tracking time
-  if (config.gammaMode() == GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear || config.trajectoryMode() == TrajectoryMode::simtool) {
+  if (config.gammaMode() == GammaMode::simtool
+      || config.gammaMode()==GammaMode::simtool_plus_linear
+      || config.gammaMode()==GammaMode::simtool_no_interpolation
+      || config.trajectoryMode() == TrajectoryMode::simtool) {
     unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
     config.getSimToolInstance().verbose = true;
     config.getSimToolInstance().setTurns(turns);
@@ -221,15 +227,22 @@ void Tracking::setOrbit()
 }
 
 
-//calculate polarization: average over all spin vectors for each time step
+//calculate polarization: average over all successfully tracked spin vectors for each time step
 void Tracking::calcPolarization()
 {
-  polarization = queue[0].getStorage();
-  
-  for (unsigned int i=1; i<queue.size(); i++) {
-    polarization += queue[i].getStorage();
+  unsigned int i=0;
+  for (; i<queue.size(); i++) {
+    if (errors.count(i)==0) {
+      polarization = queue[i].getStorage();
+      break;
+    }
   }
-  polarization /= numParticles();
+
+  for (i++; i<queue.size(); i++) {
+    if (errors.count(i)==0)
+      polarization += queue[i].getStorage();
+  }
+  polarization /= numSuccessful();
 }
 
 void Tracking::savePolarization()
@@ -242,6 +255,7 @@ void Tracking::savePolarization()
   if (!file.is_open())
     throw TrackFileError(filename);
 
+  file << "# Polarization calculated as average over " << numSuccessful() << " spins" << std::endl;
   file << polarization.printHeader(w, "P") << std::endl;
   file << polarization.print(w);
   

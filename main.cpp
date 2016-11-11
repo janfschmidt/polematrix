@@ -4,6 +4,7 @@
 #include <libpalattice/AccLattice.hpp>
 #include <libpalattice/FunctionOfPos.hpp>
 #include "Tracking.hpp"
+#include "version.hpp"
 
 namespace po = boost::program_options;
 
@@ -32,6 +33,7 @@ int main(int argc, char *argv[])
   po::options_description modes("Program modes");
   modes.add_options()
     ("help,h", "display this help message")
+    ("version,v", "display version")
     ("template,T", "create config file template (template.pole) and quit")
     ;
 
@@ -39,7 +41,7 @@ int main(int argc, char *argv[])
   confs.add_options()  
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
-    ("verbose,v", "more output, e.g. each written spin file")
+    ("verbose,V", "more output, e.g. each written spin file")
     ("no-progressbar,n", "do not show progress bar during tracking")
     ("all,a", "write all output (e.g. lattice and orbit)")
     ;
@@ -66,6 +68,11 @@ int main(int argc, char *argv[])
   // special program modes and abortion due to input errors
   if (args.count("help")) {
     usage(visible);
+    return 0;
+  }
+
+  if (args.count("version")) {
+    std::cout << "polematrix " << polemversion() << std::endl;
     return 0;
   }
   

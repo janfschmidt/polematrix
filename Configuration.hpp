@@ -84,6 +84,7 @@ public:
   double dE() const {return _dE;}
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
+  std::string gammaModeString() const;
   TrajectoryMode trajectoryMode() const {return _trajectoryMode;}
   int seed() const {return _seed;}
   double q() const {return _q;}

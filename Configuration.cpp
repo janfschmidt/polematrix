@@ -17,7 +17,7 @@ Configuration::Configuration(std::string pathIn)
   _dE = 0;
   _s_start.zeros();
   _s_start[2] = 1;
-  _gammaMode = GammaMode::linear;
+  _gammaMode = GammaMode::radiation;
   _trajectoryMode = TrajectoryMode::closed_orbit;
   
   _seed = randomSeed();
@@ -33,6 +33,18 @@ Configuration::Configuration(std::string pathIn)
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 }
 
+std::string Configuration::gammaModeString() const
+{
+  if (_gammaMode==GammaMode::linear) return "linear";
+  else if (_gammaMode==GammaMode::offset) return "offset";
+  else if (_gammaMode==GammaMode::oscillation) return "oscillation";
+  else if (_gammaMode==GammaMode::simtool) return "simtool";
+  else if (_gammaMode==GammaMode::simtool_plus_linear) return "simtool+linear";
+  else if (_gammaMode==GammaMode::simtool_no_interpolation) return "simtool_no_interpolation";
+  else if (_gammaMode==GammaMode::radiation) return "radiation";
+  else
+    return "Please implement this GammaMode in Configuration::gammaModeString()!";
+}
 
 double Configuration::gamma(double t) const
 {
@@ -74,13 +86,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   
-  if (_gammaMode==GammaMode::linear) tree.put("spintracking.gammaMode", "linear");
-  else if (_gammaMode==GammaMode::offset) tree.put("spintracking.gammaMode", "offset");
-  else if (_gammaMode==GammaMode::oscillation) tree.put("spintracking.gammaMode", "oscillation");
-  else if (_gammaMode==GammaMode::simtool) tree.put("spintracking.gammaMode", "simtool");
-  else if (_gammaMode==GammaMode::simtool_plus_linear) tree.put("spintracking.gammaMode", "simtool+linear");
-    else if (_gammaMode==GammaMode::simtool_no_interpolation) tree.put("spintracking.gammaMode", "simtool_no_interpolation");
-  else if (_gammaMode==GammaMode::radiation) tree.put("spintracking.gammaMode", "radiation");
+  tree.put("spintracking.gammaMode", gammaModeString());
 
   if (_trajectoryMode==TrajectoryMode::closed_orbit) tree.put("spintracking.trajectoryMode", "closed orbit");
   else if (_trajectoryMode==TrajectoryMode::simtool) tree.put("spintracking.trajectoryMode", "simtool");
@@ -184,6 +190,7 @@ void Configuration::printSummary() const
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
+  s << "longitudinal phase space model (GammaMode): \"" << gammaModeString() << "\"" << std::endl;
   s << "output for each spin vector to " << spinDirectory().string() <<"/"<< std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
@@ -232,7 +239,7 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
 
 void Configuration::setGammaMode(pt::ptree &tree)
 {
-  std::string s = tree.get<std::string>("spintracking.gammaMode", "linear");
+  std::string s = tree.get<std::string>("spintracking.gammaMode", "radiation");
   
   if (s == "linear")
     _gammaMode = GammaMode::linear;
