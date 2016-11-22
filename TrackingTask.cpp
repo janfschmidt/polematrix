@@ -381,8 +381,7 @@ double TrackingTask::gammaRadiation(const double &pos)
     outfileAdd_ps(pos);
   }
   
-  //Rampe: Sollenergie gamma_0 aktualisieren (config.gamma()) !!
-  syliModel.update(currentElement.element(), pos);
+  syliModel.update(currentElement.element(), pos, gammaFromConfig(pos));
   return syliModel.gamma();
 }
 
