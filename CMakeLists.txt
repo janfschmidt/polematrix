@@ -1,7 +1,7 @@
 # cmake Version
 cmake_minimum_required(VERSION 2.8)
 
-project(palattice CXX)
+project(palattice CXX C)
 set(CMAKE_BUILD_TYPE Release)
 
 # Project Version
@@ -28,14 +28,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 
 # Libraries
-# set(CMAKE_LIBRARY_PATH
-#   ${CMAKE_LIBRARY_PATH}
-#   /usr/lib/x86_64-linux-gnu/SDDS
-#   /usr/lib/i386-linux-gnu/SDDS
-#   /usr/lib64/SDDS
-#   /usr/lib/SDDS
-#   )
-
 find_library(GSL_LIBRARY gsl)
 find_library(GSLCBLAS_LIBRARY gslcblas)
 if(NOT GSL_LIBRARY OR NOT GSLCBLAS_LIBRARY)
@@ -57,6 +49,7 @@ find_package(Boost 1.30.0
   COMPONENTS
   program_options
   filesystem
+  system
   )
 
 find_package (Threads)
