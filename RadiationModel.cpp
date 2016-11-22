@@ -98,7 +98,7 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
 }
 
 
-void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos)
+void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const double& pos, const double& newGamma0)
 {
   if(element->type == pal::dipole) {
     // phase change from momentum compaction (1st + 2nd order!)
@@ -108,6 +108,7 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
     _gamma -= radModel.radiatedEnergy(element, gamma0(), gamma());
   }
   else if(element->type == pal::cavity) {
+    set_gamma0(newGamma0); // update reference energy (energy ramp)
     // energy gain in cavity
     double tmp =  gammaU0()/nCavities * std::sin(phase());
     _gamma += tmp;

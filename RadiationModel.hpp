@@ -60,7 +60,7 @@ public:
   double gammaMinusGamma0() const {return gamma()-gamma0();}
 
   void init(const pal::AccLattice* l);
-  void update(const pal::AccElement* element, const double& pos);
+  void update(const pal::AccElement* element, const double& pos, const double& newGamma0);
 
   //cavity voltage in keV
   double U0_keV() const {return config.q() * lattice->Erev_keV_syli(gamma0());}
