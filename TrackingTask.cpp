@@ -79,10 +79,9 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 
-TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
+TrackingTask::TrackingTask(unsigned int id, const std::shared_ptr<Configuration> c)
   : particleId(id), config(c), w(14), completed(false),
     gammaSimTool(config->getSimToolInstance(), gsl_interp_akima),
-    trajectorySimTool(config->getSimToolInstance(), gsl_interp_akima),
     syliModel(config->seed()+particleId, config),
     currentElement(pal::AccLattice().begin())
     // pal::AccLattice::const_iterator currentElement is initialized with empty lattice (dirty)!
@@ -116,28 +115,27 @@ TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
 
   switch (config->trajectoryMode()) {
   case TrajectoryMode::simtool:
-    trajectory = &TrackingTask::trajectoryFromSimTool;
+    trajectory.reset( new SimtoolTrajectory(particleId, config) );
     break;
   default:
-    trajectory = &TrackingTask::trajectoryFromOrbit;
+    trajectory.reset( new Orbit(particleId, config) );
   }
 }
+
 
 
 void TrackingTask::setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o)
 {
   lattice = l;
   orbit = o;
+  trajectory->setOrbit(orbit);
 }
 
 
 void TrackingTask::run()
 {
   initGamma();
-  // initialize trajectory interpolation
-  if (config->trajectoryMode()==TrajectoryMode::simtool) {
-    //trajectorySimTool.init();  --> not used to improve performance, trajectory is accessed by infrontof()
-  }
+  trajectory->init();
   
   outfileOpen();
 
@@ -148,7 +146,7 @@ void TrackingTask::run()
 
   // clear interpolation to save memory
   gammaSimTool.clear();
-  trajectorySimTool.clear();
+  trajectory->clear();
   
   completed = true;
 }
@@ -177,15 +175,6 @@ void TrackingTask::initGamma()
   std::cout << "DEBUG: " << particleId << ": " << config.use_count() <<" "<< lattice.use_count()<<" "<< orbit.use_count() << std::endl;
 }
 
-void TrackingTask::initTrajectory()
-{
-  if (config->trajectoryMode()==TrajectoryMode::simtool) {
-    // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-    trajectorySimTool.simToolTrajectory( config->getSimToolInstance(), particleId+1 );
-  }
-  //else: no init needed
-}
-
 
 
 void TrackingTask::matrixTracking()
@@ -203,7 +192,7 @@ void TrackingTask::matrixTracking()
 
   while (pos < pos_stop) {
     currentGamma = (this->*gamma)(pos);
-    omega = currentElement.element()->B_int( (this->*trajectory)(pos) ) * config->a_gyro; // field of element
+    omega = currentElement.element()->B_int( trajectory->get(pos) ) * config->a_gyro; // field of element
     omega.x *= currentGamma;
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
@@ -261,11 +250,11 @@ void TrackingTask::saveGammaSimTool()
     return;
   
   gammaSimTool.info.add("polematrix particle ID", particleId);
-  trajectorySimTool.info.add("polematrix particle ID", particleId);
   std::stringstream file;
   file <<std::setw(4)<<std::setfill('0')<< particleId << ".dat";
   gammaSimTool.print( (config->outpath()/"gammaSimTool_").string() + file.str() );
-  trajectorySimTool.print( (config->outpath()/"trajectorySimTool_").string() + file.str() );
+
+  trajectory->saveSimtoolData();
 }
 
 

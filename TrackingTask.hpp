@@ -13,6 +13,7 @@
 #include <libpalattice/types.hpp>
 #include "Configuration.hpp"
 #include "RadiationModel.hpp"
+#include "Trajectory.hpp"
 
 
 // spin tracking result container (3d spin vector as function of time)
@@ -47,7 +48,6 @@ private:
   unsigned int w;                             // output column width (print)
   bool completed;                             // tracking completed
   pal::FunctionOfPos<double> gammaSimTool;    // gamma(pos) from elegant
-  pal::FunctionOfPos<pal::AccPair> trajectorySimTool; //x(pos) & z(pos) from elegant
   double gammaSimToolCentral;                 // gamma central from elegant (set energy)
   LongitudinalPhaseSpaceModel syliModel;      // for gammaMode "radiation"
   
@@ -56,6 +56,8 @@ private:
   double currentGamma;                            // gamma
 
   arma::running_stat<double> gammaStat;       // gamma statistics
+
+  std::unique_ptr<Trajectory> trajectory;     // particle trajectory, implementation depends TrajectoryMode
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
@@ -65,7 +67,7 @@ private:
 
   
 public:
-  TrackingTask(unsigned int id, std::shared_ptr<Configuration> c);
+  TrackingTask(unsigned int id, const std::shared_ptr<Configuration> c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}
@@ -73,9 +75,13 @@ public:
   void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
   void run();                                 //run tracking task
   void matrixTracking();
-  
+
+  // particle energy gamma(pos), implementation depends GammaMode
   double (TrackingTask::*gamma)(const double&);
-  //gamma modes:
+  void initGamma();
+  void saveGammaSimTool();
+  
+  // gamma(pos) implementations:
   double gammaFromConfig(const double &pos) {return config->gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
   double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config->pos_start());}
   double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaSimToolCentral + gammaFromConfig(pos); }
@@ -83,15 +89,6 @@ public:
   double gammaRadiation(const double &pos);
   double gammaOffset(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0();}
   double gammaOscillation(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0()*cos(2*M_PI*syliModel.synchrotronFreq_current()*pos/GSL_CONST_MKSA_SPEED_OF_LIGHT + particleId);} // uses particleId for individual start phases
-
-  pal::AccPair (TrackingTask::*trajectory)(const double&);
-  //trajectory modes:
-  pal::AccPair trajectoryFromOrbit(const double &pos) {return orbit->interp( orbit->posInTurn(pos) );}
-  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config->pos_start());}
-
-  void initGamma();
-  void initTrajectory();
-  void saveGammaSimTool();
 
   inline arma::mat33 rotxMatrix(double angle) const;
   inline arma::mat33 rotMatrix(pal::AccTriple B) const;

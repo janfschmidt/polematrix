@@ -63,6 +63,7 @@ add_executable(polematrix
   Tracking.cpp
   TrackingTask.cpp
   RadiationModel.cpp
+  Trajectory.cpp
   )
 SET_TARGET_PROPERTIES(polematrix
   PROPERTIES
