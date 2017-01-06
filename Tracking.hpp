@@ -29,7 +29,6 @@ private:
   std::shared_ptr<pal::FunctionOfPos<pal::AccPair>> orbit;
 
   SpinMotion polarization;
-  double gammaCentral;
   void calcPolarization();  //calculate polarization: average over all spin vectors for each time step
 
 

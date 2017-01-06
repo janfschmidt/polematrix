@@ -89,7 +89,7 @@ public:
   pal::AccPair trajectoryFromOrbit(const double &pos) {return orbit->interp( orbit->posInTurn(pos) );}
   pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config->pos_start());}
 
-  void initGamma(double gammaSimTool);
+  void initGamma();
   void initTrajectory();
   void saveGammaSimTool();
 

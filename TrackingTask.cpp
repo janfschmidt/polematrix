@@ -90,7 +90,6 @@ TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
   outfile_ps = std::unique_ptr<std::ofstream>(new std::ofstream());
-  gammaSimToolCentral = 0.;
 
   switch (config->gammaMode()) {
   case GammaMode::simtool:
@@ -134,15 +133,7 @@ void TrackingTask::setModel(std::shared_ptr<const pal::AccLattice> l, std::share
 
 void TrackingTask::run()
 {
-  // initialize gamma interpolation
-  if (config->gammaMode()==GammaMode::simtool || config->gammaMode()==GammaMode::simtool_plus_linear) {
-    gammaSimTool.init();
-    saveGammaSimTool();
-  }
-  else if (config->gammaMode()==GammaMode::simtool_no_interpolation) {
-    // no interpolation used
-    saveGammaSimTool();
-  }
+  initGamma();
   // initialize trajectory interpolation
   if (config->trajectoryMode()==TrajectoryMode::simtool) {
     //trajectorySimTool.init();  --> not used to improve performance, trajectory is accessed by infrontof()
@@ -162,7 +153,7 @@ void TrackingTask::run()
   completed = true;
 }
 
-void TrackingTask::initGamma(double gammaCentral)
+void TrackingTask::initGamma()
 {
   if ( config->gammaMode()==GammaMode::simtool
        || config->gammaMode()==GammaMode::simtool_plus_linear
@@ -170,7 +161,11 @@ void TrackingTask::initGamma(double gammaCentral)
     {
       // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
       gammaSimTool.readSimToolParticleColumn( config->getSimToolInstance(), particleId+1, "p" );
-      gammaSimToolCentral = gammaCentral;
+      gammaSimToolCentral = config->getSimToolInstance().readGammaCentral();
+      if (config->gammaMode() != GammaMode::simtool_no_interpolation) {
+	    gammaSimTool.init();
+      }
+      saveGammaSimTool();
     }
   else if ( config->gammaMode()==GammaMode::radiation
 	    || config->gammaMode()==GammaMode::offset

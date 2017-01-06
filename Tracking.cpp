@@ -3,7 +3,7 @@
 #include "version.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : gammaCentral(0.), config(new Configuration), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : config(new Configuration), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -97,8 +97,6 @@ void Tracking::processQueue()
       mutex.unlock();
       try {
 	myTask->setModel(lattice,orbit);
-	myTask->initGamma(gammaCentral);  // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-	myTask->initTrajectory();
 	myTask->run(); // run next queued TrackingTask
       }
       //cancel thread in error case
@@ -174,7 +172,6 @@ void Tracking::setModel()
   //set physical quantities from SimTool if not set by config
   if (config->gammaMode() == GammaMode::simtool
       || config->gammaMode() == GammaMode::simtool_plus_linear) {
-    gammaCentral = config->getSimToolInstance().readGammaCentral();
   }
   else if (config->gammaMode() == GammaMode::linear)
     {
