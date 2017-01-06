@@ -71,15 +71,15 @@ double SynchrotronRadiationModel::radiatedEnergy(const pal::AccElement* element,
 void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
 {  
   //gamma0 & pos start from config
-  lastPos = config.pos_start();
+  lastPos = config->pos_start();
   lattice = l;
   nCavities = lattice->size(pal::cavity);
-  set_gamma0(config.gamma_start());
+  set_gamma0(config->gamma_start());
 
-  // if (config.verbose()) {
+  // if (config->verbose()) {
   //   std::cout <<"gamma0=" << gamma0() << ", sigma_gamma=" << sigma_gamma()
   // 	      << "\nref_phase=" << ref_phase() << ", sigma_phase=" << sigma_phase()
-  // 	      << "\nq=" << config.q()<< ", syncr_freq=" << synchrotronFreq() << std::endl;
+  // 	      << "\nq=" << config->q()<< ", syncr_freq=" << synchrotronFreq() << std::endl;
   // }
 
   // init statistical distributions:
@@ -91,7 +91,7 @@ void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
   _gamma =  gammaDistribution(initrng);
   _phase = phaseDistribution(initrng);
   
-  // if (config.verbose()) {
+  // if (config->verbose()) {
   //   std::cout << "longitudinal phase space initialized with "
   // 	      << "phase="<< phase() <<", gamma="<< gamma() << std::endl;
   // }
@@ -103,7 +103,7 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
   if(element->type == pal::dipole) {
     // phase change from momentum compaction (1st + 2nd order!)
     // calculate for whole turn and use percentage of bent length
-    _phase += 2*M_PI * config.h() * (config.alphac() + config.alphac2()*delta()) * delta()  * (element->length/lattice->bentLength());
+    _phase += 2*M_PI * config->h() * (config->alphac() + config->alphac2()*delta()) * delta()  * (element->length/lattice->bentLength());
     // energy loss in dipole: radiate
     _gamma -= radModel.radiatedEnergy(element, gamma0(), gamma());
   }
@@ -120,20 +120,20 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
 // bunch length, calculated as time, converted to rf-phase (factor 2pi cancels)
 double LongitudinalPhaseSpaceModel::sigma_phase() const
 {
-  return config.sigmaPhaseFactor() * config.alphac()/synchrotronFreq() * sigma_gamma()/gamma0()
-    * config.h()*GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference();
+  return config->sigmaPhaseFactor() * config->alphac()/synchrotronFreq() * sigma_gamma()/gamma0()
+    * config->h()*GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference();
 }
 
 // energy spread in units of gamma
 double LongitudinalPhaseSpaceModel::sigma_gamma() const
 {
-  return config.sigmaGammaFactor() * std::pow(gamma0(),2) * std::sqrt( 3.84e-13/(config.Js()*config.R()) );
+  return config->sigmaGammaFactor() * std::pow(gamma0(),2) * std::sqrt( 3.84e-13/(config->Js()*config->R()) );
 }
 
 // synchrotron frequency in Hz
 double LongitudinalPhaseSpaceModel::synchrotronFreq_formula(const double& gammaIn) const
 {
   return GSL_CONST_MKSA_SPEED_OF_LIGHT/lattice->circumference()
-    * std::sqrt( -U0_keV()*config.h() / (2*M_PI*gammaIn*config.E_rest_keV)
-		 * std::cos(ref_phase())*config.alphac() );
+    * std::sqrt( -U0_keV()*config->h() / (2*M_PI*gammaIn*config->E_rest_keV)
+		 * std::cos(ref_phase())*config->alphac() );
 }

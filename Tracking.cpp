@@ -3,7 +3,7 @@
 #include "version.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), config(new Configuration), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -25,23 +25,23 @@ void Tracking::start()
   if (lattice.size()==0 || orbit.size()==0)
     throw TrackError("Cannot start tracking, if model is not specified (Lattice, Orbit).");
 
-  if (config.t_stop() <= config.t_start()) {
+  if (config->t_stop() <= config->t_start()) {
     std::stringstream msg;
-    msg << "Cannot track backwards: t_stop=" << config.t_stop() << " < t_start=" << config.t_start();
+    msg << "Cannot track backwards: t_stop=" << config->t_stop() << " < t_start=" << config->t_start();
     throw TrackError(msg.str());
   }
 
   // fill queue
-  for (unsigned int i=0; i<config.nParticles(); i++) {
+  for (unsigned int i=0; i<config->nParticles(); i++) {
     queue.emplace_back( TrackingTask(i,config) );
   }
   // set iterator to begin of queue
   queueIt = queue.begin();
 
   // write current config to file
-  config.save( config.confOutFile().string() );
+  config->save( config->confOutFile().string() );
 
-  std::cout << "Start tracking "<<config.nParticles()<<" Spins..." << std::endl;
+  std::cout << "Start tracking "<<config->nParticles()<<" Spins..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
   //start threads
@@ -156,74 +156,74 @@ void Tracking::setModel()
   setOrbit();
 
   //set energy in SimTool to E0 (ramp not considered!)
-  double p_MeV = config.E0()*1000.;
-  config.getSimToolInstance().setMomentum_MeV(p_MeV);
+  double p_MeV = config->E0()*1000.;
+  config->getSimToolInstance().setMomentum_MeV(p_MeV);
 
   
   //set number of turns for SimTool based on tracking time
-  if (config.gammaMode() == GammaMode::simtool
-      || config.gammaMode()==GammaMode::simtool_plus_linear
-      || config.gammaMode()==GammaMode::simtool_no_interpolation
-      || config.trajectoryMode() == TrajectoryMode::simtool) {
-    unsigned int turns = (config.duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
-    config.getSimToolInstance().verbose = true;
-    config.getSimToolInstance().setTurns(turns);
+  if (config->gammaMode() == GammaMode::simtool
+      || config->gammaMode()==GammaMode::simtool_plus_linear
+      || config->gammaMode()==GammaMode::simtool_no_interpolation
+      || config->trajectoryMode() == TrajectoryMode::simtool) {
+    unsigned int turns = (config->duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
+    config->getSimToolInstance().verbose = true;
+    config->getSimToolInstance().setTurns(turns);
     std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
   }
   
 
   //set physical quantities from SimTool if not set by config
-  if (config.gammaMode() == GammaMode::simtool
-      || config.gammaMode() == GammaMode::simtool_plus_linear) {
-    gammaCentral = config.getSimToolInstance().readGammaCentral();
+  if (config->gammaMode() == GammaMode::simtool
+      || config->gammaMode() == GammaMode::simtool_plus_linear) {
+    gammaCentral = config->getSimToolInstance().readGammaCentral();
   }
-  else if (config.gammaMode() == GammaMode::linear)
+  else if (config->gammaMode() == GammaMode::linear)
     {
       // no model setup needed
     }
   else {
-    if (config.q()==0.) {
-      config.set_q(lattice.overvoltageFactor(config.gamma_start()));
+    if (config->q()==0.) {
+      config->set_q(lattice.overvoltageFactor(config->gamma_start()));
       std::cout << "* set overvoltage factor from lattice"
-		<< ": q=" << config.q() << std::endl;
+		<< ": q=" << config->q() << std::endl;
 	}
-    if (config.h()==0) {
-      config.set_h(lattice.harmonicNumber());
+    if (config->h()==0) {
+      config->set_h(lattice.harmonicNumber());
       std::cout << "* set harmonic number from lattice"
-		<< ": h=" << config.h() << std::endl;
+		<< ": h=" << config->h() << std::endl;
     }
-    if (config.R()==0.) {
-      config.set_R(lattice.integralDipoleRadius());
+    if (config->R()==0.) {
+      config->set_R(lattice.integralDipoleRadius());
       std::cout << "* set dipole bending radius from lattice"
-		<< ": R=" << config.R() << std::endl;
+		<< ": R=" << config->R() << std::endl;
     }
-    if (config.alphac()==0.) {
-      config.set_alphac(config.getSimToolInstance().readAlphaC());
-      std::cout << "* set momentum compaction factor from " << config.getSimToolInstance().tool_string()
-		<< ": alphac=" << config.alphac() << std::endl;
+    if (config->alphac()==0.) {
+      config->set_alphac(config->getSimToolInstance().readAlphaC());
+      std::cout << "* set momentum compaction factor from " << config->getSimToolInstance().tool_string()
+		<< ": alphac=" << config->alphac() << std::endl;
     }
-    if (config.alphac2()==0.) {
-      config.set_alphac2(config.getSimToolInstance().readAlphaC2());
-      std::cout << "* set 2nd order momentum compaction factor from " << config.getSimToolInstance().tool_string()
-		<< ": alphac2=" << config.alphac2() << std::endl;
+    if (config->alphac2()==0.) {
+      config->set_alphac2(config->getSimToolInstance().readAlphaC2());
+      std::cout << "* set 2nd order momentum compaction factor from " << config->getSimToolInstance().tool_string()
+		<< ": alphac2=" << config->alphac2() << std::endl;
     }
-    if (config.Js()==0.) {
-      config.set_Js(config.getSimToolInstance().readDampingPartitionNumber_syli().s);
-      std::cout << "* set long. damping partition number from " << config.getSimToolInstance().tool_string()
-		<< ": Js=" << config.Js() << std::endl;
+    if (config->Js()==0.) {
+      config->set_Js(config->getSimToolInstance().readDampingPartitionNumber_syli().s);
+      std::cout << "* set long. damping partition number from " << config->getSimToolInstance().tool_string()
+		<< ": Js=" << config->Js() << std::endl;
     }
   }
 }
 
 void Tracking::setLattice()
 {
-  lattice = pal::AccLattice(config.getSimToolInstance());
+  lattice = pal::AccLattice(config->getSimToolInstance());
 }
 
 void Tracking::setOrbit()
 {
-  orbit = pal::FunctionOfPos<pal::AccPair>( config.getSimToolInstance() );
-  orbit.simToolClosedOrbit( config.getSimToolInstance() );
+  orbit = pal::FunctionOfPos<pal::AccPair>( config->getSimToolInstance() );
+  orbit.simToolClosedOrbit( config->getSimToolInstance() );
 }
 
 
@@ -248,7 +248,7 @@ void Tracking::calcPolarization()
 void Tracking::savePolarization()
 {
   std::ofstream file;
-  std::string filename = config.polFile().string();
+  std::string filename = config->polFile().string();
   unsigned int w = 14;
   
   file.open(filename);

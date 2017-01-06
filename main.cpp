@@ -99,21 +99,21 @@ int main(int argc, char *argv[])
   Tracking t(nThreads);
   std::cout << "* " << t.numThreads() << " threads used." << std::endl;
   
-  t.config.load( configfile );
+  t.config->load( configfile );
   // alternatively config can be set hardcoded- e.g.:
-  // t.config.nParticles = 2;
-  // t.config.s_start = {0.,0.,1.};
-  // t.config.t_start = 0.085;
+  // t.config->nParticles = 2;
+  // t.config->s_start = {0.,0.,1.};
+  // t.config->t_start = 0.085;
 
   
   // options from command line, NOT stored in config file
-  t.config.set_outpath(outpath);
+  t.config->set_outpath(outpath);
   if (args.count("verbose"))
-    t.config.set_verbose(true);
+    t.config->set_verbose(true);
   if (args.count("no-progressbar"))
     t.showProgressBar = false;
   
-  t.config.printSummary();
+  t.config->printSummary();
 
 
   

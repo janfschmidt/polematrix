@@ -1,5 +1,6 @@
 #include <vector>
 #include <cmath>
+#include <memory>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/poisson_distribution.hpp>
 #include <boost/random/normal_distribution.hpp>
@@ -32,7 +33,7 @@ protected:
   int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
   const pal::AccLattice* lattice;
-  Configuration &config;
+  const std::shared_ptr<const Configuration> config;
   unsigned int nCavities;
   double _gamma0;  // reference energy in units of gamma
   double _gammaU0; // cavity amplitude U0 in units of gamma
@@ -41,12 +42,12 @@ protected:
   double _gamma;   //current energy
   double lastPos;  //total distance currently traveled in m (to calc distance since last step)
 
-  void updateCavityVoltage() {_gammaU0 = U0_keV() / config.E_rest_keV;}
+  void updateCavityVoltage() {_gammaU0 = U0_keV() / config->E_rest_keV;}
   double synchrotronFreq_formula(const double& gammaIn) const;
 
 
 public:
-  LongitudinalPhaseSpaceModel(int _seed, Configuration &c)
+  LongitudinalPhaseSpaceModel(int _seed, std::shared_ptr<const Configuration> c)
     : seed(_seed),radModel(seed),lattice(NULL), config(c) {lastPos=_phase=_gamma=_gamma0=_gammaU0=0;}
   double gammaU0() const {return _gammaU0;}
   double gamma0() const {return _gamma0;}
@@ -63,11 +64,11 @@ public:
   void update(const pal::AccElement* element, const double& pos, const double& newGamma0);
 
   //cavity voltage in keV
-  double U0_keV() const {return config.q() * lattice->Erev_keV_syli(gamma0());}
+  double U0_keV() const {return config->q() * lattice->Erev_keV_syli(gamma0());}
 
   //reference phase -> stable phase for given overvoltage q
   // (! electron beam: stable phase on falling slope of sine !)
-  double ref_phase() const {return M_PI - std::asin( 1/config.q() );}
+  double ref_phase() const {return M_PI - std::asin( 1/config->q() );}
   
   double sigma_phase() const;     //bunch length as phase in units of radian
   double sigma_gamma() const;     //energy spread in units of gamma

@@ -35,7 +35,7 @@ class TrackingTask
 {
 public:
   const unsigned int particleId;
-  Configuration &config; //not const, because SimToolInstance status can be changed
+  const std::shared_ptr<Configuration> config; //not const Object, because SimToolInstance status can be changed
   const pal::AccLattice *lattice;
   const pal::FunctionOfPos<pal::AccPair> *orbit;
   
@@ -65,7 +65,7 @@ private:
 
   
 public:
-  TrackingTask(unsigned int id, Configuration &c);
+  TrackingTask(unsigned int id, std::shared_ptr<Configuration> c);
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}
@@ -75,10 +75,10 @@ public:
   
   double (TrackingTask::*gamma)(const double&);
   //gamma modes:
-  double gammaFromConfig(const double &pos) {return config.gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
-  double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config.pos_start());}
+  double gammaFromConfig(const double &pos) {return config->gamma(pos/GSL_CONST_MKSA_SPEED_OF_LIGHT);}
+  double gammaFromSimTool(const double &pos) {return gammaSimTool.interpPeriodic(pos-config->pos_start());}
   double gammaFromSimToolPlusConfig(const double &pos) {return gammaFromSimTool(pos) - gammaSimToolCentral + gammaFromConfig(pos); }
-  double gammaFromSimToolNoInterpolation(const double &pos) {return gammaSimTool.infrontof(pos-config.pos_start());}
+  double gammaFromSimToolNoInterpolation(const double &pos) {return gammaSimTool.infrontof(pos-config->pos_start());}
   double gammaRadiation(const double &pos);
   double gammaOffset(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0();}
   double gammaOscillation(const double &pos) {return gammaFromConfig(pos) + syliModel.gammaMinusGamma0()*cos(2*M_PI*syliModel.synchrotronFreq_current()*pos/GSL_CONST_MKSA_SPEED_OF_LIGHT + particleId);} // uses particleId for individual start phases
@@ -86,7 +86,7 @@ public:
   pal::AccPair (TrackingTask::*trajectory)(const double&);
   //trajectory modes:
   pal::AccPair trajectoryFromOrbit(const double &pos) {return orbit->interp( orbit->posInTurn(pos) );}
-  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config.pos_start());}
+  pal::AccPair trajectoryFromSimTool(const double &pos) {return trajectorySimTool.interpPeriodic(pos-config->pos_start());}
 
   void initGamma(double gammaSimTool);
   void initTrajectory();

@@ -9,6 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <list>
+#include <memory>
 #include "Configuration.hpp"
 #include "TrackingTask.hpp"
 
@@ -33,15 +34,16 @@ private:
 
 
 public:
-  Configuration config;
+  const std::shared_ptr<Configuration> config;
   bool showProgressBar;
 
   Tracking(unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
+  Tracking(const Tracking& o) = delete;
   ~Tracking() {}
 
   void start();                  // start tracking (processing queued tasks)
 
-  unsigned int numParticles() const {return config.nParticles();}
+  unsigned int numParticles() const {return config->nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
   unsigned int numSuccessful() const {return numParticles() - errors.size();}
   const pal::AccLattice& getLattice() const {return lattice;}
@@ -53,8 +55,8 @@ public:
 
   std::map<double,arma::colvec3> getPolarization() const {return polarization;}
   void savePolarization();
-  void saveLattice() const {lattice.print( (config.outpath()/"lattice.dat").string() );}
-  void saveOrbit() const {orbit.print( (config.outpath()/"closedorbit.dat").string() );}
+  void saveLattice() const {lattice.print( (config->outpath()/"lattice.dat").string() );}
+  void saveOrbit() const {orbit.print( (config->outpath()/"closedorbit.dat").string() );}
 };
 
 

@@ -79,11 +79,11 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 
-TrackingTask::TrackingTask(unsigned int id, Configuration &c)
+TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
   : particleId(id), config(c), w(14), completed(false),
-    gammaSimTool(c.getSimToolInstance(), gsl_interp_akima),
-    trajectorySimTool(c.getSimToolInstance(), gsl_interp_akima),
-    syliModel(config.seed()+particleId, config),
+    gammaSimTool(config->getSimToolInstance(), gsl_interp_akima),
+    trajectorySimTool(config->getSimToolInstance(), gsl_interp_akima),
+    syliModel(config->seed()+particleId, config),
     currentElement(pal::AccLattice().begin())
     // pal::AccLattice::const_iterator currentElement is initialized with empty lattice (dirty)!
 {
@@ -94,7 +94,7 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
   outfile_ps = std::unique_ptr<std::ofstream>(new std::ofstream());
   gammaSimToolCentral = 0.;
 
-  switch (config.gammaMode()) {
+  switch (config->gammaMode()) {
   case GammaMode::simtool:
     gamma = &TrackingTask::gammaFromSimTool;
     break;
@@ -117,7 +117,7 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
     gamma = &TrackingTask::gammaFromConfig;
   }
 
-  switch (config.trajectoryMode()) {
+  switch (config->trajectoryMode()) {
   case TrajectoryMode::simtool:
     trajectory = &TrackingTask::trajectoryFromSimTool;
     break;
@@ -131,16 +131,16 @@ TrackingTask::TrackingTask(unsigned int id, Configuration &c)
 void TrackingTask::run()
 {
   // initialize gamma interpolation
-  if (config.gammaMode()==GammaMode::simtool || config.gammaMode()==GammaMode::simtool_plus_linear) {
+  if (config->gammaMode()==GammaMode::simtool || config->gammaMode()==GammaMode::simtool_plus_linear) {
     gammaSimTool.init();
     saveGammaSimTool();
   }
-  else if (config.gammaMode()==GammaMode::simtool_no_interpolation) {
+  else if (config->gammaMode()==GammaMode::simtool_no_interpolation) {
     // no interpolation used
     saveGammaSimTool();
   }
   // initialize trajectory interpolation
-  if (config.trajectoryMode()==TrajectoryMode::simtool) {
+  if (config->trajectoryMode()==TrajectoryMode::simtool) {
     //trajectorySimTool.init();  --> not used to improve performance, trajectory is accessed by infrontof()
   }
   
@@ -160,27 +160,29 @@ void TrackingTask::run()
 
 void TrackingTask::initGamma(double gammaCentral)
 {
-  if ( config.gammaMode()==GammaMode::simtool
-       || config.gammaMode()==GammaMode::simtool_plus_linear
-       || config.gammaMode()==GammaMode::simtool_no_interpolation )
+  if ( config->gammaMode()==GammaMode::simtool
+       || config->gammaMode()==GammaMode::simtool_plus_linear
+       || config->gammaMode()==GammaMode::simtool_no_interpolation )
     {
       // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-      gammaSimTool.readSimToolParticleColumn( config.getSimToolInstance(), particleId+1, "p" );
+      gammaSimTool.readSimToolParticleColumn( config->getSimToolInstance(), particleId+1, "p" );
       gammaSimToolCentral = gammaCentral;
     }
-  else if ( config.gammaMode()==GammaMode::radiation
-	    || config.gammaMode()==GammaMode::offset
-	    || config.gammaMode()==GammaMode::oscillation ) {
+  else if ( config->gammaMode()==GammaMode::radiation
+	    || config->gammaMode()==GammaMode::offset
+	    || config->gammaMode()==GammaMode::oscillation ) {
     syliModel.init(lattice);
   }
   //else: no init needed
+
+  std::cout << "DEBUG: " << particleId << ": " << config.use_count() << std::endl;
 }
 
 void TrackingTask::initTrajectory()
 {
-  if (config.trajectoryMode()==TrajectoryMode::simtool) {
+  if (config->trajectoryMode()==TrajectoryMode::simtool) {
     // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-    trajectorySimTool.simToolTrajectory( config.getSimToolInstance(), particleId+1 );
+    trajectorySimTool.simToolTrajectory( config->getSimToolInstance(), particleId+1 );
   }
   //else: no init needed
 }
@@ -189,11 +191,11 @@ void TrackingTask::initTrajectory()
 
 void TrackingTask::matrixTracking()
 {
-  arma::colvec3 s = config.s_start();
+  arma::colvec3 s = config->s_start();
   pal::AccTriple omega;
-  double pos = config.pos_start();
-  double pos_stop = config.pos_stop();
-  double dpos_out = config.dpos_out();
+  double pos = config->pos_start();
+  double pos_stop = config->pos_stop();
+  double dpos_out = config->dpos_out();
   double pos_nextOut = pos;
 
   // set start lattice element and position
@@ -202,7 +204,7 @@ void TrackingTask::matrixTracking()
 
   while (pos < pos_stop) {
     currentGamma = (this->*gamma)(pos);
-    omega = currentElement.element()->B_int( (this->*trajectory)(pos) ) * config.a_gyro; // field of element
+    omega = currentElement.element()->B_int( (this->*trajectory)(pos) ) * config->a_gyro; // field of element
     omega.x *= currentGamma;
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)
@@ -256,51 +258,51 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 
 void TrackingTask::saveGammaSimTool()
 {
-  if ( !config.saveGamma(particleId) )
+  if ( !config->saveGamma(particleId) )
     return;
   
   gammaSimTool.info.add("polematrix particle ID", particleId);
   trajectorySimTool.info.add("polematrix particle ID", particleId);
   std::stringstream file;
   file <<std::setw(4)<<std::setfill('0')<< particleId << ".dat";
-  gammaSimTool.print( (config.outpath()/"gammaSimTool_").string() + file.str() );
-  trajectorySimTool.print( (config.outpath()/"trajectorySimTool_").string() + file.str() );
+  gammaSimTool.print( (config->outpath()/"gammaSimTool_").string() + file.str() );
+  trajectorySimTool.print( (config->outpath()/"trajectorySimTool_").string() + file.str() );
 }
 
 
 std::string TrackingTask::outfileName() const
 {
   std::stringstream ss;
-  //  ss << config.subfolder("spins") << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
+  //  ss << config->subfolder("spins") << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
     ss << "spin_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
-    return ( config.spinDirectory()/ss.str() ).string();
+    return ( config->spinDirectory()/ss.str() ).string();
 }
 std::string TrackingTask::phasespaceOutfileName() const
 {
   std::stringstream ss;
     ss << "longPhaseSpace_" << std::setw(4)<<std::setfill('0')<<particleId << ".dat";
-    return ( config.outpath()/ss.str() ).string();
+    return ( config->outpath()/ss.str() ).string();
 }
 
 
 
 void TrackingTask::outfileOpen()
 {
-  if ( fs::create_directory(config.spinDirectory()) )
-       std::cout << "* created directory " << config.spinDirectory() << std::endl;
+  if ( fs::create_directory(config->spinDirectory()) )
+       std::cout << "* created directory " << config->spinDirectory() << std::endl;
   outfile->open(outfileName());
   if (!outfile->is_open())
     throw TrackFileError(outfileName());
   
   *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma" << std::endl;
 
-  if (config.gammaMode()==GammaMode::radiation) {
-    if (config.savePhaseSpace(particleId)) {
+  if (config->gammaMode()==GammaMode::radiation) {
+    if (config->savePhaseSpace(particleId)) {
       outfile_ps->open(phasespaceOutfileName());
       if (!outfile_ps->is_open())
 	throw TrackFileError(phasespaceOutfileName());
       
-      *outfile_ps << "# longitudinal phase space at " << config.savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
+      *outfile_ps << "# longitudinal phase space at " << config->savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
       *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "dphase / rad" <<std::setw(w)<< "dgamma/gamma0" << std::endl;
     }
   }
@@ -314,7 +316,7 @@ void TrackingTask::outfileClose()
 	   << "# stddev: " << gammaStat.stddev(1) << std::endl;
     
   outfile->close();
-  if (config.verbose()) {
+  if (config->verbose()) {
     std::cout << "* " << storage.size() << " steps written to " << outfileName()
 	      <<std::setw(40)<<std::left<< "." << std::endl;
   }
@@ -329,7 +331,7 @@ void TrackingTask::outfileClose()
 void TrackingTask::outfileAdd(const double &t, const arma::colvec3 &s)
 {
   *outfile << storage.printAnyData(w,t,s) << std::setw(w)<< currentGamma;
-  if (config.gammaMode() == GammaMode::radiation)
+  if (config->gammaMode() == GammaMode::radiation)
     *outfile <<std::setw(w)<< syliModel.phase();
   *outfile << std::endl;
 }
@@ -359,7 +361,7 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
   bar << particleId << ":";
 
   if (barWidth!=0) {
-    unsigned int steps = (1.0 * barWidth * storage.size() / config.outSteps()) + 0.5;
+    unsigned int steps = (1.0 * barWidth * storage.size() / config->outSteps()) + 0.5;
     unsigned int i=0;
     bar << "[";
     for (; i<steps; i++)
@@ -368,7 +370,7 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
       bar << " ";
     bar << "]";
   }
-  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config.outSteps()*100 << "%";
+  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config->outSteps()*100 << "%";
   
   return bar.str();
 }
@@ -377,7 +379,7 @@ std::string TrackingTask::getProgressBar(unsigned int barWidth) const
 double TrackingTask::gammaRadiation(const double &pos)
 {
   // long. phase space output
-  if (config.savePhaseSpace(particleId) && currentElement.element()->name == config.savePhaseSpaceElement()) {
+  if (config->savePhaseSpace(particleId) && currentElement.element()->name == config->savePhaseSpaceElement()) {
     outfileAdd_ps(pos);
   }
   
