@@ -68,7 +68,7 @@ double SynchrotronRadiationModel::radiatedEnergy(const pal::AccElement* element,
 
 
 
-void LongitudinalPhaseSpaceModel::init(const pal::AccLattice* l)
+void LongitudinalPhaseSpaceModel::init(std::shared_ptr<const pal::AccLattice> l)
 {  
   //gamma0 & pos start from config
   lastPos = config->pos_start();

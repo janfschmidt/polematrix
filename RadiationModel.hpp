@@ -32,7 +32,7 @@ class LongitudinalPhaseSpaceModel {
 protected:
   int seed;
   SynchrotronRadiationModel radModel;        // stochastical model for radiation
-  const pal::AccLattice* lattice;
+  std::shared_ptr<const pal::AccLattice> lattice;
   const std::shared_ptr<const Configuration> config;
   unsigned int nCavities;
   double _gamma0;  // reference energy in units of gamma
@@ -48,7 +48,7 @@ protected:
 
 public:
   LongitudinalPhaseSpaceModel(int _seed, std::shared_ptr<const Configuration> c)
-    : seed(_seed),radModel(seed),lattice(NULL), config(c) {lastPos=_phase=_gamma=_gamma0=_gammaU0=0;}
+    : seed(_seed),radModel(seed), config(c) {lastPos=_phase=_gamma=_gamma0=_gammaU0=0;}
   double gammaU0() const {return _gammaU0;}
   double gamma0() const {return _gamma0;}
   double phase() const {return _phase;}
@@ -60,7 +60,7 @@ public:
   double delta() const {return (gamma()-gamma0())/gamma0();}
   double gammaMinusGamma0() const {return gamma()-gamma0();}
 
-  void init(const pal::AccLattice* l);
+  void init(std::shared_ptr<const pal::AccLattice> l);
   void update(const pal::AccElement* element, const double& pos, const double& newGamma0);
 
   //cavity voltage in keV

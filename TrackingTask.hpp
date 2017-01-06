@@ -36,8 +36,8 @@ class TrackingTask
 public:
   const unsigned int particleId;
   const std::shared_ptr<Configuration> config; //not const Object, because SimToolInstance status can be changed
-  const pal::AccLattice *lattice;
-  const pal::FunctionOfPos<pal::AccPair> *orbit;
+  std::shared_ptr<const pal::AccLattice> lattice;
+  std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> orbit;
   
 private:
   arma::mat33 one;
@@ -69,7 +69,8 @@ public:
   TrackingTask(const TrackingTask& other) = delete;
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}
-  
+
+  void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
   void run();                                 //run tracking task
   void matrixTracking();
   

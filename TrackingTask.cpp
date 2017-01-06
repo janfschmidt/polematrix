@@ -87,8 +87,6 @@ TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
     currentElement(pal::AccLattice().begin())
     // pal::AccLattice::const_iterator currentElement is initialized with empty lattice (dirty)!
 {
-  lattice = NULL;
-  orbit = NULL;
   one.eye(); // fill unit matrix
   outfile = std::unique_ptr<std::ofstream>(new std::ofstream());
   outfile_ps = std::unique_ptr<std::ofstream>(new std::ofstream());
@@ -126,6 +124,12 @@ TrackingTask::TrackingTask(unsigned int id, std::shared_ptr<Configuration> c)
   }
 }
 
+
+void TrackingTask::setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o)
+{
+  lattice = l;
+  orbit = o;
+}
 
 
 void TrackingTask::run()
@@ -175,7 +179,7 @@ void TrackingTask::initGamma(double gammaCentral)
   }
   //else: no init needed
 
-  std::cout << "DEBUG: " << particleId << ": " << config.use_count() << std::endl;
+  std::cout << "DEBUG: " << particleId << ": " << config.use_count() <<" "<< lattice.use_count()<<" "<< orbit.use_count() << std::endl;
 }
 
 void TrackingTask::initTrajectory()

@@ -25,8 +25,8 @@ private:
   void processQueue();
   void printProgress() const;
 
-  pal::AccLattice lattice;
-  pal::FunctionOfPos<pal::AccPair> orbit;
+  std::shared_ptr<pal::AccLattice> lattice;
+  std::shared_ptr<pal::FunctionOfPos<pal::AccPair>> orbit;
 
   SpinMotion polarization;
   double gammaCentral;
@@ -46,8 +46,8 @@ public:
   unsigned int numParticles() const {return config->nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
   unsigned int numSuccessful() const {return numParticles() - errors.size();}
-  const pal::AccLattice& getLattice() const {return lattice;}
-  const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return orbit;}
+  const pal::AccLattice& getLattice() const {return *lattice;}
+  const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return *orbit;}
 
   void setModel();
   void setLattice();
@@ -55,8 +55,8 @@ public:
 
   std::map<double,arma::colvec3> getPolarization() const {return polarization;}
   void savePolarization();
-  void saveLattice() const {lattice.print( (config->outpath()/"lattice.dat").string() );}
-  void saveOrbit() const {orbit.print( (config->outpath()/"closedorbit.dat").string() );}
+  void saveLattice() const {lattice->print( (config->outpath()/"lattice.dat").string() );}
+  void saveOrbit() const {orbit->print( (config->outpath()/"closedorbit.dat").string() );}
 };
 
 

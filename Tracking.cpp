@@ -3,7 +3,7 @@
 #include "version.hpp"
 
 
-Tracking::Tracking(unsigned int nThreads) : lattice(0., pal::Anchor::end), orbit(0., gsl_interp_akima_periodic), gammaCentral(0.), config(new Configuration), showProgressBar(true)
+Tracking::Tracking(unsigned int nThreads) : gammaCentral(0.), config(new Configuration), showProgressBar(true)
 {
   // use at least one thread
   if (nThreads == 0)
@@ -22,7 +22,7 @@ Tracking::Tracking(unsigned int nThreads) : lattice(0., pal::Anchor::end), orbit
 
 void Tracking::start()
 { 
-  if (lattice.size()==0 || orbit.size()==0)
+  if (lattice->size()==0 || orbit->size()==0)
     throw TrackError("Cannot start tracking, if model is not specified (Lattice, Orbit).");
 
   if (config->t_stop() <= config->t_start()) {
@@ -95,9 +95,8 @@ void Tracking::processQueue()
       queueIt++;
       runningTasks.push_back(myTask); // to display progress
       mutex.unlock();
-      myTask->lattice=&lattice;
-      myTask->orbit=&orbit;
       try {
+	myTask->setModel(lattice,orbit);
 	myTask->initGamma(gammaCentral);  // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
 	myTask->initTrajectory();
 	myTask->run(); // run next queued TrackingTask
@@ -165,7 +164,7 @@ void Tracking::setModel()
       || config->gammaMode()==GammaMode::simtool_plus_linear
       || config->gammaMode()==GammaMode::simtool_no_interpolation
       || config->trajectoryMode() == TrajectoryMode::simtool) {
-    unsigned int turns = (config->duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
+    unsigned int turns = (config->duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice->circumference()) + 1;
     config->getSimToolInstance().verbose = true;
     config->getSimToolInstance().setTurns(turns);
     std::cout << "* Elegant tracking " << turns <<" turns to get single particle trajectories" << std::endl;
@@ -183,17 +182,17 @@ void Tracking::setModel()
     }
   else {
     if (config->q()==0.) {
-      config->set_q(lattice.overvoltageFactor(config->gamma_start()));
+      config->set_q(lattice->overvoltageFactor(config->gamma_start()));
       std::cout << "* set overvoltage factor from lattice"
 		<< ": q=" << config->q() << std::endl;
 	}
     if (config->h()==0) {
-      config->set_h(lattice.harmonicNumber());
+      config->set_h(lattice->harmonicNumber());
       std::cout << "* set harmonic number from lattice"
 		<< ": h=" << config->h() << std::endl;
     }
     if (config->R()==0.) {
-      config->set_R(lattice.integralDipoleRadius());
+      config->set_R(lattice->integralDipoleRadius());
       std::cout << "* set dipole bending radius from lattice"
 		<< ": R=" << config->R() << std::endl;
     }
@@ -217,13 +216,13 @@ void Tracking::setModel()
 
 void Tracking::setLattice()
 {
-  lattice = pal::AccLattice(config->getSimToolInstance());
+  lattice.reset( new pal::AccLattice(config->getSimToolInstance()) );
 }
 
 void Tracking::setOrbit()
 {
-  orbit = pal::FunctionOfPos<pal::AccPair>( config->getSimToolInstance() );
-  orbit.simToolClosedOrbit( config->getSimToolInstance() );
+  orbit.reset( new pal::FunctionOfPos<pal::AccPair>(config->getSimToolInstance()) );
+  orbit->simToolClosedOrbit( config->getSimToolInstance() );
 }
 
 
