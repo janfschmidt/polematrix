@@ -338,3 +338,62 @@ int Configuration::randomSeed() const
   auto now = std::chrono::system_clock::now();
   return std::move( now.time_since_epoch().count() );
 }
+
+
+
+// set parameters, which are currently unset, from SimToolInstance and given lattice
+void Configuration::autocomplete(const pal::AccLattice& lattice)
+{
+  if (q()==0.) {
+    set_q(lattice.overvoltageFactor(gamma_start()));
+    std::cout << "* set overvoltage factor from lattice"
+	      << ": q=" << q() << std::endl;
+  }
+  if (h()==0) {
+    set_h(lattice.harmonicNumber());
+    std::cout << "* set harmonic number from lattice"
+	      << ": h=" << h() << std::endl;
+  }
+  if (R()==0.) {
+    set_R(lattice.integralDipoleRadius());
+    std::cout << "* set dipole bending radius from lattice"
+	      << ": R=" << R() << std::endl;
+  }
+  if (alphac()==0.) {
+    set_alphac(palattice->readAlphaC());
+    std::cout << "* set momentum compaction factor from " << palattice->tool_string()
+	      << ": alphac=" << alphac() << std::endl;
+  }
+  if (alphac2()==0.) {
+    set_alphac2(palattice->readAlphaC2());
+    std::cout << "* set 2nd order momentum compaction factor from " << palattice->tool_string()
+	      << ": alphac2=" << alphac2() << std::endl;
+  }
+  if (Js()==0.) {
+    set_Js(palattice->readDampingPartitionNumber_syli().s);
+    std::cout << "* set long. damping partition number from " << palattice->tool_string()
+	      << ": Js=" << Js() << std::endl;
+  }
+}
+
+
+// write energy and, if needed, number of turns to SimToolInstance
+void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
+{
+  //set energy to E0 (ramp not considered!)
+  double p_MeV = E0()*1000.;
+  palattice->setMomentum_MeV(p_MeV);
+
+  
+  //set number of turns based on tracking time & circumference
+  if (gammaMode() == GammaMode::simtool
+      || gammaMode()==GammaMode::simtool_plus_linear
+      || gammaMode()==GammaMode::simtool_no_interpolation
+      || trajectoryMode() == TrajectoryMode::simtool) {
+    unsigned int turns = (duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / lattice.circumference()) + 1;
+    palattice->verbose = true;
+    palattice->setTurns(turns);
+    std::cout << "* " << palattice->tool_string() <<" tracking " << turns <<" turns to get single particle trajectories" << std::endl;
+  }
+
+}

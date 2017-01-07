@@ -60,6 +60,7 @@ find_package (Threads)
 add_executable(polematrix
   main.cpp
   Configuration.cpp
+  Simulation.cpp
   Tracking.cpp
   TrackingTask.cpp
   RadiationModel.cpp

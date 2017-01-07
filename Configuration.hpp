@@ -11,6 +11,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
 #include <libpalattice/SimTools.hpp>
+#include <libpalattice/AccLattice.hpp>
 
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
@@ -127,9 +128,13 @@ public:
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
   void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
+  // set parameters, which are currently unset, from SimToolInstance and given lattice
+  void autocomplete(const pal::AccLattice& lattice);
 
 protected:
   std::string getSaveList(std::vector<bool> list) const;
+  int randomSeed() const;
+  
 public:
   double duration() const {return t_stop() - t_start();}
   fs::path subDirectory(std::string folder) const {return outpath()/folder;}
@@ -156,8 +161,9 @@ public:
   void save(const std::string &filename) const;
   void load(const std::string &filename);
 
-protected:
-  int randomSeed() const;
+  // write energy and, if needed, number of turns to SimToolInstance
+  void updateSimToolSettings(const pal::AccLattice& lattice);
+
 };
 
 

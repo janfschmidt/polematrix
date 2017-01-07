@@ -9,7 +9,7 @@
 class Trajectory
 {
 public:
-  unsigned int particleId;
+  const unsigned int particleId;
   std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> orbit;
 
 protected:

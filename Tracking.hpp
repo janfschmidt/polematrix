@@ -10,10 +10,12 @@
 #include <mutex>
 #include <list>
 #include <memory>
-#include "Configuration.hpp"
+#include "Simulation.hpp"
 #include "TrackingTask.hpp"
 
-class Tracking
+
+
+class Tracking : public Simulation
 {
 private:
   std::vector<TrackingTask> queue;
@@ -21,41 +23,28 @@ private:
   std::vector<TrackingTask>::iterator queueIt;
   std::list<std::vector<TrackingTask>::const_iterator> runningTasks; // to display progress
   std::mutex mutex;
-  std::map<unsigned int,std::string> errors;
+  
   void processQueue();
   void printProgress() const;
-
-  std::shared_ptr<pal::AccLattice> lattice;
-  std::shared_ptr<pal::FunctionOfPos<pal::AccPair>> orbit;
 
   SpinMotion polarization;
   void calcPolarization();  //calculate polarization: average over all spin vectors for each time step
 
 
 public:
-  const std::shared_ptr<Configuration> config;
   bool showProgressBar;
 
   Tracking(unsigned int nThreads=std::thread::hardware_concurrency());  // queue nP. tasks & create nT. threads
   Tracking(const Tracking& o) = delete;
   ~Tracking() {}
-
+  
   void start();                  // start tracking (processing queued tasks)
 
   unsigned int numParticles() const {return config->nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
-  unsigned int numSuccessful() const {return numParticles() - errors.size();}
-  const pal::AccLattice& getLattice() const {return *lattice;}
-  const pal::FunctionOfPos<pal::AccPair>& getOrbit() const {return *orbit;}
-
-  void setModel();
-  void setLattice();
-  void setOrbit();
 
   std::map<double,arma::colvec3> getPolarization() const {return polarization;}
   void savePolarization();
-  void saveLattice() const {lattice->print( (config->outpath()/"lattice.dat").string() );}
-  void saveOrbit() const {orbit->print( (config->outpath()/"closedorbit.dat").string() );}
 };
 
 
