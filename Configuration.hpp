@@ -61,6 +61,10 @@ private:
   double _sigmaPhaseFactor; // start value for sigma_phase in units of equilibrium value
   double _sigmaGammaFactor; // start value for sigma_gamma in units of equilibrium value
 
+  //Resonance Strengths
+  double _agammaMin;
+  double _agammaMax;
+  unsigned int _nTurns;
   
 public:
   //constants / internal configuration (constructor)
@@ -100,6 +104,10 @@ public:
   std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
   double sigmaPhaseFactor() const {return _sigmaPhaseFactor;}
   double sigmaGammaFactor() const {return _sigmaGammaFactor;}
+  double agammaMin() const {return _agammaMin;}
+  double agammaMax() const {return _agammaMax;}
+  // #turns for resonance strengths calc are calculated from tracking duration() if not set
+  unsigned int numTurns(double circumference);
   
   //setter
 protected:
@@ -128,6 +136,8 @@ public:
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
   void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
+  void set_agammaMax(double a) {_agammaMax = a;}
+  void set_nTurns(unsigned int n) {_nTurns = n;}
   // set parameters, which are currently unset, from SimToolInstance and given lattice
   void autocomplete(const pal::AccLattice& lattice);
 

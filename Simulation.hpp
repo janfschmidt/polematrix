@@ -49,11 +49,9 @@ public:
   std::shared_ptr<const pal::AccLattice> lattice;
   std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> orbit;
 
-  SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> cy);
+  SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> c);
   void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
-
   virtual void run() =0;
-
 };
 
 #endif

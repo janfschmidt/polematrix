@@ -29,6 +29,9 @@ Configuration::Configuration(std::string pathIn)
   _savePhaseSpaceElement = "";
   _sigmaPhaseFactor = 1.;
   _sigmaGammaFactor = 1.;
+  _agammaMin = 0.;
+  _agammaMax = 10.;
+  _nTurns = 0;
 
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 }
@@ -85,6 +88,9 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.savePhaseSpaceElement", savePhaseSpaceElement());
   tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
+  tree.put("resonancestrengths.minSpintune", agammaMin());
+  tree.put("resonancestrengths.maxSpintune", agammaMax());
+  tree.put("resonancestrengths.turns", _nTurns);
   
   tree.put("spintracking.gammaMode", gammaModeString());
 
@@ -150,6 +156,9 @@ void Configuration::load(const std::string &filename)
   set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpaceElement", "") );
   set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
+  set_agammaMax( tree.get<double>("resonancestrengths.minSpintune", 0.) );
+  set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
+  set_agammaMax( tree.get<unsigned int>("resonancestrengths.turns", 0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
@@ -396,4 +405,13 @@ void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
     std::cout << "* " << palattice->tool_string() <<" tracking " << turns <<" turns to get single particle trajectories" << std::endl;
   }
 
+}
+
+  // #turns for resonance strengths calc are calculated from tracking duration() if not set
+unsigned int Configuration::numTurns(double circumference)
+{
+  if (_nTurns != 0)
+    return _nTurns;
+  else
+    return (duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / circumference) + 1;
 }
