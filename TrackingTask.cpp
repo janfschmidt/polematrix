@@ -80,7 +80,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, const std::shared_ptr<Configuration> c)
-  : particleId(id), config(c), w(14), completed(false),
+  : SingleParticleSimulation(id,c), w(14), completed(false),
     gammaSimTool(config->getSimToolInstance(), gsl_interp_akima),
     syliModel(config->seed()+particleId, config),
     currentElement(pal::AccLattice().begin())
@@ -112,24 +112,9 @@ TrackingTask::TrackingTask(unsigned int id, const std::shared_ptr<Configuration>
   default:
     gamma = &TrackingTask::gammaFromConfig;
   }
-
-  switch (config->trajectoryMode()) {
-  case TrajectoryMode::simtool:
-    trajectory.reset( new SimtoolTrajectory(particleId, config) );
-    break;
-  default:
-    trajectory.reset( new Orbit(particleId, config) );
-  }
 }
 
 
-
-void TrackingTask::setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o)
-{
-  lattice = l;
-  orbit = o;
-  trajectory->setOrbit(orbit);
-}
 
 
 void TrackingTask::run()

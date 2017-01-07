@@ -11,7 +11,7 @@
 #include <libpalattice/AccLattice.hpp>
 #include <libpalattice/FunctionOfPos.hpp>
 #include <libpalattice/types.hpp>
-#include "Configuration.hpp"
+#include "Simulation.hpp"
 #include "RadiationModel.hpp"
 #include "Trajectory.hpp"
 
@@ -32,14 +32,8 @@ public:
 
 
 
-class TrackingTask
+class TrackingTask : public SingleParticleSimulation
 {
-public:
-  const unsigned int particleId;
-  const std::shared_ptr<Configuration> config; //not const Object, because SimToolInstance status can be changed
-  std::shared_ptr<const pal::AccLattice> lattice;
-  std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> orbit;
-  
 private:
   arma::mat33 one;
   SpinMotion storage;                         // store results
@@ -56,8 +50,6 @@ private:
   double currentGamma;                            // gamma
 
   arma::running_stat<double> gammaStat;       // gamma statistics
-
-  std::unique_ptr<Trajectory> trajectory;     // particle trajectory, implementation depends TrajectoryMode
   
   void outfileOpen();                         // open output file and write header
   void outfileClose();                        // write footer and close output file
@@ -72,7 +64,6 @@ public:
   TrackingTask(TrackingTask&& other) = default;
   ~TrackingTask() {}
 
-  void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
   void run();                                 //run tracking task
   void matrixTracking();
 
