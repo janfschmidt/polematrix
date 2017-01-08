@@ -4,6 +4,7 @@
 #include <libpalattice/AccLattice.hpp>
 #include <libpalattice/FunctionOfPos.hpp>
 #include "Tracking.hpp"
+#include "ResStrengths.hpp"
 #include "version.hpp"
 
 namespace po = boost::program_options;
@@ -29,12 +30,12 @@ int main(int argc, char *argv[])
   std::string configfile;
     std::string outpath;
   
-  // Declare the supported options
   po::options_description modes("Program modes");
   modes.add_options()
     ("help,h", "display this help message")
     ("version,v", "display version")
     ("template,T", "create config file template (template.pole) and quit")
+    ("resonance-strengths,R", "estimate strengths of depolarizing resonances")
     ;
 
   po::options_description confs("Configuration options");
@@ -94,6 +95,8 @@ int main(int argc, char *argv[])
     return 1;
   }
 
+  
+  
 
   // initialize tracking & config
   Tracking t(nThreads);
@@ -112,10 +115,38 @@ int main(int argc, char *argv[])
     t.config->set_verbose(true);
   if (args.count("no-progressbar"))
     t.showProgressBar = false;
+
+
+  
+  // resonance strengths mode (no tracking)
+  if (args.count("resonance-strengths")) {
+    ResStrengths r(t.config);
+    // initialize model from simtool
+    try {
+      r.setModel();
+    }
+    catch (pal::palatticeError &e) {
+      std::cout << e.what() << std::endl << "Quit." << std::endl;
+      return 3;
+    }
+    if (args.count("all")) {
+      r.saveLattice();
+      r.saveOrbit();
+    }
+    try{
+      r.start();
+    }
+    catch (std::exception &e) {
+      std::cout << e.what() << std::endl << "Quit." << std::endl;
+      return 2;
+    }
+    r.save();
+    return 0;
+  }
+
+
   
   t.config->printSummary();
-
-
   
   // initialize model from simtool
   try {

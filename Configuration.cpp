@@ -158,7 +158,7 @@ void Configuration::load(const std::string &filename)
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
   set_agammaMax( tree.get<double>("resonancestrengths.minSpintune", 0.) );
   set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
-  set_agammaMax( tree.get<unsigned int>("resonancestrengths.turns", 0) );
+  set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;

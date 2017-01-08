@@ -21,6 +21,7 @@ public:
   const std::shared_ptr<Configuration> config;
   
   Simulation() : config(new Configuration) {}
+  Simulation(const std::shared_ptr<Configuration> c) : config(c) {}
   void setModel();
   
   bool modelReady() {if (lattice->size()==0 || orbit->size()==0) return false; else return true;}

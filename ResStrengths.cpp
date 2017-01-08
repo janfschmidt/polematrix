@@ -47,12 +47,10 @@ void ResStrengthsData::cacheIt(double agamma, std::complex<double>& epsilon)
 
 
 
-ResStrengths::ResStrengths()
-{     
-}
 
 std::complex<double> ResStrengths::calculate(double agamma)
 {
+  std::cout << "average over particles for gamma*a=" << agamma << std::endl;
   std::complex<double> epsilon (0,0);
   for (auto &p : particles) {
     epsilon += p[agamma];
@@ -65,14 +63,17 @@ std::complex<double> ResStrengths::calculate(double agamma)
 
 void ResStrengths::start()
 {
-  std::cout << "Estimate Resonance Strengths..." << std::endl;
+  
+  std::cout << "Estimate Resonance Strengths using "
+    	    << config->nParticles() << " particles and "
+	    << nTurns() << " turns:" << std::endl;
   for (unsigned int i=0; i<config->nParticles(); i++) {
-    particles.emplace_back( ParticleResStrengths(i,config) );
+    particles.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
   }
   for (auto& p : particles) {
     p.run();
   }
-  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->numTurns(lattice->circumference())) {
+  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
     calculate(agamma);
   }
   std::cout << "Done." << std::endl;
@@ -91,7 +92,7 @@ void ResStrengths::print(string filename)
 
  //metadata
   info.add("Description", "strengths of depolarizing resonances (complex numbers)");
-  info.add("turns used for res. strength calc.", config->numTurns(lattice->circumference()));
+  info.add("turns used for res. strength calc.", nTurns());
   info += lattice->info;
   s << info.out("#");
 
@@ -126,11 +127,10 @@ void ResStrengths::print(string filename)
 
 
 
-
-ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_ptr<Configuration> c)
+ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_ptr<Configuration> c,std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o)
   : SingleParticleSimulation(id,c)
 {
-  nturns = config->numTurns(lattice->circumference());
+  setModel(l,o);
 }
 
 
@@ -144,14 +144,16 @@ ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_pt
 //     calculated here. Longitudinal component is not implemented.
 std::complex<double> ParticleResStrengths::calculate(double agamma)
 {
+  std::cout << "calculate gamma*a=" << agamma << std::endl;
   std::complex<double> epsilon (0,0);
 
-  for (unsigned int turn=1; turn<=nturns; turn++) {
+  for (unsigned int turn=0; turn<nTurns(); turn++) {
     for (AccLattice::const_iterator it=lattice->begin(); it!=lattice->end(); ++it) {
+      double pos = it.pos() + turn*lattice->circumference();
       //field from Thomas-BMT equation:
       // omega = (1+agamma) * B_x - i * (1+a) * B_s
       // assume particle velocity parallel to s-axis, B is already normalized to rigidity (BR)_0 = p_0/e
-      std::complex<double> omega = (1+agamma)*it.element()->B(trajectory->get(it.pos())).x - im * (1+config->a_gyro)*it.element()->B(trajectory->get(it.pos())).s;
+      std::complex<double> omega = (1+agamma)*it.element()->B(trajectory->get(pos)).x - im * (1+config->a_gyro)*it.element()->B(trajectory->get(pos)).s;
 
       // dipole
       if (it.element()->type == dipole) {
@@ -171,7 +173,7 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
     }//lattice
   }//turn
 
-  epsilon /= double(nturns);
+  epsilon /= double(nTurns());
   cacheIt(agamma,epsilon);
   return epsilon;
 }
@@ -181,8 +183,9 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
 void ParticleResStrengths::run()
 {
   trajectory->init();
+      std::cout << "DEBUG: init done" << std::endl;
 
-  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=1/nturns) {
+      for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
     calculate(agamma);
   }
   

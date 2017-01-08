@@ -56,12 +56,17 @@ public:
 
 class ParticleResStrengths : public SingleParticleSimulation, public ResStrengthsData {
 protected:
-  unsigned int nturns;
   std::complex<double> calculate(double agamma);    // calculate res. strength freq. omega=agamma
   
 public:
-  ParticleResStrengths(unsigned int id, const std::shared_ptr<Configuration> c);
+  ParticleResStrengths(unsigned int id, const std::shared_ptr<Configuration> c,std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
+  ParticleResStrengths(const ParticleResStrengths& other) = delete;
+  ParticleResStrengths(ParticleResStrengths&& other) = default;
   void run();
+
+  unsigned int nTurns() const {return config->numTurns(lattice->circumference());}
+  double spintuneStep() const {return 1./double(nTurns());}
+
 };
 
 
@@ -77,10 +82,15 @@ public:
   Metadata info;
   
   ResStrengths();
+  ResStrengths(const std::shared_ptr<Configuration> c) : Simulation(c) {}
   void start();                                    // calculate & print all res. strengths according to config
 
   //print all res. strengths in cache
   void print(string filename="");
+  void save() {print( (config->outpath()/"resonance-strengths.dat").string() );}
+
+  unsigned int nTurns() const {return config->numTurns(lattice->circumference());}
+  double spintuneStep() const {return 1./double(nTurns());}
 };
 
 
