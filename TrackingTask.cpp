@@ -266,7 +266,8 @@ void TrackingTask::outfileOpen()
   outfile->open(outfileName());
   if (!outfile->is_open())
     throw TrackFileError(outfileName());
-  
+
+  *outfile << config->metadata();
   *outfile << storage.printHeader(w) <<std::setw(w)<< "gamma" << std::endl;
 
   if (config->gammaMode()==GammaMode::radiation) {
@@ -274,7 +275,8 @@ void TrackingTask::outfileOpen()
       outfile_ps->open(phasespaceOutfileName());
       if (!outfile_ps->is_open())
 	throw TrackFileError(phasespaceOutfileName());
-      
+
+      *outfile_ps << config->metadata();
       *outfile_ps << "# longitudinal phase space at " << config->savePhaseSpaceElement() << ", particleId " << particleId << std::endl;
       *outfile_ps <<"# " <<std::setw(w-2)<< "t / s" <<std::setw(w)<< "dphase / rad" <<std::setw(w)<< "dgamma/gamma0" << std::endl;
     }

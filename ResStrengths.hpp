@@ -35,6 +35,7 @@
 #include <libpalattice/Metadata.hpp>
 #include "Simulation.hpp"
 #include "Trajectory.hpp"
+#include "version.hpp"
 
 
 class ResStrengthsData {

@@ -34,6 +34,9 @@ Configuration::Configuration(std::string pathIn)
   _nTurns = 0;
 
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
+
+  // metadata
+  info.add("and polematrix version", polemversion());
 }
 
 std::string Configuration::gammaModeString() const
@@ -47,6 +50,14 @@ std::string Configuration::gammaModeString() const
   else if (_gammaMode==GammaMode::radiation) return "radiation";
   else
     return "Please implement this GammaMode in Configuration::gammaModeString()!";
+}
+
+std::string Configuration::trajectoryModeString() const
+{
+  if (_trajectoryMode==TrajectoryMode::closed_orbit) return "closed orbit";
+  else if (_trajectoryMode==TrajectoryMode::simtool) return "simtool";
+  else
+    return "Please implement this TrajectoryMode in Configuration::trajectoryModeString()!";
 }
 
 double Configuration::gamma(double t) const
@@ -93,9 +104,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("resonancestrengths.turns", _nTurns);
   
   tree.put("spintracking.gammaMode", gammaModeString());
-
-  if (_trajectoryMode==TrajectoryMode::closed_orbit) tree.put("spintracking.trajectoryMode", "closed orbit");
-  else if (_trajectoryMode==TrajectoryMode::simtool) tree.put("spintracking.trajectoryMode", "simtool");
+  tree.put("spintracking.trajectoryMode", trajectoryModeString());
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -159,9 +168,20 @@ void Configuration::load(const std::string &filename)
   set_agammaMax( tree.get<double>("resonancestrengths.minSpintune", 0.) );
   set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
   set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
+
+  set_metadata(filename);
   
   std::cout << "* configuration loaded from " << filename << std::endl;
   return;
+}
+
+void Configuration::set_metadata(const std::string& configfile)
+{
+  info.add("configuration file", configfile);
+  info.add("gammaMode", gammaModeString());
+  info.add("trajectoryMode", trajectoryModeString());
+  info.add("simtool", palattice->tool_string());
+  info.add("simtool file", palattice->inFile());
 }
 
 

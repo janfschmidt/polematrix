@@ -12,6 +12,8 @@
 #include <boost/filesystem.hpp>
 #include <libpalattice/SimTools.hpp>
 #include <libpalattice/AccLattice.hpp>
+#include <libpalattice/Metadata.hpp>
+#include "version.hpp"
 
 namespace pt = boost::property_tree;
 namespace fs = boost::filesystem;
@@ -65,6 +67,8 @@ private:
   double _agammaMin;
   double _agammaMax;
   unsigned int _nTurns;
+
+  pal::Metadata info;
   
 public:
   //constants / internal configuration (constructor)
@@ -90,6 +94,7 @@ public:
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
   std::string gammaModeString() const;
+  std::string trajectoryModeString() const;
   TrajectoryMode trajectoryMode() const {return _trajectoryMode;}
   int seed() const {return _seed;}
   double q() const {return _q;}
@@ -106,12 +111,14 @@ public:
   double sigmaGammaFactor() const {return _sigmaGammaFactor;}
   double agammaMin() const {return _agammaMin;}
   double agammaMax() const {return _agammaMax;}
+  std::string metadata() const {return info.out("#");}
   // #turns for resonance strengths calc are calculated from tracking duration() if not set
   unsigned int numTurns(double circumference);
   
   //setter
 protected:
   void set_saveList(const std::string &particleList, std::vector<bool> &list, const std::string &optionName);
+  void set_metadata(const std::string &configfile);
 public:
   void set_outpath(fs::path p) {_outpath=p;}
   void set_verbose(bool v=true) {_verbose=v;}

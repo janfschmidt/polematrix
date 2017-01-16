@@ -178,6 +178,7 @@ void Tracking::savePolarization()
   if (!file.is_open())
     throw TrackFileError(filename);
 
+  file << config->metadata();
   file << "# Polarization calculated as average over " << numSuccessful() << " spins" << std::endl;
   file << polarization.printHeader(w, "P") << std::endl;
   file << polarization.print(w);

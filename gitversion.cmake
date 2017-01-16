@@ -9,7 +9,7 @@ execute_process(
   )
 
 execute_process(
-  COMMAND ${GIT_EXECUTABLE} log -n 1 --date=iso --pretty=format:"%ad"
+  COMMAND ${GIT_EXECUTABLE} log -n 1 --date=iso --pretty=format:%ad
   OUTPUT_VARIABLE GIT_DATE
   OUTPUT_STRIP_TRAILING_WHITESPACE
   )

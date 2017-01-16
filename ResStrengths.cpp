@@ -91,6 +91,7 @@ void ResStrengths::print(string filename)
   std::complex<double> epsilon;
 
  //metadata
+  info.add("and polematrix version", polemversion());
   info.add("Description", "strengths of depolarizing resonances (complex numbers)");
   info.add("turns used for res. strength calc.", nTurns());
   info += lattice->info;
