@@ -140,8 +140,7 @@ ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_pt
 // Fields are NOT expressed by linear approx. of particle motion as by Courant-Ruth and DEPOL code,
 // but the magnetic fields are used directly.
 // !!! At the moment the orbit/field inside a magnet is assumed to be constant.
-// !!! edge focusing of dipoles is not included in AccLattice, but horizontal edge fields is
-//     calculated here. Longitudinal component is not implemented.
+// !!! edge focusing of dipoles is not included
 std::complex<double> ParticleResStrengths::calculate(double agamma)
 {
   std::cout << "calculate gamma*a=" << agamma << std::endl;
@@ -158,11 +157,6 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
       // dipole
       if (it.element()->type == dipole) {
 	double R = ((Dipole*)it.element())->R(); // bending radius
-	// horizontal component of fringe field due to edge angle (e1,e2):
-	//   Bx*l = k*z*l = - tan(e1)/R*z1 - tan(e2)/R*z2
-	// (longitudinal fringe field not implemented)
-	omega -= (1+agamma) * ( tan(it.element()->e1)/R * trajectory->get(it.begin()).z
-				+ tan(it.element()->e2)/R * trajectory->get(it.end()).z );
 	// dipole: epsilon = 1/2pi * omega * R/(i*agamma) * (e^{i*agamma*theta2}-e^{i*agamma*theta1})
 	epsilon += 1/(2*M_PI) * omega * R/(im*agamma) * (std::exp(im*agamma*(lattice->theta(it.end())+turn*2*M_PI)) - std::exp(im*agamma*(lattice->theta(it.begin())+turn*2*M_PI)));
       }
