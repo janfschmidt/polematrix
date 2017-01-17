@@ -18,7 +18,10 @@ will be available soon (in German).
 Do not hesitate to contact me if you have any questions and please report bugs.
 A user guide is coming soon.
 
+
+
 ## Quick-Info
+
 Dependencies:
 - CMake
 - Gnu Scientific Library (GSL)
@@ -37,16 +40,20 @@ make
 sudo make install
 ```
 
+
+
 ## Usage
+
 ```
 polematrix [CONFIGURATION FILE] [options]
 ```
-*[CONFIGURATION FILE]* holds the tracking parameters.
+*[CONFIGURATION FILE]* is an easy to read xml file, which holds the tracking parameters.
 A template configuration file can be generated with option `--template`
 
 ###Allowed options:
 
 ####Program modes:
+
 ```
 -h [ --help ]                  display this help message
 -v [ --version ]               display version
@@ -55,6 +62,7 @@ A template configuration file can be generated with option `--template`
 ```
 
 ####Configuration options:
+
 ```
 -t [ --threads ] arg	       number of threads used for tracking
 -o [ --output-path ] arg (=.)  path for output files
@@ -62,3 +70,8 @@ A template configuration file can be generated with option `--template`
 -n [ --no-progressbar ]        do not show progress bar during tracking
 -a [ --all ]                   write all output (e.g. lattice and orbit)
 ```
+
+## Known Issues
+
+- the estimation of resonance strengths (`-R` mode) is currently only
+working for imperfection resonances (`<trajectoryMode>closed orbit</trajectoryMode>`)
