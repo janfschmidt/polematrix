@@ -1,7 +1,7 @@
-/* ResStrengths Class
+/* ResStrengths Classes
  * estimate the complex strengths of depolarizing resonances from a lattice & orbit
  *
- * Copyright (C) 2016 Jan Felix Schmidt <janschmidt@mailbox.org>
+ * Copyright (C) 2017 Jan Felix Schmidt <janschmidt@mailbox.org>
  *   
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
  * Courant, E. D., and Ronald D. Ruth.
  * "The acceleration of polarized protons in circular accelerators."
  * BNL–51270 and UC–28 and ISA–80–5 (1980).
- *
  */
 
 #include "ResStrengths.hpp"

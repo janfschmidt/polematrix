@@ -27,6 +27,8 @@ Dependencies:
 - Gnu Scientific Library (GSL)
 - Boost program options
 - Boost filesystem
+- Boost property tree
+- Boost random
 - [Armadillo](http://arma.sourceforge.net/) Library
 - [palattice](https://github.com/janfschmidt/palattice) Library
 
