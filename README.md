@@ -22,19 +22,21 @@ A user guide is coming soon.
 
 ## Quick-Info
 
-Dependencies:
+####Dependencies:
+
 - CMake
 - Gnu Scientific Library (GSL)
 - Boost program options
 - Boost filesystem
 - Boost property tree
 - Boost random
-- [Armadillo](http://arma.sourceforge.net/) Library
-- [palattice](https://github.com/janfschmidt/palattice) Library
+- [Armadillo](http://arma.sourceforge.net/) library
+- [palattice](https://github.com/janfschmidt/palattice) library
 
 So far, polematrix was tested only with GCC compiler under Ubuntu/Debian Linux.
 
-Installation:
+####Installation:
+
 ```
 cd polematrix/build
 cmake ..
@@ -75,5 +77,5 @@ A template configuration file can be generated with option `--template`
 
 ## Known Issues
 
-- the estimation of resonance strengths (`-R` mode) is currently only
-working for imperfection resonances (`<trajectoryMode>closed orbit</trajectoryMode>`)
+- the estimation of resonance strengths (`-R` mode) is work in progress and currently only
+working for imperfection resonances (using `<trajectoryMode>closed orbit</trajectoryMode>`)
