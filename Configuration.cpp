@@ -278,7 +278,7 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
 
   //do not change SimToolInstance if nothing has to be changed
   if (tool==palattice->tool && mode==palattice->mode && file==palattice->inFile()) {
-    std::cout << "DEBUG: Configuration::setSimToolInstance(): no changes" << std::endl;
+    //std::cout << "DEBUG: Configuration::setSimToolInstance(): no changes" << std::endl;
     return;
   }
 

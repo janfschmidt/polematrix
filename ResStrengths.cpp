@@ -177,7 +177,7 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
 void ParticleResStrengths::run()
 {
   trajectory->init();
-      std::cout << "DEBUG: init done" << std::endl;
+  // std::cout << "DEBUG: init done" << std::endl;
 
       for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
     calculate(agamma);

@@ -175,8 +175,6 @@ void TrackingTask::initGamma()
     syliModel.init(lattice);
   }
   //else: no init needed
-
-  std::cout << "DEBUG: " << particleId << ": " << config.use_count() <<" "<< lattice.use_count()<<" "<< orbit.use_count() << std::endl;
 }
 
 
