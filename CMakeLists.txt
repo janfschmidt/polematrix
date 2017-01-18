@@ -59,6 +59,7 @@ find_package (Threads)
 # build 'polematrix'
 add_executable(polematrix
   main.cpp
+  debug.cpp
   Configuration.cpp
   Simulation.cpp
   Tracking.cpp

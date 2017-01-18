@@ -20,6 +20,7 @@
 #include <chrono>
 #include <boost/version.hpp>
 #include "Configuration.hpp"
+#include "debug.hpp"
 
 Configuration::Configuration(std::string pathIn)
   : E_rest_GeV(0.0005109989), E_rest_keV(E_rest_GeV*1e6), a_gyro(0.001159652), default_steps(1000), spinDirName("spins"), polFileName("polarization.dat"), confOutFileName("currentconfig.pole")
@@ -278,7 +279,7 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
 
   //do not change SimToolInstance if nothing has to be changed
   if (tool==palattice->tool && mode==palattice->mode && file==palattice->inFile()) {
-    //std::cout << "DEBUG: Configuration::setSimToolInstance(): no changes" << std::endl;
+    polematrix::debug(__PRETTY_FUNCTION__, "no changes");
     return;
   }
 

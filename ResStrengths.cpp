@@ -24,6 +24,7 @@
  */
 
 #include "ResStrengths.hpp"
+#include "debug.hpp"
 
 
 // get res. strength from cache
@@ -177,9 +178,9 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
 void ParticleResStrengths::run()
 {
   trajectory->init();
-  // std::cout << "DEBUG: init done" << std::endl;
+  polematrix::debug(__PRETTY_FUNCTION__, "init done");
 
-      for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
+  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
     calculate(agamma);
   }
   
