@@ -47,6 +47,7 @@ private:
   //palattice
   std::shared_ptr<pal::SimToolInstance> palattice;
   std::vector<bool> _saveGamma;
+  double _circumference;
 
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
@@ -83,9 +84,10 @@ private:
   double _sigmaGammaFactor; // start value for sigma_gamma in units of equilibrium value
 
   //Resonance Strengths
-  double _agammaMin;
+  double _agammaMin;    // output spin tune range
   double _agammaMax;
-  unsigned int _nTurns;
+  double _dagamma;      // spin tune output step width
+  unsigned int _nTurns; // number of turns for res.strengths calculation
 
   pal::Metadata info;
   
@@ -132,7 +134,9 @@ public:
   double agammaMax() const {return _agammaMax;}
   std::string metadata() const {return info.out("#");}
   // #turns for resonance strengths calc are calculated from tracking duration() if not set
-  unsigned int numTurns(double circumference);
+  unsigned int numTurns() const;
+  // spin tune output step width for resonance strengths is calculated from #turns if not set
+  double dagamma() const;
   
   //setter
 protected:
@@ -162,7 +166,9 @@ public:
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
   void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
+  void set_agammaMin(double a) {_agammaMin = a;}
   void set_agammaMax(double a) {_agammaMax = a;}
+  void set_dagamma(double a) {_dagamma = a;}
   void set_nTurns(unsigned int n) {_nTurns = n;}
   // set parameters, which are currently unset, from SimToolInstance and given lattice
   void autocomplete(const pal::AccLattice& lattice);

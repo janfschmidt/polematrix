@@ -38,19 +38,57 @@ std::complex<double> ResStrengthsData::operator[](double agamma)
 }
 
 
-void ResStrengthsData::cacheIt(double agamma, std::complex<double>& epsilon)
+// get res. strength from cache or calculate it
+std::complex<double> ResStrengthsData::get(double agamma)
+{
+  auto it = cache.find(agamma);
+  if (it != cache.end())
+    return it->second;
+  else
+    return calculate(agamma);
+}
+
+
+void ResStrengthsData::cacheIt(double agamma, const std::complex<double>& epsilon)
 {
   cache.insert( std::pair<double,std::complex<double> >(agamma,epsilon) );
 }
 
 
+std::string ResStrengthsData::header(unsigned int w) const
+{
+  std::stringstream s;
+  s << "#"<<std::setw(w)<<"agamma"<<std::setw(w)<< "real(epsilon)" <<std::setw(w)<< "imag(epsilon)" <<std::setw(w)<< "abs(epsilon)";
+  return s.str();
+}
+
+std::string ResStrengthsData::printSingle(double agamma, const std::complex<double>& epsilon) const
+{
+  const unsigned int w=16;
+  std::stringstream s;
+  s <<resetiosflags(ios::scientific)<<setiosflags(ios::fixed)<<setprecision(4);
+  s <<std::setw(1+w)<< agamma;
+  s <<resetiosflags(ios::fixed)<<setiosflags(ios::scientific)<<showpoint<<setprecision(5);
+  s <<std::setw(w)<< epsilon.real() <<std::setw(w)<< epsilon.imag() <<std::setw(w)<< std::abs(epsilon);
+  return s.str();
+}
+
+std::string ResStrengthsData::getFormatted(double agamma)
+{
+  std::stringstream s;
+  s << header() << std::endl << printSingle(agamma, get(agamma));
+  return s.str();
+}
 
 
 
 
 std::complex<double> ResStrengths::calculate(double agamma)
 {
-  std::cout << "average over particles for gamma*a=" << agamma << std::endl;
+  std::stringstream msg;
+  msg << "average over particles for gamma*a=" << agamma;
+  polematrix::debug(__PRETTY_FUNCTION__, msg.str());
+  
   std::complex<double> epsilon (0,0);
   for (auto &p : particles) {
     epsilon += p[agamma];
@@ -65,15 +103,15 @@ void ResStrengths::start()
 {
   
   std::cout << "Estimate Resonance Strengths using "
-    	    << config->nParticles() << " particles and "
-	    << nTurns() << " turns:" << std::endl;
+	    << config->numTurns() << " turns for "
+    	    << config->nParticles() << " particles:" << std::endl;
   for (unsigned int i=0; i<config->nParticles(); i++) {
     particles.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
   }
   for (auto& p : particles) {
     p.run();
   }
-  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
+  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->dagamma()) {
     calculate(agamma);
   }
   std::cout << "Done." << std::endl;
@@ -87,26 +125,22 @@ void ResStrengths::print(string filename)
 {
   std::fstream file;
   std::stringstream s;
-  const int w = 16;
+  const unsigned int w = 16;
   std::complex<double> epsilon;
 
  //metadata
   info.add("and polematrix version", polemversion());
   info.add("Description", "strengths of depolarizing resonances (complex numbers)");
-  info.add("turns used for res. strength calc.", nTurns());
+  info.add("turns used for res. strength calc.", config->numTurns());
   info += lattice->info;
   s << info.out("#");
 
- // header
-  s <<"#"<<std::setw(w)<<"agamma"<<std::setw(w)<< "real(epsilon)" <<std::setw(w)<< "imag(epsilon)" <<std::setw(w)<< "abs(epsilon)" << std::endl;
- 
-  for (auto it : cache) {
-    auto epsilon = it.second;
-    s <<resetiosflags(ios::scientific)<<setiosflags(ios::fixed)<<setprecision(4);
-    s <<std::setw(1+w)<< it.first;
-    s <<resetiosflags(ios::fixed)<<setiosflags(ios::scientific)<<showpoint<<setprecision(5);
-    s <<std::setw(w)<< epsilon.real() <<std::setw(w)<< epsilon.imag() <<std::setw(w)<< std::abs(epsilon)
-      << std::endl;
+  // header
+  s << header(w) << std::endl;
+
+  // data
+  for (auto& it : cache) {
+    s << printSingle(it) << std::endl;
   }
 
  // output of s
@@ -140,14 +174,14 @@ ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_pt
 // based on Courant-Ruth formalism using the magnetic fields B(orbit)
 // Fields are NOT expressed by linear approx. of particle motion as by Courant-Ruth and DEPOL code,
 // but the magnetic fields are used directly.
-// !!! At the moment the orbit/field inside a magnet is assumed to be constant.
-// !!! edge focusing of dipoles is not included
+// !!! the orbit/field inside a magnet is assumed to be constant.
+// !!! edge focusing is not included
 std::complex<double> ParticleResStrengths::calculate(double agamma)
 {
   std::cout << "calculate gamma*a=" << agamma << std::endl;
   std::complex<double> epsilon (0,0);
 
-  for (unsigned int turn=0; turn<nTurns(); turn++) {
+  for (unsigned int turn=0; turn<config->numTurns(); turn++) {
     for (AccLattice::const_iterator it=lattice->begin(); it!=lattice->end(); ++it) {
       double pos = it.pos() + turn*lattice->circumference();
       //field from Thomas-BMT equation:
@@ -158,17 +192,17 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
       // dipole
       if (it.element()->type == dipole) {
 	double R = ((Dipole*)it.element())->R(); // bending radius
-	// dipole: epsilon = 1/2pi * omega * R/(i*agamma) * (e^{i*agamma*theta2}-e^{i*agamma*theta1})
+	// calculate for dipole: epsilon = 1/2pi * omega * R/(i*agamma) * (e^{i*agamma*theta2}-e^{i*agamma*theta1})
 	epsilon += 1/(2*M_PI) * omega * R/(im*agamma) * (std::exp(im*agamma*(lattice->theta(it.end())+turn*2*M_PI)) - std::exp(im*agamma*(lattice->theta(it.begin())+turn*2*M_PI)));
       }
-      // all others: epsilon = 1/2pi * e^{i*agamma*theta} *  omega * l
       else {
+	// calculate for all others: epsilon = 1/2pi * e^{i*agamma*theta} *  omega * l
 	epsilon += 1/(2*M_PI) * std::exp(im*agamma*(lattice->theta(it.pos())+turn*2*M_PI)) * omega * it.element()->length;
       }
     }//lattice
   }//turn
 
-  epsilon /= double(nTurns());
+  epsilon /= double(config->numTurns());
   cacheIt(agamma,epsilon);
   return epsilon;
 }
@@ -180,7 +214,7 @@ void ParticleResStrengths::run()
   trajectory->init();
   polematrix::debug(__PRETTY_FUNCTION__, "init done");
 
-  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=spintuneStep()) {
+  for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->dagamma()) {
     calculate(agamma);
   }
   

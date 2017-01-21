@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     ("verbose,V", "more output, e.g. each written spin file")
     ("no-progressbar,n", "do not show progress bar during tracking")
     ("all,a", "write all output (e.g. lattice and orbit)")
+    ("spintune,s", po::value<double>(), "in resonance-strengths mode: calculate for given spin tune only")
     ;
   
   po::options_description hidden("Hidden options");
@@ -84,8 +85,8 @@ int main(int argc, char *argv[])
     po::store(po::command_line_parser(argc, argv).options(all).positional(pd).run(), args);
     po::notify(args);
   }
-  catch(po::unknown_option unknown){
-    std::cout << "Unknown option: " << unknown.get_option_name() << std::endl;
+  catch(po::error_with_option_name e){
+    std::cout << "ERROR: " << e.what() << std::endl;
     std::cout << "use -h for help." << std::endl;
     return 1;
   }
@@ -152,7 +153,11 @@ int main(int argc, char *argv[])
       r.saveOrbit();
     }
     try{
-      r.start();
+      if (args.count("spintune")) {
+	std::cout << r.getFormatted( args["spintune"].as<double>() ) << std::endl;
+      }
+      else
+	r.start();
     }
     catch (std::exception &e) {
       std::cout << e.what() << std::endl << "Quit." << std::endl;

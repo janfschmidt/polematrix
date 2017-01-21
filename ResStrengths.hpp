@@ -42,11 +42,18 @@ protected:
   std::map<double,std::complex<double> > cache;
   const std::complex<double> im;                  // imaginary unit i
 
-  void cacheIt(double agamma, std::complex<double>& epsilon);
+  std::string header(unsigned int w=16) const;
+  void cacheIt(double agamma, const std::complex<double>& epsilon);
+  virtual std::complex<double> calculate(double agamma) =0;
 
 public:
   ResStrengthsData() : im(std::complex<double> (0,1)) {}
-  std::complex<double> operator[](double agamma);        // get res. strength (from cache)
+  std::complex<double> operator[](double agamma);        // get res. strength from cache
+  std::complex<double> get(double agamma);               // get res. strength from cache or calculate it
+  std::string getFormatted(double agamma);
+
+  std::string printSingle(double agamma, const std::complex<double>& epsilon) const; // formated output of entry
+  std::string printSingle(const std::pair<double,std::complex<double> >& it) const {return printSingle(it.first,it.second);}
 };
 
 
@@ -62,20 +69,15 @@ public:
   ParticleResStrengths(unsigned int id, const std::shared_ptr<Configuration> c,std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
   ParticleResStrengths(const ParticleResStrengths& other) = delete;
   ParticleResStrengths(ParticleResStrengths&& other) = default;
+  
   void run();
-
-  unsigned int nTurns() const {return config->numTurns(lattice->circumference());}
-  double spintuneStep() const {return 1./double(nTurns());}
-
 };
-
 
 
 
 class ResStrengths : public Simulation, public ResStrengthsData {
 protected:
   std::vector<ParticleResStrengths> particles;
-
   std::complex<double> calculate(double agamma);
   
 public:
@@ -83,14 +85,11 @@ public:
   
   ResStrengths();
   ResStrengths(const std::shared_ptr<Configuration> c) : Simulation(c) {}
-  void start();                                    // calculate & print all res. strengths according to config
 
-  //print all res. strengths in cache
-  void print(string filename="");
+  void start();                                  // calculate & print all res. strengths according to config
+
+  void print(string filename="");                //print all res. strengths in cache
   void save() {print( (config->outpath()/"resonance-strengths.dat").string() );}
-
-  unsigned int nTurns() const {return config->numTurns(lattice->circumference());}
-  double spintuneStep() const {return 1./double(nTurns());}
 };
 
 

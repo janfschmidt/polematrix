@@ -52,6 +52,7 @@ Configuration::Configuration(std::string pathIn)
   _agammaMin = 0.;
   _agammaMax = 10.;
   _nTurns = 0;
+  _dagamma = 0.;
 
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 
@@ -121,6 +122,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   tree.put("resonancestrengths.minSpintune", agammaMin());
   tree.put("resonancestrengths.maxSpintune", agammaMax());
+  tree.put("resonancestrengths.spintuneStep", dagamma());
   tree.put("resonancestrengths.turns", _nTurns);
   
   tree.put("spintracking.gammaMode", gammaModeString());
@@ -185,9 +187,10 @@ void Configuration::load(const std::string &filename)
   set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpaceElement", "") );
   set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
-  set_agammaMax( tree.get<double>("resonancestrengths.minSpintune", 0.) );
+  set_agammaMin( tree.get<double>("resonancestrengths.minSpintune", 0.) );
   set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
   set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
+  set_dagamma( tree.get<double>("resonancestrengths.spintuneStep", 0.) );
 
   set_metadata(filename);
   
@@ -423,6 +426,8 @@ void Configuration::autocomplete(const pal::AccLattice& lattice)
     std::cout << "* set long. damping partition number from " << palattice->tool_string()
 	      << ": Js=" << Js() << std::endl;
   }
+
+  _circumference = lattice.circumference();
 }
 
 
@@ -447,11 +452,24 @@ void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
 
 }
 
-  // #turns for resonance strengths calc are calculated from tracking duration() if not set
-unsigned int Configuration::numTurns(double circumference)
+// #turns for resonance strengths calc are calculated from tracking duration() if not set
+unsigned int Configuration::numTurns() const
 {
   if (_nTurns != 0)
     return _nTurns;
+  else {
+    if (std::fabs(_circumference) < COMPARE_DOUBLE_EQUAL)
+      throw std::runtime_error("Configuration::numTurns() cannot guess number of turns, because it's neither set in config file nor loaded from model (Configuration::autocomlete()");
+    return (duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / _circumference) + 1;
+  }
+}
+
+// spin tune output step width for resonance strengths is calculated from #turns if not set
+double Configuration::dagamma() const
+{
+  auto dag = std::fabs(_dagamma);
+  if ( dag > COMPARE_DOUBLE_EQUAL )
+    return dag;
   else
-    return (duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / circumference) + 1;
+    return 1./double(numTurns());
 }

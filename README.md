@@ -68,11 +68,12 @@ A template configuration file can be generated with option `--template`
 ####Configuration options:
 
 ```
--t [ --threads ] arg	       number of threads used for tracking
+-t [ --threads ] arg (=all)    number of threads used for tracking
 -o [ --output-path ] arg (=.)  path for output files
 -V [ --verbose ]               more output, e.g. each written spin file
 -n [ --no-progressbar ]        do not show progress bar during tracking
 -a [ --all ]                   write all output (e.g. lattice and orbit)
+-s [ --spintune ] arg	       in resonance-strengths mode: calculate for given spin tune only
 ```
 
 ## Known Issues
