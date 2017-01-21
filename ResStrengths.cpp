@@ -62,7 +62,7 @@ std::string ResStrengthsData::header(unsigned int w) const
   return s.str();
 }
 
-std::string ResStrengthsData::printSingle(double agamma, const std::complex<double>& epsilon) const
+std::string ResStrengthsData::printSingle(double agamma, std::complex<double> epsilon) const
 {
   const unsigned int w=16;
   std::stringstream s;
@@ -73,15 +73,21 @@ std::string ResStrengthsData::printSingle(double agamma, const std::complex<doub
   return s.str();
 }
 
-std::string ResStrengthsData::getFormatted(double agamma)
+
+
+
+void ResStrengths::init()
 {
-  std::stringstream s;
-  s << header() << std::endl << printSingle(agamma, get(agamma));
-  return s.str();
+  if (particles.size() > 0)
+    return;
+  
+  std::cout << "Estimate Resonance Strengths using "
+	    << config->numTurns() << " turns for "
+    	    << config->nParticles() << " particles:" << std::endl;
+  for (unsigned int i=0; i<config->nParticles(); i++) {
+    particles.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
+  }
 }
-
-
-
 
 std::complex<double> ResStrengths::calculate(double agamma)
 {
@@ -101,13 +107,7 @@ std::complex<double> ResStrengths::calculate(double agamma)
 
 void ResStrengths::start()
 {
-  
-  std::cout << "Estimate Resonance Strengths using "
-	    << config->numTurns() << " turns for "
-    	    << config->nParticles() << " particles:" << std::endl;
-  for (unsigned int i=0; i<config->nParticles(); i++) {
-    particles.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
-  }
+  init();
   for (auto& p : particles) {
     p.run();
   }
@@ -115,6 +115,17 @@ void ResStrengths::start()
     calculate(agamma);
   }
   std::cout << "Done." << std::endl;
+}
+
+std::string ResStrengths::getSingle(double agamma)
+{
+  config->set_agammaMin(agamma);
+  config->set_agammaMax(agamma);
+  start();
+  
+  std::stringstream s;
+  s << header() << std::endl << printSingle(agamma, operator[](agamma));
+  return s.str();
 }
 
 
@@ -212,7 +223,6 @@ std::complex<double> ParticleResStrengths::calculate(double agamma)
 void ParticleResStrengths::run()
 {
   trajectory->init();
-  polematrix::debug(__PRETTY_FUNCTION__, "init done");
 
   for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->dagamma()) {
     calculate(agamma);

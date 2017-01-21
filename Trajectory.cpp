@@ -19,16 +19,20 @@
  */
 
 #include "Trajectory.hpp"
+#include "debug.hpp"
 
 SimtoolTrajectory::SimtoolTrajectory(unsigned int id, const std::shared_ptr<Configuration> c)
-  : Trajectory(id,c), simtoolTrajectory(config->getSimToolInstance(), gsl_interp_akima) {}
+  : Trajectory(id,c), simtoolTrajectory(config->getSimToolInstance(), gsl_interp_akima), initDone(false) {}
 
 
 void SimtoolTrajectory::init()
 {
-  // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-  simtoolTrajectory.simToolTrajectory( config->getSimToolInstance(), particleId+1 );
-  //trajectorySimTool.init();  --> not used to improve performance, trajectory is accessed by infrontof()
+  if (!initDone) {
+    // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
+    simtoolTrajectory.simToolTrajectory( config->getSimToolInstance(), particleId+1 );
+    initDone = true;
+    polematrix::debug(__PRETTY_FUNCTION__, "init done");
+  }
 }
 
 

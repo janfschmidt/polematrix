@@ -45,14 +45,13 @@ protected:
   std::string header(unsigned int w=16) const;
   void cacheIt(double agamma, const std::complex<double>& epsilon);
   virtual std::complex<double> calculate(double agamma) =0;
+  std::complex<double> get(double agamma);               // get res. strength from cache or calculate it
 
 public:
   ResStrengthsData() : im(std::complex<double> (0,1)) {}
   std::complex<double> operator[](double agamma);        // get res. strength from cache
-  std::complex<double> get(double agamma);               // get res. strength from cache or calculate it
-  std::string getFormatted(double agamma);
 
-  std::string printSingle(double agamma, const std::complex<double>& epsilon) const; // formated output of entry
+  std::string printSingle(double agamma, std::complex<double> epsilon) const; // formated output of entry
   std::string printSingle(const std::pair<double,std::complex<double> >& it) const {return printSingle(it.first,it.second);}
 };
 
@@ -71,6 +70,7 @@ public:
   ParticleResStrengths(ParticleResStrengths&& other) = default;
   
   void run();
+  void runSingle();
 };
 
 
@@ -79,6 +79,7 @@ class ResStrengths : public Simulation, public ResStrengthsData {
 protected:
   std::vector<ParticleResStrengths> particles;
   std::complex<double> calculate(double agamma);
+  void init();
   
 public:
   Metadata info;
@@ -87,6 +88,7 @@ public:
   ResStrengths(const std::shared_ptr<Configuration> c) : Simulation(c) {}
 
   void start();                                  // calculate & print all res. strengths according to config
+  std::string getSingle(double agamma);          // calculate & print single resonance strength
 
   void print(string filename="");                //print all res. strengths in cache
   void save() {print( (config->outpath()/"resonance-strengths.dat").string() );}

@@ -154,16 +154,17 @@ int main(int argc, char *argv[])
     }
     try{
       if (args.count("spintune")) {
-	std::cout << r.getFormatted( args["spintune"].as<double>() ) << std::endl;
+	std::cout << r.getSingle( args["spintune"].as<double>() ) << std::endl;
       }
-      else
+      else {
 	r.start();
+	r.save();
+      }
     }
     catch (std::exception &e) {
       std::cout << e.what() << std::endl << "Quit." << std::endl;
       return 2;
     }
-    r.save();
     return 0;
   }
 

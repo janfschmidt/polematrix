@@ -64,6 +64,7 @@ class SimtoolTrajectory : public Trajectory
 {
 private:
   pal::FunctionOfPos<pal::AccPair> simtoolTrajectory;
+  bool initDone;
   
 public:
   SimtoolTrajectory(unsigned int id, const std::shared_ptr<Configuration> c);
