@@ -75,8 +75,3 @@ A template configuration file can be generated with option `--template`
 -a [ --all ]                   write all output (e.g. lattice and orbit)
 -s [ --spintune ] arg	       in resonance-strengths mode: calculate for given spin tune only
 ```
-
-## Known Issues
-
-- the estimation of resonance strengths (`-R` mode) is work in progress and currently only
-working for imperfection resonances (using `<trajectoryMode>closed orbit</trajectoryMode>`)
