@@ -25,6 +25,7 @@
 #include "TrackingTask.hpp"
 
 
+
 void SpinMotion::operator+=(const SpinMotion &other)
 {
   if (this->size() != other.size())
@@ -194,7 +195,12 @@ void TrackingTask::matrixTracking()
 
   while (pos < pos_stop) {
     currentGamma = (this->*gamma)(pos);
-    omega = currentElement.element()->B_int( trajectory->get(pos) ) * config->a_gyro; // field of element
+    auto Bint = currentElement.element()->B_int( trajectory->get(pos) );  // field of element
+    // Dipole: Integral field including Bx from edge focussing (! uses vertical trajectory at "pos" for magnet entrance and exit)
+    if (config->edgefoc() && currentElement.element()->type == pal::dipole) {
+      Bint.x -= ( tan(currentElement.element()->e1)/ + tan(currentElement.element()->e2)/(1./currentElement.element()->k0.z) ) * trajectory->get(pos).z;
+    }
+    omega = Bint * config->a_gyro;
     omega.x *= currentGamma;
     omega.z *= currentGamma;
     // omega.s: Precession around s is suppressed by factor gamma (->TBMT-equation)

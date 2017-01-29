@@ -69,6 +69,7 @@ private:
   unsigned int _nParticles; // number of tracked particles
   GammaMode _gammaMode;
   TrajectoryMode _trajectoryMode;
+  bool _edgefoc;            // edge focussing field (Bx) of Dipoles included ?
 
   //radiation (used with gammaMode radiation only)
   int _seed;                // random number seed
@@ -117,6 +118,7 @@ public:
   std::string gammaModeString() const;
   std::string trajectoryModeString() const;
   TrajectoryMode trajectoryMode() const {return _trajectoryMode;}
+  bool edgefoc() const {return _edgefoc;}
   int seed() const {return _seed;}
   double q() const {return _q;}
   double alphac() const {return _alphac;}
@@ -154,6 +156,7 @@ public:
   void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
   void set_trajectoryMode(TrajectoryMode t) {_trajectoryMode=t;}
+  void set_edgefoc(bool e) {_edgefoc = e;}
   void set_saveGamma(std::string particleList) {set_saveList(particleList,_saveGamma,"saveGamma");}
   void set_seed(int s) {_seed=s;}
   void set_q(double q) {_q=q;}

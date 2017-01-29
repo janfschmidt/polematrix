@@ -39,6 +39,7 @@ Configuration::Configuration(std::string pathIn)
   _s_start[2] = 1;
   _gammaMode = GammaMode::radiation;
   _trajectoryMode = TrajectoryMode::closed_orbit;
+  _edgefoc = false;
   
   _seed = randomSeed();
   _q = 0.;
@@ -105,6 +106,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("spintracking.s_start.x", _s_start[0]);
   tree.put("spintracking.s_start.z", _s_start[2]);
   tree.put("spintracking.s_start.s", _s_start[1]);
+  tree.put("spintracking.edgeFocussing", _edgefoc);
   tree.put("palattice.simTool", palattice->tool_string());
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
@@ -175,6 +177,7 @@ void Configuration::load(const std::string &filename)
   set_nParticles( tree.get("spintracking.numParticles", 1) );
   set_t_start( tree.get("spintracking.t_start", 0.0) );
   set_dt_out( tree.get("spintracking.dt_out", duration()/default_steps) );
+  set_edgefoc( tree.get<bool>("spintracking.edgeFocussing", false) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
@@ -243,6 +246,8 @@ void Configuration::printSummary() const
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
   s << "longitudinal phase space model (GammaMode): \"" << gammaModeString() << "\"" << std::endl;
+  if (edgefoc())
+    s << "horizontal dipole edge focussing field used" << std::endl;
   s << "output for each spin vector to " << spinDirectory().string() <<"/"<< std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
