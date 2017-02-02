@@ -124,7 +124,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   tree.put("resonancestrengths.minSpintune", agammaMin());
   tree.put("resonancestrengths.maxSpintune", agammaMax());
-  tree.put("resonancestrengths.spintuneStep", dagamma());
+  tree.put("resonancestrengths.spintuneStep", _dagamma);
   tree.put("resonancestrengths.turns", _nTurns);
   
   tree.put("spintracking.gammaMode", gammaModeString());
