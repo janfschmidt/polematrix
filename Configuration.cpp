@@ -35,11 +35,13 @@ Configuration::Configuration(std::string pathIn)
   _dt_out = 1e-5;
   _E0 = 1;
   _dE = 0;
+  _Emax = 1e10;
   _s_start.zeros();
   _s_start[2] = 1;
   _gammaMode = GammaMode::radiation;
   _trajectoryMode = TrajectoryMode::closed_orbit;
   _edgefoc = false;
+  _outElementUsed = false;
   
   _seed = randomSeed();
   _q = 0.;
@@ -84,7 +86,11 @@ std::string Configuration::trajectoryModeString() const
 
 double Configuration::gamma(double t) const
 {
-  return (E0() + dE() * t) / E_rest_GeV;
+  double E = (E0() + dE() * t);
+  if (E > Emax())
+    E = Emax();
+  
+  return E / E_rest_GeV;
 }
 
 double Configuration::agamma(double t) const
@@ -129,6 +135,11 @@ void Configuration::save(const std::string &filename) const
   
   tree.put("spintracking.gammaMode", gammaModeString());
   tree.put("spintracking.trajectoryMode", trajectoryModeString());
+
+  if (Emax() < 1e10)
+    tree.put("spintracking.Emax", Emax());
+  if (outElementUsed())
+    tree.put("spintracking.outElement", outElement());
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -177,6 +188,7 @@ void Configuration::load(const std::string &filename)
   set_nParticles( tree.get("spintracking.numParticles", 1) );
   set_t_start( tree.get("spintracking.t_start", 0.0) );
   set_dt_out( tree.get("spintracking.dt_out", duration()/default_steps) );
+  set_Emax( tree.get("spintracking.Emax", 1e10) );
   set_edgefoc( tree.get<bool>("spintracking.edgeFocussing", false) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
@@ -194,6 +206,13 @@ void Configuration::load(const std::string &filename)
   set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
   set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
   set_dagamma( tree.get<double>("resonancestrengths.spintuneStep", 0.) );
+
+  try {
+    set_outElement( tree.get<std::string>("spintracking.outElement") );
+  }
+  catch (pt::ptree_error &e) {
+    _outElementUsed = false;
+  }
 
   set_metadata(filename);
   
@@ -249,6 +268,8 @@ void Configuration::printSummary() const
   if (edgefoc())
     s << "horizontal dipole edge focussing field used" << std::endl;
   s << "output for each spin vector to " << spinDirectory().string() <<"/"<< std::endl;
+  if (outElementUsed())
+    s << "output at lattice element " << outElement() << " only "<< std::endl;
   s << "-----------------------------------------------------------------" << std::endl;
 
   std::cout << s.str();

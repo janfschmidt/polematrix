@@ -210,8 +210,10 @@ void TrackingTask::matrixTracking()
 
     // output
     if (pos >= pos_nextOut) {
-      storeStep(pos,s);
-      pos_nextOut += dpos_out;
+      if (!config->outElementUsed() || currentElement.element()->name == config->outElement()) {
+	storeStep(pos,s);
+	pos_nextOut += dpos_out;
+      }
     }
     gammaStat(currentGamma);
 

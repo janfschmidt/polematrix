@@ -66,10 +66,14 @@ private:
   double _dt_out;           // output(!) step width / s
   double _E0;               // energy at t=0 / GeV
   double _dE;               // dE/dt / GeV/s
+  double _Emax;             // ramp end energy / GeV
   unsigned int _nParticles; // number of tracked particles
   GammaMode _gammaMode;
   TrajectoryMode _trajectoryMode;
   bool _edgefoc;            // edge focussing field (Bx) of Dipoles included ?
+  std::string _outElement;  // output at the lattice element with this name only
+                            // (wait for next occurrence after dt_out)
+  bool _outElementUsed;
 
   //radiation (used with gammaMode radiation only)
   int _seed;                // random number seed
@@ -111,8 +115,11 @@ public:
   double t_start() const {return _t_start;}
   double t_stop() const {return _t_stop;}
   double dt_out() const {return _dt_out;}
+  std::string outElement() const {return _outElement;}
+  bool outElementUsed() const {return _outElementUsed;}
   double E0() const {return _E0;}
   double dE() const {return _dE;}
+  double Emax() const {return _Emax;}
   unsigned int nParticles() const {return _nParticles;}
   GammaMode gammaMode() const {return _gammaMode;}
   std::string gammaModeString() const;
@@ -151,8 +158,10 @@ public:
   void set_t_start(double t) {_t_start=t;}
   void set_t_stop(double t) {_t_stop=t;}
   void set_dt_out(double dt) {_dt_out=dt;}
+  void set_outElement(std::string name) {_outElement=name; _outElementUsed=true;}
   void set_E0(double E) {_E0=E;}
   void set_dE(double dEin) {_dE=dEin;}
+  void set_Emax(double E) {_Emax=E;}
   void set_nParticles(unsigned int n);
   void set_gammaMode(GammaMode g) {_gammaMode=g;}
   void set_trajectoryMode(TrajectoryMode t) {_trajectoryMode=t;}
