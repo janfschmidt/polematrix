@@ -18,6 +18,7 @@
  */
 
 #include <chrono>
+#include <algorithm>
 #include <boost/version.hpp>
 #include "Configuration.hpp"
 #include "debug.hpp"
@@ -554,6 +555,7 @@ void RfMagnetConfig::writeToConfig(pt::ptree &tree) const
 template<>
 void RfMagnetConfig::setFromStringList<std::string>(std::vector<std::string>& v, std::string list)
 {
+  list.erase(std::remove_if(list.begin(), list.end(), ::isspace), list.end());
   std::istringstream ss(list);
   std::string tmp;
   while ( std::getline(ss,tmp,',') ) {
