@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
   std::string configfile;
     std::string outpath;
   
-  po::options_description modes("Program modes");
+  po::options_description modes("Special Program Modes (no spin tracking)");
   modes.add_options()
     ("help,h", "display this help message")
     ("version,v", "display version")
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     ("resonance-strengths,R", "estimate strengths of depolarizing resonances")
     ;
 
-  po::options_description confs("Configuration options");
+  po::options_description confs("Configuration Options");
   confs.add_options()  
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     ("spintune,s", po::value<double>(), "in resonance-strengths mode: calculate for given spin tune only")
     ;
   
-  po::options_description hidden("Hidden options");
+  po::options_description hidden("Hidden Options");
   hidden.add_options()  
     ("config", po::value<std::string>(&configfile), "the configuration file for the tracking")
     ;

@@ -26,6 +26,7 @@ void Simulation::setModel()
   orbit.reset( new pal::FunctionOfPos<pal::AccPair>(palattice) );
   config->updateSimToolSettings(*lattice);
   orbit->simToolClosedOrbit( palattice );
+  config->writeRfMagnetsToLattice(*lattice);
 
   if (config->gammaMode() == GammaMode::simtool
       || config->gammaMode() == GammaMode::simtool_plus_linear

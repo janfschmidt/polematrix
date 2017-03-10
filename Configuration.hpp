@@ -41,6 +41,42 @@ namespace fs = boost::filesystem;
 enum class GammaMode{linear, offset, oscillation, radiation, simtool, simtool_plus_linear, simtool_no_interpolation};
 enum class TrajectoryMode{closed_orbit, simtool};
 
+
+
+// parse configuration of multiple rf magnets from comma separated lists
+// in a polematrix config file (boost property tree)
+// and write them to a pal::AccLattice
+class RfMagnetConfig {
+protected:
+  std::vector<std::string> elements; // element names
+  std::vector<double> Q1;            //  tunes for turn 1 (AccElement::Qrf1)
+  std::vector<double> dQ;            //  tune changes per turn (AccElement::dQrf)
+  std::vector<unsigned int> period;  //  sweep lengths in turns (AccElement::rfPeriod)
+
+  template<typename T> std::string getStringList(const std::vector<T> v) const;
+  template<typename T> void setFromStringList(std::vector<T>& v, std::string list);
+  
+public:
+  RfMagnetConfig() {};
+  ~RfMagnetConfig() {};
+
+  void set(const pt::ptree &tree);
+  void writeToLattice(pal::AccLattice& lattice) const;
+  void writeToConfig(pt::ptree &tree) const;
+
+  // comma separated string getters to write config
+  std::string getElements() const {return getStringList<std::string>(elements);}
+  std::string getQ1() const {return getStringList<double>(Q1);}
+  std::string getDQ() const {return getStringList<double>(dQ);}
+  std::string getPeriod() const {return getStringList<unsigned int>(period);}
+};
+
+
+
+
+
+
+
 class Configuration
 {
 private:
@@ -75,6 +111,9 @@ private:
                             // (wait for next occurrence after dt_out)
   bool _outElementUsed;
 
+  //rf magnets
+  RfMagnetConfig rf;
+  
   //radiation (used with gammaMode radiation only)
   int _seed;                // random number seed
   double _q;                 // over voltage factor
@@ -218,9 +257,42 @@ public:
   // write energy and, if needed, number of turns to SimToolInstance
   void updateSimToolSettings(const pal::AccLattice& lattice);
 
+  void writeRfMagnetsToLattice(pal::AccLattice& lattice) const {rf.writeToLattice(lattice);}
+
 };
 
 
+
+
+
+
+
+template<typename T>
+std::string RfMagnetConfig::getStringList(const std::vector<T> v) const
+{
+  std::stringstream ss;
+  for (auto i=0u; i<v.size(); i++) {
+    ss << v[i];
+    if (i != v.size()-1)
+      ss << ",";
+  }
+  return ss.str();
+}
+
+
+template<typename T>
+void RfMagnetConfig::setFromStringList(std::vector<T>& v, std::string list)
+{
+  std::istringstream ss(list);
+  T tmp;
+   while ( (ss >> tmp) ) {
+     v.push_back(tmp);
+     if (ss.peek() == ',' || ss.peek() == ' ')
+       ss.ignore();
+   }
+}
+
+template<> void RfMagnetConfig::setFromStringList<std::string>(std::vector<std::string>& v, std::string list);
 
 
 #endif

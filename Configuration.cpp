@@ -135,6 +135,7 @@ void Configuration::save(const std::string &filename) const
   
   tree.put("spintracking.gammaMode", gammaModeString());
   tree.put("spintracking.trajectoryMode", trajectoryModeString());
+  rf.writeToConfig(tree);
 
   if (Emax() < 1e10)
     tree.put("spintracking.Emax", Emax());
@@ -206,6 +207,7 @@ void Configuration::load(const std::string &filename)
   set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
   set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
   set_dagamma( tree.get<double>("resonancestrengths.spintuneStep", 0.) );
+  rf.set(tree);
 
   try {
     set_outElement( tree.get<std::string>("spintracking.outElement") );
@@ -498,4 +500,63 @@ double Configuration::dagamma() const
     return dag;
   else
     return 1./double(numTurns());
+}
+
+
+
+
+
+
+
+
+// class RfMagnetConfig
+// parse configuration of multiple rf magnets from comma separated lists
+// in a polematrix config file (boost property tree)
+// and write them to a pal::AccLattice
+
+void RfMagnetConfig::set(const pt::ptree &tree)
+{
+  setFromStringList<std::string>(elements, tree.get<std::string>("palattice.rfMagnets.elements", ""));
+  setFromStringList<double>(Q1, tree.get<std::string>("palattice.rfMagnets.Q1", ""));
+  setFromStringList<double>(dQ, tree.get<std::string>("palattice.rfMagnets.dQ", ""));
+  setFromStringList<unsigned int>(period, tree.get<std::string>("palattice.rfMagnets.period", ""));
+
+  auto n = elements.size();
+  if (Q1.size()!=n || dQ.size()!=n || period.size()!=n)
+    throw std::runtime_error("Cannot set up RF magnets from config file! Unequal number of entries.");
+}
+
+
+void RfMagnetConfig::writeToLattice(pal::AccLattice& lattice) const
+{
+  for (auto i=0u; i<elements.size(); i++) {
+    lattice[elements[i]].element()->Qrf1 = Q1[i];
+    lattice[elements[i]].element()->dQrf = dQ[i];
+    lattice[elements[i]].element()->rfPeriod = period[i];
+    std::cout << "* set up " << elements[i] << " as RF magnet (Q1=" << Q1[i]
+	      << ", dQ=" << dQ[i] << ", period=" << period[i] << ")" << std::endl;
+  }
+}
+
+
+void RfMagnetConfig::writeToConfig(pt::ptree &tree) const
+{
+  if (elements.size() == 0)
+    return;
+
+  tree.put("palattice.rfMagnets.elements", getElements());
+  tree.put("palattice.rfMagnets.Q1", getQ1());
+  tree.put("palattice.rfMagnets.dQ", getDQ());
+  tree.put("palattice.rfMagnets.period", getPeriod());
+}
+
+
+template<>
+void RfMagnetConfig::setFromStringList<std::string>(std::vector<std::string>& v, std::string list)
+{
+  std::istringstream ss(list);
+  std::string tmp;
+  while ( std::getline(ss,tmp,',') ) {
+     v.push_back(tmp);
+   }
 }
