@@ -31,9 +31,10 @@ Configuration::Configuration(std::string pathIn)
   _nParticles = 1;
   _saveGamma.assign(1, false);
   _savePhaseSpace.assign(1, false);
+  _simToolRamp = true;
 
   _t_start = _t_stop = 0.;
-  _dt_out = 1e-5;
+  _dt_out = 1e-4;
   _E0 = 1;
   _dE = 0;
   _Emax = 1e10;
@@ -138,10 +139,13 @@ void Configuration::save(const std::string &filename) const
   tree.put("spintracking.trajectoryMode", trajectoryModeString());
   rf.writeToConfig(tree);
 
+  // options, which are only saved if not default value
   if (Emax() < 1e10)
     tree.put("spintracking.Emax", Emax());
   if (outElementUsed())
     tree.put("spintracking.outElement", outElement());
+  if (!simToolRamp())
+    tree.put("palattice.simToolRamp", simToolRamp());
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -193,6 +197,7 @@ void Configuration::load(const std::string &filename)
   set_Emax( tree.get("spintracking.Emax", 1e10) );
   set_edgefoc( tree.get<bool>("spintracking.edgeFocussing", false) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
+  set_simToolRamp( tree.get<bool>("palattice.simToolRamp") );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
   set_alphac2( tree.get("radiation.momentum_compaction_factor_2", 0.0) );
@@ -463,10 +468,9 @@ void Configuration::autocomplete(const pal::AccLattice& lattice)
 // write energy and, if needed, number of turns to SimToolInstance
 void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
 {
-  //set energy to E0 (ramp not considered!)
+  //set energy to E0
   double p_MeV = E0()*1000.;
   palattice->setMomentum_MeV(p_MeV);
-
   
   //set number of turns based on tracking time & circumference
   if (gammaMode() == GammaMode::simtool
@@ -479,6 +483,22 @@ void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
     std::cout << "* " << palattice->tool_string() <<" tracking " << turns <<" turns to get single particle trajectories" << std::endl;
   }
 
+  //set energy ramp
+  if (gammaMode() == GammaMode::simtool
+      || gammaMode() == GammaMode::simtool_no_interpolation
+      || trajectoryMode() == TrajectoryMode::simtool) {
+    if (simToolRamp()) {
+      if (palattice->tool==pal::SimTool::elegant) {
+	palattice->elegantEnergyRamp.tStart = t_start();
+	palattice->elegantEnergyRamp.tStop = t_stop();
+	palattice->elegantEnergyRamp.set([&](double t) {return gamma(t)*E_rest_GeV/E0();} );
+	std::cout << "* " << palattice->tool_string() << " energy ramp set" << std::endl;
+      }
+      else
+	std::cout << "WARNING: Setting SimTool energy ramp is not implemented for " << palattice->tool_string() << std::endl
+		  << "         Option <simToolRamp> is ignored." << std::endl;
+    }
+  }
 }
 
 // #turns for resonance strengths calc are calculated from tracking duration() if not set

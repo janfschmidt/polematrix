@@ -84,6 +84,7 @@ private:
   std::shared_ptr<pal::SimToolInstance> palattice;
   std::vector<bool> _saveGamma;
   double _circumference;
+  bool _simToolRamp;
 
   pal::SimTool toolFromTree(pt::ptree tree, std::string key) const;
   pal::SimToolMode modeFromTree(pt::ptree tree, std::string key) const;
@@ -173,6 +174,7 @@ public:
   double R() const {return _R;}
   double Js() const {return _Js;}
   pal::SimToolInstance& getSimToolInstance() {return *palattice;}
+  bool simToolRamp() const {return _simToolRamp;}
   bool saveGamma(unsigned int particleId) const {return _saveGamma.at(particleId);}
   bool savePhaseSpace(unsigned int particleId) const {return _savePhaseSpace.at(particleId);}
   std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
@@ -213,6 +215,7 @@ public:
   void set_h(unsigned int h) {_h=h;}
   void set_R(double R) {_R=R;}
   void set_Js(double Js) {_Js=Js;}
+  void set_simToolRamp(bool r) {_simToolRamp=r;}
   void set_savePhaseSpaceElement(std::string name) {_savePhaseSpaceElement=name;}
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
