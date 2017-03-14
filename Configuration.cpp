@@ -32,6 +32,7 @@ Configuration::Configuration(std::string pathIn)
   _saveGamma.assign(1, false);
   _savePhaseSpace.assign(1, false);
   _simToolRamp = true;
+  _simToolRampSteps = 200;
 
   _t_start = _t_stop = 0.;
   _dt_out = 1e-4;
@@ -119,6 +120,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
   tree.put("palattice.saveGamma", saveGammaList());
+  tree.put("palattice.simToolRamp", simToolRamp());
+  tree.put("palattice.simToolRampSteps", simToolRampSteps());
   tree.put("radiation.seed", seed());
   tree.put("radiation.overvoltage_factor", q());
   tree.put("radiation.momentum_compaction_factor", alphac());
@@ -144,8 +147,6 @@ void Configuration::save(const std::string &filename) const
     tree.put("spintracking.Emax", Emax());
   if (outElementUsed())
     tree.put("spintracking.outElement", outElement());
-  if (!simToolRamp())
-    tree.put("palattice.simToolRamp", simToolRamp());
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -197,7 +198,8 @@ void Configuration::load(const std::string &filename)
   set_Emax( tree.get("spintracking.Emax", 1e10) );
   set_edgefoc( tree.get<bool>("spintracking.edgeFocussing", false) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
-  set_simToolRamp( tree.get<bool>("palattice.simToolRamp") );
+  set_simToolRamp( tree.get<bool>("palattice.simToolRamp", true) );
+  set_simToolRampSteps( tree.get<unsigned int>("palattice.simToolRampSteps", 200) );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
   set_alphac2( tree.get("radiation.momentum_compaction_factor_2", 0.0) );
@@ -491,6 +493,7 @@ void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
       if (palattice->tool==pal::SimTool::elegant) {
 	palattice->elegantEnergyRamp.tStart = t_start();
 	palattice->elegantEnergyRamp.tStop = t_stop();
+	palattice->elegantEnergyRamp.nSteps = simToolRampSteps();
 	palattice->elegantEnergyRamp.set([&](double t) {return gamma(t)*E_rest_GeV/E0();} );
 	std::cout << "* " << palattice->tool_string() << " energy ramp set" << std::endl;
       }
