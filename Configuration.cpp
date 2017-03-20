@@ -443,7 +443,7 @@ void Configuration::autocomplete(const pal::AccLattice& lattice)
 	      << ": h=" << h() << std::endl;
   }
   if (R()==0.) {
-    set_R(lattice.integralDipoleRadius());
+    set_R(lattice.avgDipoleRadius());
     std::cout << "* set dipole bending radius from lattice"
 	      << ": R=" << R() << std::endl;
   }
