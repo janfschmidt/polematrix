@@ -32,9 +32,9 @@ namespace po = boost::program_options;
 void usage(po::options_description &desc)
 {
   std::cout << std::endl
-	    << "polematrix [CONFIGURATION FILE] [options]" <<std::endl<<std::endl
+	    << "polematrix [options] [CONFIGURATION FILE]" <<std::endl<<std::endl
 	    << "[CONFIGURATION FILE] holds the tracking parameters." <<std::endl
-	    << "A template config file can be generated with option --template" <<std::endl<<std::endl<<std::endl
+	    << "A template config file can be generated with option -T [--template]" <<std::endl<<std::endl<<std::endl
 	    << "Allowed options:" <<std::endl;
   std::cout << desc << std::endl;
   return;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   po::options_description modes("Special Program Modes (no spin tracking)");
   modes.add_options()
     ("help,h", "display this help message")
-    ("version,v", "display version")
+    ("version,V", "display version")
     ("template,T", "create config file template (template.pole) and quit")
     ("resonance-strengths,R", "estimate strengths of depolarizing resonances")
     ;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
   confs.add_options()  
     ("threads,t", po::value<unsigned int>(&nThreads)->default_value(std::thread::hardware_concurrency()), "number of threads used for tracking")
     ("output-path,o", po::value<std::string>(&outpath)->default_value("."), "path for output files")
-    ("verbose,V", "more output, e.g. each written spin file")
+    ("verbose,v", "more output, e.g. each written spin file")
     ("no-progressbar,n", "do not show progress bar during tracking")
     ("all,a", "write all output (e.g. lattice and orbit)")
     ("spintune,s", po::value<double>(), "in resonance-strengths mode: calculate for given spin tune only")

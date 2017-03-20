@@ -184,11 +184,10 @@ public:
   double sigmaGammaFactor() const {return _sigmaGammaFactor;}
   double agammaMin() const {return _agammaMin;}
   double agammaMax() const {return _agammaMax;}
+  double dagamma() const {return _dagamma;}
   std::string metadata() const {return info.out("#");}
   // #turns for resonance strengths calc are calculated from tracking duration() if not set
   unsigned int numTurns() const;
-  // spin tune output step width for resonance strengths is calculated from #turns if not set
-  double dagamma() const;
   
   //setter
 protected:

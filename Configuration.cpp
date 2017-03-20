@@ -58,7 +58,7 @@ Configuration::Configuration(std::string pathIn)
   _agammaMin = 0.;
   _agammaMax = 10.;
   _nTurns = 0;
-  _dagamma = 0.;
+  _dagamma = 1.;
 
   palattice.reset(new pal::SimToolInstance(pal::elegant, pal::online, ""));
 
@@ -120,22 +120,22 @@ void Configuration::save(const std::string &filename) const
   tree.put("palattice.mode", palattice->mode_string());
   tree.put("palattice.file", palattice->inFile());
   tree.put("palattice.saveGamma", saveGammaList());
-  tree.put("palattice.simToolRamp", simToolRamp());
-  tree.put("palattice.simToolRampSteps", simToolRampSteps());
+  tree.put("palattice.simToolRamp.set", simToolRamp());
+  tree.put("palattice.simToolRamp.steps", simToolRampSteps());
   tree.put("radiation.seed", seed());
+  tree.put("radiation.savePhaseSpace.list", savePhaseSpaceList());
+  tree.put("radiation.savePhaseSpace.elementName", savePhaseSpaceElement());
+  tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
+  tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   tree.put("radiation.overvoltage_factor", q());
   tree.put("radiation.momentum_compaction_factor", alphac());
   tree.put("radiation.momentum_compaction_factor_2", alphac2());
   tree.put("radiation.harmonic_number", h());
   tree.put("radiation.bending_radius", R());
   tree.put("radiation.longitudinal_damping_partition_number", Js());
-  tree.put("radiation.savePhaseSpace", savePhaseSpaceList());
-  tree.put("radiation.savePhaseSpaceElement", savePhaseSpaceElement());
-  tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
-  tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
-  tree.put("resonancestrengths.minSpintune", agammaMin());
-  tree.put("resonancestrengths.maxSpintune", agammaMax());
-  tree.put("resonancestrengths.spintuneStep", _dagamma);
+  tree.put("resonancestrengths.spintune.min", agammaMin());
+  tree.put("resonancestrengths.spintune.max", agammaMax());
+  tree.put("resonancestrengths.spintune.step", _dagamma);
   tree.put("resonancestrengths.turns", _nTurns);
   
   tree.put("spintracking.gammaMode", gammaModeString());
@@ -198,8 +198,8 @@ void Configuration::load(const std::string &filename)
   set_Emax( tree.get("spintracking.Emax", 1e10) );
   set_edgefoc( tree.get<bool>("spintracking.edgeFocussing", false) );
   set_saveGamma( tree.get<std::string>("palattice.saveGamma", "") );
-  set_simToolRamp( tree.get<bool>("palattice.simToolRamp", true) );
-  set_simToolRampSteps( tree.get<unsigned int>("palattice.simToolRampSteps", 200) );
+  set_simToolRamp( tree.get<bool>("palattice.simToolRamp.set", true) );
+  set_simToolRampSteps( tree.get<unsigned int>("palattice.simToolRamp.steps", 200) );
   set_seed( tree.get<int>("radiation.seed", randomSeed()) );
   set_alphac( tree.get("radiation.momentum_compaction_factor", 0.0) );
   set_alphac2( tree.get("radiation.momentum_compaction_factor_2", 0.0) );
@@ -207,14 +207,14 @@ void Configuration::load(const std::string &filename)
   set_h( tree.get("radiation.harmonic_number", 0) );
   set_R( tree.get("radiation.bending_radius", 0.0) );
   set_Js( tree.get("radiation.longitudinal_damping_partition_number", 0.0) );
-  set_savePhaseSpace( tree.get<std::string>("radiation.savePhaseSpace", "") );
-  set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpaceElement", "") );
+  set_savePhaseSpace( tree.get<std::string>("radiation.savePhaseSpace.list", "") );
+  set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpace.elementName", "") );
   set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
-  set_agammaMin( tree.get<double>("resonancestrengths.minSpintune", 0.) );
-  set_agammaMax( tree.get<double>("resonancestrengths.maxSpintune", 10.) );
+  set_agammaMin( tree.get<double>("resonancestrengths.spintune.min", 0.) );
+  set_agammaMax( tree.get<double>("resonancestrengths.spintune.max", 10.) );
+  set_dagamma( tree.get<double>("resonancestrengths.spintune.step", 1.) );
   set_nTurns( tree.get<unsigned int>("resonancestrengths.turns", 0) );
-  set_dagamma( tree.get<double>("resonancestrengths.spintuneStep", 0.) );
   rf.set(tree);
 
   try {
@@ -504,28 +504,15 @@ void Configuration::updateSimToolSettings(const pal::AccLattice& lattice)
   }
 }
 
-// #turns for resonance strengths calc are calculated from tracking duration() if not set
+// #turns for resonance strengths calc are calculated from stepwidth dagamma() if not set
 unsigned int Configuration::numTurns() const
 {
   if (_nTurns != 0)
     return _nTurns;
   else {
-    if (std::fabs(_circumference) < COMPARE_DOUBLE_EQUAL)
-      throw std::runtime_error("Configuration::numTurns() cannot guess number of turns, because it's neither set in config file nor loaded from model (Configuration::autocomlete()");
-    return (duration()*GSL_CONST_MKSA_SPEED_OF_LIGHT / _circumference) + 1;
+    return (unsigned int) (1./std::fabs(dagamma()) + 0.5);
   }
 }
-
-// spin tune output step width for resonance strengths is calculated from #turns if not set
-double Configuration::dagamma() const
-{
-  auto dag = std::fabs(_dagamma);
-  if ( dag > COMPARE_DOUBLE_EQUAL )
-    return dag;
-  else
-    return 1./double(numTurns());
-}
-
 
 
 
