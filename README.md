@@ -1,5 +1,5 @@
 # polematrix
-#### a spin tracking code for electron accelerators using Elegant
+**a spin tracking code for electron accelerators using Elegant**
 
 *Copyright (C) 2017 Jan Felix Schmidt <janschmidt@mailbox.org>, GNU General Public License*
 
@@ -22,7 +22,7 @@ A user guide is coming soon.
 
 ## Quick-Info
 
-####Dependencies:
+#### Dependencies:
 
 - CMake
 - Gnu Scientific Library (GSL)
@@ -35,7 +35,7 @@ A user guide is coming soon.
 
 So far, polematrix was tested only with GCC compiler under Ubuntu/Debian Linux.
 
-####Installation:
+#### Installation:
 
 ```
 cd polematrix/build
@@ -54,9 +54,9 @@ polematrix [CONFIGURATION FILE] [options]
 *[CONFIGURATION FILE]* is an easy to read xml file, which holds the tracking parameters.
 A template configuration file can be generated with option `--template`
 
-###Allowed options:
+### Allowed options:
 
-####Program modes:
+#### Program modes:
 
 ```
 -h [ --help ]                  display this help message
@@ -65,7 +65,7 @@ A template configuration file can be generated with option `--template`
 -R [ --resonance-strengths ]   estimate strengths of depolarizing resonances
 ```
 
-####Configuration options:
+#### Configuration options:
 
 ```
 -t [ --threads ] arg (=all)    number of threads used for tracking
