@@ -20,7 +20,7 @@ A user guide is coming soon.
 
 
 
-## Quick-Info
+## Installation
 
 #### Dependencies:
 
@@ -35,7 +35,7 @@ A user guide is coming soon.
 
 So far, polematrix was tested only with GCC compiler under Ubuntu/Debian Linux.
 
-#### Installation:
+#### Compile & Install:
 
 ```
 cd polematrix/build
@@ -60,7 +60,7 @@ A template configuration file can be generated with option `--template`
 
 ```
 -h [ --help ]                  display this help message
--v [ --version ]               display version
+-V [ --version ]               display version
 -T [ --template ]              create config file template (template.pole) and quit
 -R [ --resonance-strengths ]   estimate strengths of depolarizing resonances
 ```
@@ -70,7 +70,7 @@ A template configuration file can be generated with option `--template`
 ```
 -t [ --threads ] arg (=all)    number of threads used for tracking
 -o [ --output-path ] arg (=.)  path for output files
--V [ --verbose ]               more output, e.g. each written spin file
+-v [ --verbose ]               more output, e.g. each written spin file
 -n [ --no-progressbar ]        do not show progress bar during tracking
 -a [ --all ]                   write all output (e.g. lattice and orbit)
 -s [ --spintune ] arg	       in resonance-strengths mode: calculate for given spin tune only
