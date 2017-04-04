@@ -76,7 +76,7 @@ std::string Configuration::gammaModeString() const
   else if (_gammaMode==GammaMode::simtool_no_interpolation) return "simtool_no_interpolation";
   else if (_gammaMode==GammaMode::radiation) return "radiation";
   else
-    return "Please implement this GammaMode in Configuration::gammaModeString()!";
+    return "Please implement this GammaModel in Configuration::gammaModeString()!";
 }
 
 std::string Configuration::trajectoryModeString() const
@@ -84,7 +84,7 @@ std::string Configuration::trajectoryModeString() const
   if (_trajectoryMode==TrajectoryMode::closed_orbit) return "closed orbit";
   else if (_trajectoryMode==TrajectoryMode::simtool) return "simtool";
   else
-    return "Please implement this TrajectoryMode in Configuration::trajectoryModeString()!";
+    return "Please implement this TrajectoryModel in Configuration::trajectoryModeString()!";
 }
 
 double Configuration::gamma(double t) const
@@ -138,8 +138,8 @@ void Configuration::save(const std::string &filename) const
   tree.put("resonancestrengths.spintune.step", _dagamma);
   tree.put("resonancestrengths.turns", _nTurns);
   
-  tree.put("spintracking.gammaMode", gammaModeString());
-  tree.put("spintracking.trajectoryMode", trajectoryModeString());
+  tree.put("spintracking.gammaModel", gammaModeString());
+  tree.put("spintracking.trajectoryModel", trajectoryModeString());
   rf.writeToConfig(tree);
 
   // options, which are only saved if not default value
@@ -233,8 +233,8 @@ void Configuration::load(const std::string &filename)
 void Configuration::set_metadata(const std::string& configfile)
 {
   info.add("configuration file", configfile);
-  info.add("gammaMode", gammaModeString());
-  info.add("trajectoryMode", trajectoryModeString());
+  info.add("gammaModel", gammaModeString());
+  info.add("trajectoryModel", trajectoryModeString());
   info.add("simtool", palattice->tool_string());
   info.add("simtool file", palattice->inFile());
 }
@@ -274,7 +274,7 @@ void Configuration::printSummary() const
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
-  s << "longitudinal phase space model (GammaMode): \"" << gammaModeString() << "\"" << std::endl;
+  s << "longitudinal phase space model (GammaModel): \"" << gammaModeString() << "\"" << std::endl;
   if (edgefoc())
     s << "horizontal dipole edge focussing field used" << std::endl;
   s << "output for each spin vector to " << spinDirectory().string() <<"/"<< std::endl;
@@ -327,7 +327,15 @@ void Configuration::setSimToolInstance(pt::ptree &tree)
 
 void Configuration::setGammaMode(pt::ptree &tree)
 {
-  std::string s = tree.get<std::string>("spintracking.gammaMode", "radiation");
+  std::string s;
+  // rename Mode->Model, accept "Mode" if "Model" found for compatibility
+  try {
+    s = tree.get<std::string>("spintracking.gammaModel");
+  }
+  catch (pt::ptree_error &e) {
+    s = tree.get<std::string>("spintracking.gammaMode", "radiation");
+    std::cout << "WARNING: option gammaMode is deprecated. It has been renamed as gammaModel." << std::endl;
+  }
   
   if (s == "linear")
     _gammaMode = GammaMode::linear;
@@ -345,12 +353,20 @@ void Configuration::setGammaMode(pt::ptree &tree)
     _gammaMode = GammaMode::radiation;
   
   else
-    throw pt::ptree_error("Invalid gammaMode "+s);
+    throw pt::ptree_error("Invalid gammaModel "+s);
 }
 
 void Configuration::setTrajectoryMode(pt::ptree &tree)
 {
-  std::string s = tree.get<std::string>("spintracking.trajectoryMode", "closed orbit");
+  std::string s;
+  // rename Mode->Model, accept "Mode" if "Model" found for compatibility
+  try {
+    s = tree.get<std::string>("spintracking.trajectoryModel", "closed orbit");
+  }
+  catch (pt::ptree_error &e) {
+    s = tree.get<std::string>("spintracking.trajectoryMode", "closed orbit");
+    std::cout << "WARNING: option trajectoryMode is deprecated. It has been renamed as trajectoryModel." << std::endl;
+  }
   
   if (s == "closed orbit")
     _trajectoryMode = TrajectoryMode::closed_orbit;
@@ -358,7 +374,7 @@ void Configuration::setTrajectoryMode(pt::ptree &tree)
     _trajectoryMode = TrajectoryMode::simtool;
   
   else
-    throw pt::ptree_error("Invalid trajectoryMode "+s);
+    throw pt::ptree_error("Invalid trajectoryModel "+s);
 }
 
 
