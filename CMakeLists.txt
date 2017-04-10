@@ -10,6 +10,12 @@ set(PROG_VERSION 0.99)
 # Install Path
 # set(CMAKE_INSTALL_PREFIX "/usr/local")
 
+# Googletest Path
+# optional, used to compile tests in tests/ directory
+set(GTEST_PATH /home/schmidt/git/googletest) #/set/googletest/path/here
+
+
+
 
 # CXX-Standard
 include(CheckCXXCompilerFlag)
@@ -120,3 +126,32 @@ add_custom_target(uninstall
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/cmake_uninstall.cmake)
 
 
+
+
+
+# tests
+if(EXISTS ${GTEST_PATH})
+  enable_testing()
+  add_subdirectory(${GTEST_PATH} gtest)
+  include_directories(${GTEST_PATH} ${GTEST_PATH}/include)
+
+  add_executable(test-radiation
+    test-radiation.cpp
+    RadiationModel.cpp
+    Configuration.cpp
+    debug.cpp
+    )
+  target_link_libraries(test-radiation
+    ${ARMADILLO_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${PALATTICE_LIBRARY}
+    ${Z_LIBRARY}
+    ${GSL_LIBRARY}
+    ${GSLCBLAS_LIBRARY}
+    gtest
+    )
+  add_test(allTests test-radiation)
+endif()

@@ -45,6 +45,9 @@ public:
   // at a reference beam energy given by gamma0.
   // returns energy in units of gamma
   double radiatedEnergy(const pal::AccElement* element, const double& gamma0, const double& gammaIn);
+
+  // energy of a single radiated photon, in units of crit. energy
+  double getPhotonEnergy() {return photonEnergy(rng);}
 };
 
 
