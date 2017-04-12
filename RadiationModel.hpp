@@ -35,9 +35,6 @@ protected:
   boost::random::mt11213b rng;
   boost::random::piecewise_linear_distribution<> photonEnergy;
 
-  // photon spectrum. used for probabilities of photon energies
-  double nPhoton(double u_per_uc) const;
-
 public:
   SynchrotronRadiationModel(int _seed=1);
   int getSeed() const {return seed;}
@@ -48,6 +45,9 @@ public:
 
   // energy of a single radiated photon, in units of crit. energy
   double getPhotonEnergy() {return photonEnergy(rng);}
+
+  // photon spectrum. used for probabilities of photon energies
+  double nPhoton(double u_per_uc) const;
 };
 
 

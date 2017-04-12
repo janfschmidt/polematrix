@@ -49,7 +49,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
 { 
   std::vector<double> intervals; // energies u, normalized to critical energy
   std::vector<double> weights;   // number of photons emitted at these energies
-  for(double u=1e-20; u<=100.; u*=1.1) {
+  for(double u=1e-7; u<=31.; u*=1.1) {
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
   }
@@ -57,6 +57,7 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
 
   // photon energy distribution
   photonEnergy = boost::random::piecewise_linear_distribution<>(intervals.begin(), intervals.end(), weights.begin());
+  //std::cout <<"min:" << photonEnergy.min() << " max:" << photonEnergy.max() << std::endl;
 }
 
 
