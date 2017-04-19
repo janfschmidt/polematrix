@@ -361,7 +361,7 @@ void Configuration::setTrajectoryMode(pt::ptree &tree)
   std::string s;
   // rename Mode->Model, accept "Mode" if "Model" found for compatibility
   try {
-    s = tree.get<std::string>("spintracking.trajectoryModel", "closed orbit");
+    s = tree.get<std::string>("spintracking.trajectoryModel");
   }
   catch (pt::ptree_error &e) {
     s = tree.get<std::string>("spintracking.trajectoryMode", "closed orbit");
