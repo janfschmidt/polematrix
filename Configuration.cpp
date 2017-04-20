@@ -262,19 +262,21 @@ void Configuration::printSummary() const
   unsigned int w=8;
 
   s << "-----------------------------------------------------------------" << std::endl;
-  s << "Tracking " << _nParticles << " Spins" << std::endl
-    << "time      " <<std::setw(w-2)<<  _t_start << " s   -------------------->   " <<std::setw(w-2)<< _t_stop << " s" << std::endl;
-  if(_gammaMode == GammaMode::simtool) {
-    s << "energy ";
-    if(palattice->tool==pal::SimTool::elegant)
-      s << E0()*1000. <<" MeV";
-    s << " from " << palattice->tool_string() << std::endl;
+  s << "Tracking " << _nParticles << " Spins" << std::endl;
+  s << "time      " <<std::setw(w-2)<<  _t_start << " s   -------------------->   " <<std::setw(w-2)<< _t_stop << " s" << std::endl;
+  if(_gammaMode == GammaMode::simtool
+     && (palattice->tool==pal::SimTool::madx || palattice->mode==pal::offline)) {
+    s << "energy from " << palattice->tool_string() << std::endl;
   }
-  else
+  else {
     s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
+  }
+  if (palattice->mode == pal::online)
+    s << "lattice: " << palattice->inFile() << std::endl;
   s << "start spin direction: Sx = " << _s_start[0] << ", Ss = " << _s_start[1] << ", Sz = " << _s_start[2] << std::endl;
   s << "longitudinal phase space model (GammaModel): \"" << gammaModeString() << "\"" << std::endl;
+  s << "transversal phase space model (TrajectoryModel): \"" << trajectoryModeString() << "\"" << std::endl;
   if (edgefoc())
     s << "horizontal dipole edge focussing field used" << std::endl;
   s << "output for each spin vector to " << spinDirectory().string() <<"/"<< std::endl;
