@@ -165,7 +165,14 @@ void Configuration::save(const std::string &filename) const
 void Configuration::load(const std::string &filename)
 {
   pt::ptree tree;
-  pt::read_xml(filename, tree);
+  try {
+    pt::read_xml(filename, tree);
+  }
+  catch (pt::xml_parser_error &e){
+    std::cout << "Error loading configuration file:" << std::endl
+	      << e.what() << std::endl;
+    exit(1);
+  }
 
   //obligatory config
   try {
