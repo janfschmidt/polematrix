@@ -19,25 +19,6 @@
 
 #include "Simulation.hpp"
 
-void Simulation::setModel()
-{
-  auto& palattice = config->getSimToolInstance();
-  lattice.reset( new pal::AccLattice(palattice) );
-  orbit.reset( new pal::FunctionOfPos<pal::AccPair>(palattice) );
-  config->updateSimToolSettings(*lattice);
-  orbit->simToolClosedOrbit( palattice );
-  config->writeRfMagnetsToLattice(*lattice);
-
-  if (config->gammaMode() == GammaMode::simtool
-      || config->gammaMode() == GammaMode::simtool_plus_linear
-      || config->gammaMode() == GammaMode::simtool_no_interpolation
-      || config->gammaMode() == GammaMode::linear) {
-    // no model setup needed
-  }
-  else {
-    config->autocomplete(*lattice);
-  }
-}
 
 
 SingleParticleSimulation::SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> c)

@@ -25,23 +25,6 @@
 
 
 
-Tracking::Tracking(unsigned int nThreads) : showProgressBar(true)
-{
-  // use at least one thread
-  if (nThreads == 0)
-    nThreads = 1;
-
-  // set iterator to begin of queue
-  queueIt = queue.begin();
-
-  // create threads
-  for (unsigned int i=0; i<nThreads; i++) {
-    threadPool.emplace_back(std::thread());
-  }
-}
-
-
-
 void Tracking::start()
 { 
   if (!modelReady())
@@ -67,9 +50,7 @@ void Tracking::start()
   auto start = std::chrono::high_resolution_clock::now();
 
   //start threads
-  for (std::thread& t : threadPool) {
-    t = std::thread(&Tracking::processQueue,this);
-  }
+  startThreads();
 
   //start extra thread for progress bars
   if (showProgressBar) {
@@ -78,11 +59,9 @@ void Tracking::start()
     progress.join();
   }
 
-  // wait for threads to finish
-  for (std::thread& t : threadPool) {
-    t.join();
-  }
+  waitForThreads();
 
+  // finished: calc. time & error output
   auto stop = std::chrono::high_resolution_clock::now();
   auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
   std::cout << std::endl
@@ -96,47 +75,11 @@ void Tracking::start()
   for (auto& it : errors)
     std::cout << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
   std::cout << "-----------------------------------------------------------------" << std::endl;
-  
+
   if (numSuccessful() > 0)
     calcPolarization();
 }
 
-
-void Tracking::processQueue()
-{
-  std::vector<TrackingTask>::iterator myTask;
-
-  while (true) {
-    mutex.lock();
-    if (queueIt == queue.end()) {
-      mutex.unlock();
-      return;   // finish this thread
-    }
-    else {
-      myTask = queueIt;
-      queueIt++;
-      runningTasks.push_back(myTask); // to display progress
-      mutex.unlock();
-      try {
-	myTask->setModel(lattice, orbit);
-	myTask->run(); // run next queued TrackingTask
-      }
-      //cancel thread in error case
-      catch (std::exception &e) {
-	std::cout << "ERROR @ particle " << myTask->particleId
-	  // << " (thread_id "<< std::this_thread::get_id() << ")"
-		  <<":"<< std::endl
-		  << e.what() << std::endl;
-	mutex.lock();
-	errors.emplace(myTask->particleId, e.what());
-	mutex.unlock();
-      }
-      mutex.lock();
-      runningTasks.remove(myTask); // to display progress
-      mutex.unlock();
-    }//else
-  }//while
-}
 
 
 void Tracking::printProgress() const

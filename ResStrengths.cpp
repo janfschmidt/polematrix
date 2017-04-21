@@ -78,14 +78,14 @@ std::string ResStrengthsData::printSingle(double agamma, std::complex<double> ep
 
 void ResStrengths::init()
 {
-  if (particles.size() > 0)
+  if (queue.size() > 0)
     return;
   
   std::cout << "Estimate Resonance Strengths using "
 	    << config->numTurns() << " turns for "
     	    << config->nParticles() << " particles:" << std::endl;
   for (unsigned int i=0; i<config->nParticles(); i++) {
-    particles.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
+    queue.emplace_back( ParticleResStrengths(i,config,lattice,orbit) );
   }
 }
 
@@ -96,7 +96,7 @@ std::complex<double> ResStrengths::calculate(double agamma)
   polematrix::debug(__PRETTY_FUNCTION__, msg.str());
   
   std::complex<double> epsilon (0,0);
-  for (auto &p : particles) {
+  for (auto &p : queue) {
     epsilon += p[agamma];
   }
   epsilon /= numParticles();
@@ -107,15 +107,27 @@ std::complex<double> ResStrengths::calculate(double agamma)
 
 void ResStrengths::start()
 {
+  // fill particle queue
   init();
-  for (auto& p : particles) {
-    p.run();
-  }
+
+  // set iterator to begin of queue
+  queueIt = queue.begin();
+
+  // write current config to file
+  config->save( config->confOutFile().string() );
+
+  // start threads
+  startThreads();
+  
+  waitForThreads();
+
+  // finished: average ResStrengths
   for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->dagamma()) {
     calculate(agamma);
   }
   std::cout << "Done." << std::endl;
 }
+
 
 std::string ResStrengths::getSingle(double agamma)
 {

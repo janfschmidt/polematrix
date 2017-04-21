@@ -75,17 +75,16 @@ public:
 
 
 
-class ResStrengths : public Simulation, public ResStrengthsData {
+class ResStrengths : public Simulation<ParticleResStrengths>, public ResStrengthsData {
 protected:
-  std::vector<ParticleResStrengths> particles;
   std::complex<double> calculate(double agamma);
   void init();
   
 public:
   Metadata info;
   
-  ResStrengths();
-  ResStrengths(const std::shared_ptr<Configuration> c) : Simulation(c) {}
+  ResStrengths(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads) {}
+  ResStrengths(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(c,nThreads) {}
 
   void start();                                  // calculate & print all res. strengths according to config
   std::string getSingle(double agamma);          // calculate & print single resonance strength
