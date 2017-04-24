@@ -116,16 +116,30 @@ void ResStrengths::start()
   // write current config to file
   config->save( config->confOutFile().string() );
 
+  auto start = std::chrono::high_resolution_clock::now();
+  
   // start threads
   startThreads();
   
   waitForThreads();
 
   // finished: average ResStrengths
+  std::cout << printErrors();
   for (double agamma=config->agammaMin(); agamma<=config->agammaMax(); agamma+=config->dagamma()) {
     calculate(agamma);
   }
-  std::cout << "Done." << std::endl;
+  if (numSuccessful() > 0) {
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
+    std::cout << std::endl
+	      << "-----------------------------------------------------------------" << std::endl;
+    std::cout << "Resonance Strengths estimated via "<<numSuccessful()<< " particles in ";
+    std::cout << secs.count() << " s = "<< int(secs.count()/60.+0.5) << " min." << std::endl;
+    std::cout << "Thanks for using polematrix " << polemversion() << std::endl;
+    std::cout << "-----------------------------------------------------------------" << std::endl;
+  }
+  else
+    std::cout << "Aborted due to ERRORs." << std::endl;
 }
 
 
@@ -245,3 +259,5 @@ void ParticleResStrengths::run()
   
   trajectory->clear();
 }
+
+

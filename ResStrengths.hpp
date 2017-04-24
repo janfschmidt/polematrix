@@ -71,6 +71,8 @@ public:
   
   void run();
   void runSingle();
+
+  double getProgress() const {return (double)cache.size() / config->outSteps_resStrengths();}
 };
 
 
