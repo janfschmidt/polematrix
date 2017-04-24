@@ -19,25 +19,6 @@
 
 #include "Simulation.hpp"
 
-void Simulation::setModel()
-{
-  auto& palattice = config->getSimToolInstance();
-  lattice.reset( new pal::AccLattice(palattice) );
-  orbit.reset( new pal::FunctionOfPos<pal::AccPair>(palattice) );
-  config->updateSimToolSettings(*lattice);
-  orbit->simToolClosedOrbit( palattice );
-  config->writeRfMagnetsToLattice(*lattice);
-
-  if (config->gammaMode() == GammaMode::simtool
-      || config->gammaMode() == GammaMode::simtool_plus_linear
-      || config->gammaMode() == GammaMode::simtool_no_interpolation
-      || config->gammaMode() == GammaMode::linear) {
-    // no model setup needed
-  }
-  else {
-    config->autocomplete(*lattice);
-  }
-}
 
 
 SingleParticleSimulation::SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> c)
@@ -58,4 +39,26 @@ void SingleParticleSimulation::setModel(std::shared_ptr<const pal::AccLattice> l
   lattice = l;
   orbit = o;
   trajectory->setOrbit(orbit);
+}
+
+
+std::string SingleParticleSimulation::getProgressBar(unsigned int barWidth) const
+{
+  std::stringstream bar;
+
+  bar << particleId << ":";
+
+  if (barWidth!=0) {
+    unsigned int steps = (1.0 * barWidth * getProgress()) + 0.5;
+    unsigned int i=0;
+    bar << "[";
+    for (; i<steps; i++)
+      bar << "=";
+    for (; i<barWidth; i++)
+      bar << " ";
+    bar << "]";
+  }
+  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< getProgress()*100. << "%";
+  
+  return bar.str();
 }

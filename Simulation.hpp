@@ -22,37 +22,13 @@
 
 #include <libpalattice/AccLattice.hpp>
 #include <libpalattice/FunctionOfPos.hpp>
+#include <thread>
+#include <mutex>
+#include <memory>
+#include <list>
+#include <vector>
 #include "Configuration.hpp"
 #include "Trajectory.hpp"
-
-
-// abstract base class for a simulation
-// including a config as well as lattice and orbit, which can be set using config
-
-class Simulation {
-protected:
-  std::shared_ptr<pal::AccLattice> lattice;
-  std::shared_ptr<pal::FunctionOfPos<pal::AccPair>> orbit;
-  
-  std::map<unsigned int,std::string> errors;
-
-public:
-  const std::shared_ptr<Configuration> config;
-  
-  Simulation() : config(new Configuration) {}
-  Simulation(const std::shared_ptr<Configuration> c) : config(c) {}
-  void setModel();
-  
-  bool modelReady() {if (lattice->size()==0 || orbit->size()==0) return false; else return true;}
-  unsigned int numParticles() const {return config->nParticles();}
-  unsigned int numSuccessful() const {return numParticles() - errors.size();}
-    
-  virtual void start() =0;
-  
-  void saveLattice() const {lattice->print( (config->outpath()/"lattice.dat").string() );}
-  void saveOrbit() const {orbit->print( (config->outpath()/"closedorbit.dat").string() );}
-};
-
 
 
 // abstract base class for a simulation task for a single particle
@@ -71,8 +47,212 @@ public:
 
   SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> c);
   void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
+  
   virtual void run() =0;
+
+  virtual double getProgress() const =0; // progress [0,1] for status output
+  virtual std::string getProgressBar(unsigned int barWidth) const;
 };
+
+
+
+
+
+
+// abstract base class for a simulation
+// including a config as well as lattice and orbit, which can be set using config
+
+template <typename T=SingleParticleSimulation>
+class Simulation {
+protected:
+  std::shared_ptr<pal::AccLattice> lattice;
+  std::shared_ptr<pal::FunctionOfPos<pal::AccPair>> orbit;
+
+  // queue
+  typedef typename std::vector<T>::iterator taskIterator;
+  typedef typename std::vector<T>::const_iterator const_taskIterator;
+  std::vector<T> queue;
+  taskIterator queueIt;
+  std::list<const_taskIterator> runningTasks; // to display progress
+
+
+  // thread management
+  std::vector<std::thread> threadPool;
+  std::thread progress;
+  std::mutex mutex;
+  void initThreadPool(unsigned int nThreads);
+  void startThreads();
+  void waitForThreads();
+  void processQueue();
+  void printProgress() const;
+  
+  std::map<unsigned int,std::string> errors;
+
+public:
+  const std::shared_ptr<Configuration> config;
+  bool showProgressBar;
+  
+  Simulation(unsigned int nThreads=std::thread::hardware_concurrency())
+    : queueIt(queue.begin()), config(new Configuration), showProgressBar(true) {initThreadPool(nThreads);}
+  Simulation(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency())
+    : queueIt(queue.begin()), config(c), showProgressBar(true) {initThreadPool(nThreads);}
+  Simulation(const Simulation& o) = delete;
+  
+  void setModel();
+  
+  bool modelReady() {if (lattice->size()==0 || orbit->size()==0) return false; else return true;}
+  unsigned int numParticles() const {return config->nParticles();}
+  unsigned int numSuccessful() const {return numParticles() - errors.size();}
+    
+  virtual void start() =0;
+  
+  void saveLattice() const {lattice->print( (config->outpath()/"lattice.dat").string() );}
+  void saveOrbit() const {orbit->print( (config->outpath()/"closedorbit.dat").string() );}
+
+  std::string printErrors() const;
+};
+
+
+
+
+
+
+
+// ---- template class implementation ----
+template <typename T>
+void Simulation<T>::initThreadPool(unsigned int nThreads)
+{
+  // use at least one thread
+  if (nThreads == 0)
+    nThreads = 1;
+  
+  // create threads
+  for (auto i=0u; i<nThreads; i++) {
+    threadPool.emplace_back(std::thread());
+  }
+}
+
+template <typename T>
+void Simulation<T>::startThreads()
+{
+  for (std::thread& t : threadPool) {
+    t = std::thread(&Simulation::processQueue,this);
+  }
+  //start extra thread for progress bars
+  if (showProgressBar) {
+    sleep(1);
+    progress = std::thread(&Simulation::printProgress,this);
+  }
+}
+
+template <typename T>
+void Simulation<T>::waitForThreads()
+{
+  for (std::thread& t : threadPool) {
+    t.join();
+  }
+  if (showProgressBar) {
+    progress.join();
+  }
+}
+
+template <typename T>
+void Simulation<T>::setModel()
+{
+  auto& palattice = config->getSimToolInstance();
+  lattice.reset( new pal::AccLattice(palattice) );
+  orbit.reset( new pal::FunctionOfPos<pal::AccPair>(palattice) );
+  config->updateSimToolSettings(*lattice);
+  orbit->simToolClosedOrbit( palattice );
+  config->writeRfMagnetsToLattice(*lattice);
+
+  if (config->gammaMode() == GammaMode::simtool
+      || config->gammaMode() == GammaMode::simtool_plus_linear
+      || config->gammaMode() == GammaMode::simtool_no_interpolation
+      || config->gammaMode() == GammaMode::linear) {
+    // no model setup needed
+  }
+  else {
+    config->autocomplete(*lattice);
+  }
+}
+
+template <typename T>
+void Simulation<T>::processQueue()
+{
+  while (true) {
+    mutex.lock();
+    if (queueIt == queue.end()) {
+      mutex.unlock();
+      return;   // finish this thread
+    }
+    else {
+      taskIterator myTask = queueIt;
+      queueIt++;
+      runningTasks.push_back(myTask); // to display progress
+      mutex.unlock();
+      try {
+	myTask->setModel(lattice, orbit);
+	myTask->run(); // run next queued task
+      }
+      //cancel thread in error case
+      catch (std::exception &e) {
+	std::cout << "ERROR @ particle " << myTask->particleId
+	  // << " (thread_id "<< std::this_thread::get_id() << ")"
+		  <<":"<< std::endl
+		  << e.what() << std::endl;
+	mutex.lock();
+	errors.emplace(myTask->particleId, e.what());
+	mutex.unlock();
+      }
+      mutex.lock();
+      runningTasks.remove(myTask); // to display progress
+      mutex.unlock();
+    }//else
+  }//while
+}
+
+
+template <typename T>
+std::string Simulation<T>::printErrors() const
+{
+  std::stringstream s;
+  for (auto& it : errors)
+    s << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
+  return s.str();
+}
+
+
+template <typename T>
+void Simulation<T>::printProgress() const
+{
+  unsigned int barWidth;
+  auto numTasks = runningTasks.size();
+  if ( numTasks < 5)
+    barWidth = 20;
+  else
+    barWidth = 15;
+  //shorter looks ugly
+  
+  while (runningTasks.size() > 0) {
+    auto tmp = runningTasks;
+    unsigned int n=0;
+    for (auto& task : tmp) {
+      if (n<2) // first 2 with progress bar
+	std::cout << task->getProgressBar(barWidth) << "  ";
+      else     // others percentage only
+	std::cout << task->getProgressBar(0) << " ";
+      n++;
+    }
+    while (n<numTasks) { // clear finished tasks
+      std::cout << "       ";
+      n++;
+    }
+    std::cout <<"\r"<< std::flush;
+    sleep(1);
+  }
+}
+
 
 #endif
 // __POLEMATRIX__SIMULATION_HPP_

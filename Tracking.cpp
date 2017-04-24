@@ -25,23 +25,6 @@
 
 
 
-Tracking::Tracking(unsigned int nThreads) : showProgressBar(true)
-{
-  // use at least one thread
-  if (nThreads == 0)
-    nThreads = 1;
-
-  // set iterator to begin of queue
-  queueIt = queue.begin();
-
-  // create threads
-  for (unsigned int i=0; i<nThreads; i++) {
-    threadPool.emplace_back(std::thread());
-  }
-}
-
-
-
 void Tracking::start()
 { 
   if (!modelReady())
@@ -66,23 +49,12 @@ void Tracking::start()
   std::cout << "Start tracking "<<config->nParticles()<<" Spins..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
-  //start threads
-  for (std::thread& t : threadPool) {
-    t = std::thread(&Tracking::processQueue,this);
-  }
+  //start threads (incl. progress bars)
+  startThreads();
 
-  //start extra thread for progress bars
-  if (showProgressBar) {
-    sleep(1);
-    std::thread progress(&Tracking::printProgress,this);
-    progress.join();
-  }
+  waitForThreads();
 
-  // wait for threads to finish
-  for (std::thread& t : threadPool) {
-    t.join();
-  }
-
+  // finished: calc. time & error output
   auto stop = std::chrono::high_resolution_clock::now();
   auto secs = std::chrono::duration_cast<std::chrono::seconds>(stop-start);
   std::cout << std::endl
@@ -93,81 +65,13 @@ void Tracking::start()
   std::cout << "Tracking "<<numSuccessful()<< " Spins done. Tracking took ";
   std::cout << secs.count() << " s = "<< int(secs.count()/60.+0.5) << " min." << std::endl;
   std::cout << "Thanks for using polematrix " << polemversion() << std::endl;
-  for (auto& it : errors)
-    std::cout << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
+  std::cout << printErrors();
   std::cout << "-----------------------------------------------------------------" << std::endl;
-  
+
   if (numSuccessful() > 0)
     calcPolarization();
 }
 
-
-void Tracking::processQueue()
-{
-  std::vector<TrackingTask>::iterator myTask;
-
-  while (true) {
-    mutex.lock();
-    if (queueIt == queue.end()) {
-      mutex.unlock();
-      return;   // finish this thread
-    }
-    else {
-      myTask = queueIt;
-      queueIt++;
-      runningTasks.push_back(myTask); // to display progress
-      mutex.unlock();
-      try {
-	myTask->setModel(lattice, orbit);
-	myTask->run(); // run next queued TrackingTask
-      }
-      //cancel thread in error case
-      catch (std::exception &e) {
-	std::cout << "ERROR @ particle " << myTask->particleId
-	  // << " (thread_id "<< std::this_thread::get_id() << ")"
-		  <<":"<< std::endl
-		  << e.what() << std::endl;
-	mutex.lock();
-	errors.emplace(myTask->particleId, e.what());
-	mutex.unlock();
-      }
-      mutex.lock();
-      runningTasks.remove(myTask); // to display progress
-      mutex.unlock();
-    }//else
-  }//while
-}
-
-
-void Tracking::printProgress() const
-{
-  std::list<std::vector<TrackingTask>::const_iterator> tmp;
-  unsigned int barWidth;
-  auto numTasks = runningTasks.size();
-  if ( numTasks < 5)
-    barWidth = 20;
-  else
-    barWidth = 15;
-  //shorter looks ugly
-  
-  while (runningTasks.size() > 0) {
-    tmp = runningTasks;
-    unsigned int n=0;
-    for (std::vector<TrackingTask>::const_iterator task : tmp) {
-      if (n<2) // first 2 with progress bar
-	std::cout << task->getProgressBar(barWidth) << "  ";
-      else     // others percentage only
-	std::cout << task->getProgressBar(0) << " ";
-      n++;
-    }
-    while (n<numTasks) { // clear finished tasks
-      std::cout << "       ";
-      n++;
-    }
-    std::cout <<"\r"<< std::flush;
-    sleep(1);
-  }
-}
 
 
 

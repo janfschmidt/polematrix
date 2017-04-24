@@ -247,6 +247,7 @@ public:
   double agamma_start() const {return agamma(t_start());}
   double agamma_stop() const {return agamma(t_stop());}
   unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
+  unsigned int outSteps_resStrengths() const {return (agammaMax()-agammaMin())/dagamma();}
   std::string saveGammaList() const {return getSaveList(_saveGamma);}
   std::string savePhaseSpaceList() const {return getSaveList(_savePhaseSpace);}
 

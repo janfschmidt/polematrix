@@ -107,7 +107,7 @@ public:
   std::string phasespaceOutfileName() const; // phase space output file name
 
   SpinMotion getStorage() const {return storage;}
-  std::string getProgressBar(unsigned int barWidth=20) const;
+  double getProgress() const {return (double)storage.size() / config->outSteps();}
   bool isCompleted() const {return completed;}
   
 };
