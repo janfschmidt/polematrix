@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
   
   // resonance strengths mode (no tracking)
   if (args.count("resonance-strengths")) {
-    ResStrengths r(t.config);
+    ResStrengths r(t.config, nThreads);
     // initialize model from simtool
     try {
       r.setModel();

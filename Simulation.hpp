@@ -87,6 +87,8 @@ public:
   
   Simulation(unsigned int nThreads=std::thread::hardware_concurrency()) : queueIt(queue.begin()), config(new Configuration) {initThreadPool(nThreads);}
   Simulation(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency()) : queueIt(queue.begin()), config(c) {initThreadPool(nThreads);}
+  Simulation(const Simulation& o) = delete;
+  
   void setModel();
   
   bool modelReady() {if (lattice->size()==0 || orbit->size()==0) return false; else return true;}

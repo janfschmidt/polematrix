@@ -85,6 +85,7 @@ public:
   
   ResStrengths(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads) {}
   ResStrengths(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(c,nThreads) {}
+  ResStrengths(const ResStrengths& o) = delete;
 
   void start();                                  // calculate & print all res. strengths according to config
   std::string getSingle(double agamma);          // calculate & print single resonance strength

@@ -201,7 +201,10 @@ ParticleResStrengths::ParticleResStrengths(unsigned int id, const std::shared_pt
 // !!! edge focusing is not included
 std::complex<double> ParticleResStrengths::calculate(double agamma)
 {
-  std::cout << "calculate gamma*a=" << agamma << std::endl;
+  std::stringstream msg;
+  msg << "calculate gamma*a=" << agamma;
+  polematrix::debug(__PRETTY_FUNCTION__, msg.str());
+  
   std::complex<double> epsilon (0,0);
 
   for (unsigned int turn=0; turn<config->numTurns(); turn++) {
