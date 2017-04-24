@@ -40,3 +40,25 @@ void SingleParticleSimulation::setModel(std::shared_ptr<const pal::AccLattice> l
   orbit = o;
   trajectory->setOrbit(orbit);
 }
+
+
+std::string SingleParticleSimulation::getProgressBar(unsigned int barWidth) const
+{
+  std::stringstream bar;
+
+  bar << particleId << ":";
+
+  if (barWidth!=0) {
+    unsigned int steps = (1.0 * barWidth * getProgress()) + 0.5;
+    unsigned int i=0;
+    bar << "[";
+    for (; i<steps; i++)
+      bar << "=";
+    for (; i<barWidth; i++)
+      bar << " ";
+    bar << "]";
+  }
+  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< getProgress()*100. << "%";
+  
+  return bar.str();
+}

@@ -49,15 +49,8 @@ void Tracking::start()
   std::cout << "Start tracking "<<config->nParticles()<<" Spins..." << std::endl;
   auto start = std::chrono::high_resolution_clock::now();
 
-  //start threads
+  //start threads (incl. progress bars)
   startThreads();
-
-  //start extra thread for progress bars
-  if (showProgressBar) {
-    sleep(1);
-    std::thread progress(&Tracking::printProgress,this);
-    progress.join();
-  }
 
   waitForThreads();
 
@@ -72,45 +65,13 @@ void Tracking::start()
   std::cout << "Tracking "<<numSuccessful()<< " Spins done. Tracking took ";
   std::cout << secs.count() << " s = "<< int(secs.count()/60.+0.5) << " min." << std::endl;
   std::cout << "Thanks for using polematrix " << polemversion() << std::endl;
-  for (auto& it : errors)
-    std::cout << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
+  std::cout << printErrors();
   std::cout << "-----------------------------------------------------------------" << std::endl;
 
   if (numSuccessful() > 0)
     calcPolarization();
 }
 
-
-
-void Tracking::printProgress() const
-{
-  std::list<std::vector<TrackingTask>::const_iterator> tmp;
-  unsigned int barWidth;
-  auto numTasks = runningTasks.size();
-  if ( numTasks < 5)
-    barWidth = 20;
-  else
-    barWidth = 15;
-  //shorter looks ugly
-  
-  while (runningTasks.size() > 0) {
-    tmp = runningTasks;
-    unsigned int n=0;
-    for (std::vector<TrackingTask>::const_iterator task : tmp) {
-      if (n<2) // first 2 with progress bar
-	std::cout << task->getProgressBar(barWidth) << "  ";
-      else     // others percentage only
-	std::cout << task->getProgressBar(0) << " ";
-      n++;
-    }
-    while (n<numTasks) { // clear finished tasks
-      std::cout << "       ";
-      n++;
-    }
-    std::cout <<"\r"<< std::flush;
-    sleep(1);
-  }
-}
 
 
 

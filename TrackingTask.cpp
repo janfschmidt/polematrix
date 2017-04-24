@@ -355,26 +355,6 @@ void TrackingTask::storeStep(const double &pos, const arma::colvec3 &s)
 }
 
 
-std::string TrackingTask::getProgressBar(unsigned int barWidth) const
-{
-  std::stringstream bar;
-
-  bar << particleId << ":";
-
-  if (barWidth!=0) {
-    unsigned int steps = (1.0 * barWidth * storage.size() / config->outSteps()) + 0.5;
-    unsigned int i=0;
-    bar << "[";
-    for (; i<steps; i++)
-      bar << "=";
-    for (; i<barWidth; i++)
-      bar << " ";
-    bar << "]";
-  }
-  bar << std::fixed<<std::setprecision(0)<<std::setw(2)<<std::setfill('0')<< 1.0*storage.size() / config->outSteps()*100 << "%";
-  
-  return bar.str();
-}
 
 
 double TrackingTask::gammaRadiation(const double &pos)

@@ -47,7 +47,11 @@ public:
 
   SingleParticleSimulation(unsigned int id, const std::shared_ptr<Configuration> c);
   void setModel(std::shared_ptr<const pal::AccLattice> l, std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o);
+  
   virtual void run() =0;
+
+  virtual double getProgress() const =0; // progress [0,1] for status output
+  virtual std::string getProgressBar(unsigned int barWidth) const;
 };
 
 
@@ -74,19 +78,24 @@ protected:
 
   // thread management
   std::vector<std::thread> threadPool;
+  std::thread progress;
   std::mutex mutex;
   void initThreadPool(unsigned int nThreads);
   void startThreads();
   void waitForThreads();
   void processQueue();
+  void printProgress() const;
   
   std::map<unsigned int,std::string> errors;
 
 public:
   const std::shared_ptr<Configuration> config;
+  bool showProgressBar;
   
-  Simulation(unsigned int nThreads=std::thread::hardware_concurrency()) : queueIt(queue.begin()), config(new Configuration) {initThreadPool(nThreads);}
-  Simulation(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency()) : queueIt(queue.begin()), config(c) {initThreadPool(nThreads);}
+  Simulation(unsigned int nThreads=std::thread::hardware_concurrency())
+    : queueIt(queue.begin()), config(new Configuration), showProgressBar(true) {initThreadPool(nThreads);}
+  Simulation(const std::shared_ptr<Configuration> c, unsigned int nThreads=std::thread::hardware_concurrency())
+    : queueIt(queue.begin()), config(c), showProgressBar(true) {initThreadPool(nThreads);}
   Simulation(const Simulation& o) = delete;
   
   void setModel();
@@ -99,6 +108,8 @@ public:
   
   void saveLattice() const {lattice->print( (config->outpath()/"lattice.dat").string() );}
   void saveOrbit() const {orbit->print( (config->outpath()/"closedorbit.dat").string() );}
+
+  std::string printErrors() const;
 };
 
 
@@ -127,6 +138,11 @@ void Simulation<T>::startThreads()
   for (std::thread& t : threadPool) {
     t = std::thread(&Simulation::processQueue,this);
   }
+  //start extra thread for progress bars
+  if (showProgressBar) {
+    sleep(1);
+    progress = std::thread(&Simulation::printProgress,this);
+  }
 }
 
 template <typename T>
@@ -134,6 +150,9 @@ void Simulation<T>::waitForThreads()
 {
   for (std::thread& t : threadPool) {
     t.join();
+  }
+  if (showProgressBar) {
+    progress.join();
   }
 }
 
@@ -194,6 +213,45 @@ void Simulation<T>::processQueue()
 }
 
 
+template <typename T>
+std::string Simulation<T>::printErrors() const
+{
+  std::stringstream s;
+  for (auto& it : errors)
+    s << "ERROR @ particle " << it.first << ": " << it.second << std::endl;
+  return s.str();
+}
+
+
+template <typename T>
+void Simulation<T>::printProgress() const
+{
+  unsigned int barWidth;
+  auto numTasks = runningTasks.size();
+  if ( numTasks < 5)
+    barWidth = 20;
+  else
+    barWidth = 15;
+  //shorter looks ugly
+  
+  while (runningTasks.size() > 0) {
+    auto tmp = runningTasks;
+    unsigned int n=0;
+    for (auto& task : tmp) {
+      if (n<2) // first 2 with progress bar
+	std::cout << task->getProgressBar(barWidth) << "  ";
+      else     // others percentage only
+	std::cout << task->getProgressBar(0) << " ";
+      n++;
+    }
+    while (n<numTasks) { // clear finished tasks
+      std::cout << "       ";
+      n++;
+    }
+    std::cout <<"\r"<< std::flush;
+    sleep(1);
+  }
+}
 
 
 #endif

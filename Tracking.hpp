@@ -32,21 +32,12 @@
 class Tracking : public Simulation<TrackingTask>
 {
 private:
-  // std::vector<TrackingTask> queue;
-  // std::vector<TrackingTask>::iterator queueIt;
-  // std::list<std::vector<TrackingTask>::const_iterator> runningTasks; // to display progress
-  
-  // virtual void processQueue();
-  void printProgress() const;
-
   SpinMotion polarization;
   void calcPolarization();  //calculate polarization: average over all spin vectors for each time step
 
 
 public:
-  bool showProgressBar;
-
-  Tracking(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads), showProgressBar(true) {}
+  Tracking(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads) {}
   Tracking(const Tracking& o) = delete;
   ~Tracking() {}
   
