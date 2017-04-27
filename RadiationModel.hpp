@@ -82,9 +82,12 @@ public:
   double stepDistance(const double& pos) const {return pos - lastPos;}
   double delta() const {return (gamma()-gamma0())/gamma0();}
   double gammaMinusGamma0() const {return gamma()-gamma0();}
+  double dphase() const {return phase() - ref_phase();}
 
   void init(std::shared_ptr<const pal::AccLattice> l);
   void update(const pal::AccElement* element, const double& pos, const double& newGamma0);
+
+  void checkStability() const;
 
   //cavity voltage in keV
   double U0_keV() const {return config->q() * lattice->Erev_keV_syli(gamma0());}
@@ -92,6 +95,10 @@ public:
   //reference phase -> stable phase for given overvoltage q
   // (! electron beam: stable phase on falling slope of sine !)
   double ref_phase() const {return M_PI - std::asin( 1/config->q() );}
+  //maximum phase for stable oscillation (separatrix): ref_phase() + pi - 2*asin(1/q)
+  double max_phase() const {return 2*M_PI - 3*std::asin( 1/config->q() );}
+  // separatrix energy (dE/E) for current phase
+  double max_delta() const;
   
   double sigma_phase() const;     //bunch length as phase in units of radian
   double sigma_gamma() const;     //energy spread in units of gamma

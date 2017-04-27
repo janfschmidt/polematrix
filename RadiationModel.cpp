@@ -129,14 +129,46 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
     _gamma -= radModel.radiatedEnergy(element, gamma0(), gamma());
   }
   else if(element->type == pal::cavity) {
-    set_gamma0(newGamma0); // update reference energy (energy ramp)
+    // update reference energy (energy ramp)
+    set_gamma0(newGamma0);
     // energy gain in cavity
     double tmp =  gammaU0()/nCavities * std::sin(phase());
     _gamma += tmp;
+    // check if outside of separatrix
+    if (config->sigmaGammaFactor() > 1. || config->sigmaPhaseFactor() > 1.)
+      checkStability();
   }
     
   lastPos = pos;
 }
+
+
+void LongitudinalPhaseSpaceModel::checkStability() const
+{
+  if (std::fabs(delta()) > max_delta() ) {
+    std::stringstream msg;
+    msg << "longitudinal motion unstable @ dp/p="
+	<< std::setiosflags(std::ios::scientific) << std::setprecision(1) << delta()
+	<< std::resetiosflags(std::ios::scientific) << std::setiosflags(std::ios::fixed) << std::setprecision(2)
+	<< ", dphase=" << dphase();
+    throw std::runtime_error(msg.str());
+  }
+}
+
+
+// separatrix energy (dE/E) for current phase
+double LongitudinalPhaseSpaceModel::max_delta() const
+{
+  double rp = std::asin( 1/config->q() );    // reference phase
+  double dp = std::fmod(dphase(), (2*M_PI)); // phase deviation from reference phase
+
+  // separatrix energy / MeV --- K. Wille section 5.7 eq. (5.101) [german, 2nd edition]
+  double dEsqr = (U0_keV()/1000.*gamma()*config->E_rest_keV/1000.) / (M_PI*config->q()*config->alphac())
+  			 * (std::cos(rp+dp) + std::cos(rp) + (2*rp+dp-M_PI)*std::sin(rp));
+
+  return std::sqrt(std::fabs(dEsqr)) / (config->E_rest_keV/1000.) / gamma0();
+}
+
 
 // bunch length, calculated as time, converted to rf-phase (factor 2pi cancels)
 double LongitudinalPhaseSpaceModel::sigma_phase() const
