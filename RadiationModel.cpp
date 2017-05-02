@@ -19,6 +19,7 @@
  */
 
 #include "RadiationModel.hpp"
+#include "debug.hpp"
 #include "gsl/gsl_sf_synchrotron.h"
 
 // photon spectrum. used for probabilities of photon energies
@@ -53,11 +54,14 @@ SynchrotronRadiationModel::SynchrotronRadiationModel(int _seed) : seed(_seed), r
     intervals.push_back(u);
     weights.push_back(nPhoton(u));
   }
-  //std::cout << intervals.size() <<" energy spectrum sampling points"<< std::endl;
 
   // photon energy distribution
   photonEnergy = boost::random::piecewise_linear_distribution<>(intervals.begin(), intervals.end(), weights.begin());
-  //std::cout <<"min:" << photonEnergy.min() << " max:" << photonEnergy.max() << std::endl;
+
+  std::stringstream msg;
+  msg << intervals.size() <<" energy spectrum sampling points, "
+      << "Emin:" << photonEnergy.min() << ", Emax:" << photonEnergy.max();
+  polematrix::debug(__PRETTY_FUNCTION__, msg.str());
 }
 
 
@@ -97,12 +101,6 @@ void LongitudinalPhaseSpaceModel::init(std::shared_ptr<const pal::AccLattice> l)
   nCavities = lattice->size(pal::cavity);
   set_gamma0(config->gamma_start());
 
-  // if (config->verbose()) {
-  //   std::cout <<"gamma0=" << gamma0() << ", sigma_gamma=" << sigma_gamma()
-  // 	      << "\nref_phase=" << ref_phase() << ", sigma_phase=" << sigma_phase()
-  // 	      << "\nq=" << config->q()<< ", syncr_freq=" << synchrotronFreq() << std::endl;
-  // }
-
   // init statistical distributions:
   boost::random::normal_distribution<> phaseDistribution(ref_phase(), sigma_phase());
   boost::random::normal_distribution<> gammaDistribution(gamma0(), sigma_gamma());
@@ -111,11 +109,6 @@ void LongitudinalPhaseSpaceModel::init(std::shared_ptr<const pal::AccLattice> l)
   boost::random::mt11213b initrng(seed);
   _gamma =  gammaDistribution(initrng);
   _phase = phaseDistribution(initrng);
-  
-  // if (config->verbose()) {
-  //   std::cout << "longitudinal phase space initialized with "
-  // 	      << "phase="<< phase() <<", gamma="<< gamma() << std::endl;
-  // }
 }
 
 
@@ -134,9 +127,7 @@ void LongitudinalPhaseSpaceModel::update(const pal::AccElement* element, const d
     // energy gain in cavity
     double tmp =  gammaU0()/nCavities * std::sin(phase());
     _gamma += tmp;
-    // check if outside of separatrix
-    if (config->sigmaGammaFactor() > 1. || config->sigmaPhaseFactor() > 1.)
-      checkStability();
+    // check if outside of separatrix ---> called from TrackingTask::matrixTracking()
   }
     
   lastPos = pos;

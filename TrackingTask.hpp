@@ -76,6 +76,8 @@ private:
   void storeStep(const double &pos, const arma::colvec3 &s); // append s(t) to storage and outfile
   void outfileAdd_ps(const double &pos);                     // append long. phase space(t) to outfile_ps
 
+  void checkLongStability() const;            // check if longitudinal motion is stable (gammaMode "radiation")
+
   
 public:
   TrackingTask(unsigned int id, const std::shared_ptr<Configuration> c);

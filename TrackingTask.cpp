@@ -212,6 +212,7 @@ void TrackingTask::matrixTracking()
     // output
     if (pos >= pos_nextOut) {
       if (!config->outElementUsed() || currentElement.element()->name == config->outElement()) {
+	checkLongStability();
 	storeStep(pos,s);
 	pos_nextOut += dpos_out;
       }
@@ -252,6 +253,16 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 		     n(0)*n(1)*onemc-n(2)*s, std::pow(n(1),2)*onemc+c, n(2)*n(1)*onemc+n(0)*s,  //column 2
                      n(0)*n(2)*onemc+n(1)*s, n(1)*n(2)*onemc-n(0)*s, std::pow(n(2),2)*onemc+c}; //column 3
   return rot;
+}
+
+
+// check if longitudinal motion is outside of separatrix -> throws std::runtime_error
+void TrackingTask::checkLongStability() const
+{
+  if (config->gammaMode()==GammaMode::radiation) {
+    syliModel.checkStability();
+  }
+  // else: no stability check implemented
 }
 
 
