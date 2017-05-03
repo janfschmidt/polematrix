@@ -259,7 +259,7 @@ arma::mat33 TrackingTask::rotMatrix(pal::AccTriple B_in) const
 // check if longitudinal motion is outside of separatrix -> throws std::runtime_error
 void TrackingTask::checkLongStability() const
 {
-  if (config->gammaMode()==GammaMode::radiation) {
+  if (config->gammaMode()==GammaMode::radiation && config->checkStability()) {
     syliModel.checkStability();
   }
   // else: no stability check implemented

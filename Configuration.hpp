@@ -128,6 +128,7 @@ private:
   std::string _savePhaseSpaceElement; // Name of Lattice Element at which long. phase space is recorded
   double _sigmaPhaseFactor; // start value for sigma_phase in units of equilibrium value
   double _sigmaGammaFactor; // start value for sigma_gamma in units of equilibrium value
+  bool _checkStability;     // switch checking longitudinal motion during tracking
 
   //Resonance Strengths
   double _agammaMin;    // output spin tune range
@@ -182,6 +183,7 @@ public:
   std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
   double sigmaPhaseFactor() const {return _sigmaPhaseFactor;}
   double sigmaGammaFactor() const {return _sigmaGammaFactor;}
+  bool checkStability() const {return _checkStability;}
   double agammaMin() const {return _agammaMin;}
   double agammaMax() const {return _agammaMax;}
   double dagamma() const {return _dagamma;}
@@ -222,6 +224,7 @@ public:
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
   void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
+  void set_checkStability(bool c) {_checkStability = c;}
   void set_agammaMin(double a) {_agammaMin = a;}
   void set_agammaMax(double a) {_agammaMax = a;}
   void set_dagamma(double a) {_dagamma = a;}

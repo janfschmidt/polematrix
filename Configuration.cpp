@@ -55,6 +55,7 @@ Configuration::Configuration(std::string pathIn)
   _savePhaseSpaceElement = "";
   _sigmaPhaseFactor = 1.;
   _sigmaGammaFactor = 1.;
+  _checkStability = true;
   _agammaMin = 0.;
   _agammaMax = 10.;
   _nTurns = 0;
@@ -127,6 +128,7 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.savePhaseSpace.elementName", savePhaseSpaceElement());
   tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
+  tree.put("radiation.checkStability", checkStability());
   tree.put("radiation.overvoltage_factor", q());
   tree.put("radiation.momentum_compaction_factor", alphac());
   tree.put("radiation.momentum_compaction_factor_2", alphac2());
@@ -218,6 +220,7 @@ void Configuration::load(const std::string &filename)
   set_savePhaseSpaceElement( tree.get<std::string>("radiation.savePhaseSpace.elementName", "") );
   set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
+  set_checkStability( tree.get<bool>("radiation.checkStability", true) );
   set_agammaMin( tree.get<double>("resonancestrengths.spintune.min", 0.) );
   set_agammaMax( tree.get<double>("resonancestrengths.spintune.max", 10.) );
   set_dagamma( tree.get<double>("resonancestrengths.spintune.step", 1.) );
