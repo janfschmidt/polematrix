@@ -1,0 +1,94 @@
+%% polematrix documentation
+%% Copyright (C) 2017 Jan Felix Schmidt <janschmidt@mailbox.org>
+%%   
+%% This program is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU General Public License as published by
+%% the Free Software Foundation, either version 3 of the License, or
+%% (at your option) any later version.
+%%
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%%
+%% You should have received a copy of the GNU General Public License
+%% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+\RequirePackage{xspace}
+
+\newcommand*{\software}[1]{\emph{#1}\xspace}
+\newcommand*{\ele}{\software{elegant}}
+\newcommand*{\madx}{\software{MAD-X}}
+\newcommand*{\polem}{\software{polematrix}}
+\newcommand*{\pal}{\software{palattice}}
+\newcommand*{\xml}{\software{xml}}
+
+\newcommand*{\cpp}{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.2ex}{++}}\xspace}
+
+% mathematical symbols
+% spin vector
+\newcommand*{\svec}[1][]{\ensuremath{\vec{S}_{#1}}\xspace}
+\newcommand*{\sabs}[1][]{\ensuremath{|\svec[#1]|}\xspace}
+\newcommand*{\sx}{\ensuremath{S_x}\xspace}
+\newcommand*{\sz}{\ensuremath{S_z}\xspace}
+\newcommand*{\slong}{\ensuremath{S_s}\xspace}
+% polarization vector
+\newcommand*{\pvec}[1][]{\ensuremath{\vec{P}_{#1}}\xspace}
+\newcommand*{\pabs}{\ensuremath{|\pvec|}\xspace}
+\newcommand*{\px}{\ensuremath{P_x}\xspace}
+\newcommand*{\pz}{\ensuremath{P_z}\xspace}
+\newcommand*{\plong}{\ensuremath{P_s}\xspace}
+\newcommand*{\poli}{\ensuremath{P_i}\xspace}
+\newcommand*{\polf}{\ensuremath{P_f}\xspace}
+
+
+
+% minted Setup
+\RequirePackage{minted}
+
+% fix caption distance
+% http://texwelt.de/wissen/fragen/8305/wie-kann-ich-den-abstand-der-
+% caption-zu-einem-mit-minted-erstelltem-listing-verringern
+\RequirePackage{etoolbox}
+\pretocmd{\listing}{%
+  \apptocmd{\endminted}{\unskip}{}{\undefined}%
+}{}{\undefined}
+
+% general setup
+\setminted{
+  frame=lines, framesep=3\fboxsep,
+  xleftmargin=8mm, xrightmargin=8mm,
+  numberblanklines=false
+}
+
+% cpp setup
+\newminted{cpp}{
+  autogobble,
+  linenos,
+  breaklines,
+  style=default,
+  fontsize=\footnotesize,
+}
+
+% bash setup
+\newminted{bash}{
+  autogobble,
+  breaklines,
+  fontsize=\footnotesize
+}
+
+% xml setup
+\newminted{xml}{
+  autogobble,
+  breaklines,
+  fontsize=\footnotesize
+}
+
+% cpp-inline Setup
+\newmintinline{cpp}{}
+
+% xml-inline setup
+\newmintinline{xml}{fontsize=\small}
+
+% bash-inline setup
+\newmintinline{bash}{fontsize=\footnotesize}

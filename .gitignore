@@ -2,3 +2,13 @@
 *~
 build/
 version.hpp
+doc/auto/
+doc/_minted-polematrix/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.run.xml
+*.toc

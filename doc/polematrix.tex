@@ -1,0 +1,154 @@
+%% polematrix documentation
+%% Copyright (C) 2017 Jan Felix Schmidt <janschmidt@mailbox.org>
+%%   
+%% This program is free software: you can redistribute it and/or modify
+%% it under the terms of the GNU General Public License as published by
+%% the Free Software Foundation, either version 3 of the License, or
+%% (at your option) any later version.
+%%
+%% This program is distributed in the hope that it will be useful,
+%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%% GNU General Public License for more details.
+%%
+%% You should have received a copy of the GNU General Public License
+%% along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+\documentclass[a4paper]{scrartcl}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{siunitx}
+\usepackage{csquotes}
+\usepackage{booktabs}
+\usepackage[colorlinks]{hyperref}
+\usepackage[backend=biber,style=alphabetic]{biblatex}
+
+\usepackage{polem_defs}
+\usepackage{cleveref}
+
+\author{Jan Felix Schmidt \textless janschmidt@mailbox.org\textgreater}
+\title{polematrix}
+\subtitle{a spin tracking code for electron accelerators using elegant}
+\date{documentation for version 0.99}
+
+\hypersetup{
+  pdftitle={polematrix documentation},
+  pdfauthor={Jan Felix Schmidt}
+}
+
+\bibliography{polem}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+  \polem is a spin tracking code. It calculates the motion of the spin of ultra
+  relativistic electrons in particle accelerators. It implements a simple matrix tracking
+  as multi-thread \cpp application. The input can be any lattice file from \ele or
+  \madx. All required particle trajectories are also imported from the established
+  particle tracking codes \ele or \madx.
+
+  \polem includes synchrotron radiation via import from \ele or an own implementation of
+  longitudinal phasespace. A short description of \polem is given in the IPAC'16
+  contribution \cite{IPAC16-decoh} and in my phd thesis, which will be available soon (in
+  German).
+  
+  Do not hesitate to contact me if you have any questions and please report bugs.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+
+
+\section{Usage}
+\label{sec:usage}
+
+\polem is called via
+\begin{bashcode}
+  polematrix [options] [CONFIGURATION FILE]
+\end{bashcode}
+where \bashinline{[options]} are the command line options shown in
+\cref{tab:polem-options}. All parameters of the spin tracking can be set up in an \xml
+configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
+\cref{sec:config}.
+
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \bashinline{-h [ --help ]}              &  display this help message \\
+    \bashinline{-V [ --version ]}           &  display version \\
+    \bashinline{-T [ --template ]}          &  create config file template (\bashinline{template.pole}) and quit \\
+    \bashinline{-R [ --resonance-strengths ]} &  estimate resonance strengths instead of spin tracking \\
+    \midrule
+    \bashinline{-t [ --threads ] arg (=all)}     &  set number of threads used for tracking \\
+    \bashinline{-o [ --output-path ] arg (=.)}   &  path for output files \\
+    \bashinline{-v [ --verbose ]}            &  activate additional status output \\
+    \bashinline{-n [ --no-progressbar ]}     &  do not show progress bar during tracking\\
+                                            &  (e.g. if output is redirected to a log file)\\
+    \bashinline{-a [ --all ]}                &  write additional output files (e.g. lattice und orbit) \\
+    \bashinline{-s [ --spintune ] arg}       &  in resonance strengths mode (\bashinline{-R}):\\
+                                            &  calculate for given spin tune only\\
+    \bottomrule
+  \end{tabular}
+  \caption{Command line options of \polem.}
+  \label{tab:polem-options}
+\end{table}
+
+
+
+\section{Installation}
+\label{sec:installation}
+
+\subsection{Dependencies}
+\label{sec:dependencies}
+
+\polem requires the following programs and libraries:
+\begin{itemize}
+\item CMake
+\item Gnu Scientific Library (GSL)
+\item Boost program options
+\item Boost filesystem
+\item Boost property tree
+\item Boost random
+\item Armadillo library
+\item \pal library
+\item \ele
+\end{itemize}
+On Ubuntu you can install the required packages with the following command:
+\begin{bashcode}
+  sudo apt-get install cmake libgsl-dev libboost-dev libboost-program-options-dev libboost-filesystem-dev libarmadillo-dev
+\end{bashcode}
+%
+\ele and \pal are not available in the Ubuntu/Debian repositories. 
+    
+\subsection{Build \polem}
+\label{sec:build}
+
+\begin{bashcode}
+  cd polematrix/build
+  cmake ..
+  make
+  sudo make install
+\end{bashcode}
+\polem has been tested only on Ubuntu/Debian Linux with the GCC compiler so far.
+
+\section{Configuration File Reference}
+\label{sec:config}
+
+
+\clearpage
+\appendix
+\printbibliography[heading=bibintoc]
+
+\end{document}
+
+
+
+%%% Local Variables: 
+%%% mode: Latex
+%%% LaTeX-command: "latex -shell-escape"
+%%% End: 
