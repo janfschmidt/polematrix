@@ -163,8 +163,20 @@ void TrackingTask::initGamma()
        || config->gammaMode()==GammaMode::simtool_no_interpolation )
     {
       // simtool: sdds import thread safe since SDDSToolKit-devel-3.3.1-2
-      gammaSimTool.readSimToolParticleColumn( config->getSimToolInstance(), particleId+1, "p" );
+      std::string col;
+      if (config->getSimToolInstance().tool==elegant) {
+	col = "p";
+      }
+      else if (config->getSimToolInstance().tool==madx) {
+	std::cout << "WARNING: It is recommended to use elegant for gammaModel simtool." << std::endl;
+	col = "PT";
+      }
+      gammaSimTool.readSimToolParticleColumn( config->getSimToolInstance(), particleId+1, col );
       gammaSimToolCentral = config->getSimToolInstance().readGammaCentral();
+      if (config->getSimToolInstance().tool==madx) { // madx: PT is dE/E -> gamma=(PT+1)*gamma0
+	gammaSimTool += 1.;
+	gammaSimTool *= gammaSimToolCentral;
+      }
       if (config->gammaMode() != GammaMode::simtool_no_interpolation) {
 	    gammaSimTool.init();
       }
