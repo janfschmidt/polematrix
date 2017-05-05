@@ -103,38 +103,89 @@ configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
 \section{Installation}
 \label{sec:installation}
 
+\polem has been tested only on Ubuntu/Debian Linux with the GCC compiler so far.
+
 \subsection{Dependencies}
 \label{sec:dependencies}
 
 \polem requires the following programs and libraries:
 \begin{itemize}
+\item GCC compiler
 \item CMake
-\item Gnu Scientific Library (GSL)
+\item Gnu Scientific Library (GSL) \cite{gsl}
 \item Boost program options
 \item Boost filesystem
-\item Boost property tree
-\item Boost random
-\item Armadillo library
-\item \pal library
-\item \ele
+\item Boost property tree \cite{boost-pt}
+\item Boost random \cite{boost-random}
+\item Armadillo library \cite{arma}
+\item \pal library \cite{palattice}
 \end{itemize}
-On Ubuntu you can install the required packages with the following command:
-\begin{bashcode}
-  sudo apt-get install cmake libgsl-dev libboost-dev libboost-program-options-dev libboost-filesystem-dev libarmadillo-dev
-\end{bashcode}
+\pal is available on github. The source code can be downloaded at \cite{palattice} and
+compiled and installed as described in the enclosed README file.
 %
-\ele and \pal are not available in the Ubuntu/Debian repositories. 
-    
-\subsection{Build \polem}
-\label{sec:build}
+All other dependencies may be in the package repositories of your Linux distribution. On
+Ubuntu you can install all required packages with the following command:
+\begin{bashcode}
+  sudo apt-get install g++ cmake libgsl-dev libboost-dev libboost-program-options-dev libboost-filesystem-dev libarmadillo-dev
+\end{bashcode}
+Additionally, \polem relies on the established particle
+tracking program \ele (or \madx), whose lattice files and tracking results are used for
+spin tracking.  \ele (and \madx) can be configured and execute automatically by \polem using
+\pal. The installation of \ele and \madx is described in \cref{sec:elemadx}.
 
+
+    
+\subsection{Build and Install \polem}
+\label{sec:build}
+\polem is compiled and installed using \software{CMake} with the following commands:
 \begin{bashcode}
   cd polematrix/build
-  cmake ..
+  cmake ../
   make
   sudo make install
 \end{bashcode}
-\polem has been tested only on Ubuntu/Debian Linux with the GCC compiler so far.
+The default install path is \bashinline{/usr/local/bin}. It can be changed by setting the
+\bashinline{CMAKE_INSTALL_PREFIX} variable in \bashinline{polematrix/CMakeLists.txt}.
+%
+To uninstall \polem run
+\begin{bashcode}
+  cd polematrix/build
+  sudo make uninstall
+\end{bashcode}
+
+
+
+\subsection{Underlying Particle Tracking Programs}
+\label{sec:elemadx}
+
+I recommend to use \polem with \ele since much more tracking parameters can be set
+automatically -- including number of particles (starting with a Gaussian profile in
+radiation equilibrium), tracking duration and linear energy ramps. If you have only a
+lattice file in \madx format, you can convert it automatically to an \ele lattice
+using the program \software{convertlattice} which is included in \pal \cite{palattice}.
+
+\subsubsection{\ele}
+\label{sec:ele}
+The particle tracking program \ele \cite{elegant} is developed at the Advanced Photon
+Source at Argonne National Laboratory. Packages for many operating systems can be
+downloaded at \cite{elegant-download}. Also install the \software{SDDSToolKit}, which is
+needed to access the binary output files of \ele.
+%
+If there is no package for your system, you can download the \bashinline{Build-AOP-RPMs}
+script instead which automatically builds all desired programs from source (see the guide
+in \cref{sec:ele-install}).
+%
+There is a parallel version of \ele, called \software{Pelegant}, which speeds up the
+tracking \cite{pelegant} (installation hints in \cref{sec:ele-install}). The \ele manual
+can be found at \cite{elegant-manual}.
+
+\subsubsection{\madx}
+\label{sec:madx}
+The particle tracking program \madx is developed at CERN and can be downloaded from the
+website \cite{madx}, which also provides the \madx manual.
+
+
+
 
 \section{Configuration File Reference}
 \label{sec:config}
@@ -142,6 +193,13 @@ On Ubuntu you can install the required packages with the following command:
 
 \clearpage
 \appendix
+
+\section{\ele Installation Guide}
+\label{sec:ele-install}
+
+
+
+
 \printbibliography[heading=bibintoc]
 
 \end{document}
