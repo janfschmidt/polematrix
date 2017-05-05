@@ -17,12 +17,14 @@
 \documentclass[a4paper]{scrartcl}
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[margin=2.5cm]{geometry}
 \usepackage{siunitx}
 \usepackage{csquotes}
 \usepackage{booktabs}
 \usepackage[colorlinks]{hyperref}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
+\usepackage{todonotes}
 
 \usepackage{polem_defs}
 \usepackage{cleveref}
@@ -38,6 +40,8 @@
 }
 
 \bibliography{polem}
+
+\setcounter{tocdepth}{2}
 
 \begin{document}
 \maketitle
@@ -97,6 +101,7 @@ configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
   \caption{Command line options of \polem.}
   \label{tab:polem-options}
 \end{table}
+
 
 
 
@@ -187,8 +192,357 @@ website \cite{madx}, which also provides the \madx manual.
 
 
 
+
+\section{Introduction to the Concept of \polem}
+\label{sec:concept}
+
+
+
+
 \section{Configuration File Reference}
 \label{sec:config}
+
+\polem is configured with an \xml file. The individual entries are arranged in several
+thematic groups like this:
+\begin{xmlcode}
+  <groupA>
+    <entry1> value </entry1>
+    <entry2> value </entry2>
+  </groupA>
+  <groupB>
+    <entry42> value </entry42>
+  </groupB>
+\end{xmlcode}
+The order of groups and entries is arbitrary. Many entries have default values and must
+not be set. When \polem is executed, a configuration file with the actual values of all
+entries is saved as \bashinline{currentconfig.pole}. All entries are
+documented in the following.
+
+\subsection{spintracking}
+
+The group \xmlinline{<spintracking>} contains the setup of the spin tracking itself.\\[2mm]
+
+\begin{configdoc}{t_start}{double}{\si{\s}}[0.0]
+  The start time $t_\text{start}$ of the spin tracking
+\end{configdoc}
+
+\begin{configdoc}{t_stop}{double}{\si{\s}}
+  The stop time $t_\text{stop}$ of the spin tracking
+\end{configdoc}
+
+\begin{configdoc}{E0}{double}{\si{\GeV}}
+  Beam energy at the time $t=\SI{0}{\s}$
+\end{configdoc}
+
+\begin{configdoc}{dE}{double}{\si{\GeV\per\s}}
+  Speed of the linear energy ramp
+\end{configdoc}
+
+\begin{configdoc}{Emax}{double}{\si{\GeV}}[\num{e10}]
+  Maximum energy to confine the energy ramp.
+  If the energy ramp reaches this energy, it is kept until the end of the tracking. Use a
+  sufficiently large number do disable this feature (default).
+\end{configdoc}
+
+\begin{configdocgroup}{s_start}
+  Initial value of the spin vector $\svec(t_\text{start})$. It is used for all spins.
+  Thus, the tracking always starts with polarization $\pabs(t_\text{start}) = 1$. The
+  three components of the vector are each set as a separate entry:
+  
+  \begin{configdoc}{x}{double}{}[0.0]
+    Horizontal component \sx of the initial value
+  \end{configdoc}
+
+  \begin{configdoc}{z}{double}{}[1.0]
+    Vertical component \sz of the initial value
+  \end{configdoc}
+
+  \begin{configdoc}{s}{double}{}[0.0]
+    Longitudinal component \slong of the initial value
+  \end{configdoc}
+\end{configdocgroup}
+
+\begin{configdoc}{numParticles}{unsigned int}{}[1]
+  Number of particles (spin vectors) for the spin tracking
+\end{configdoc}
+
+\begin{configdoc}{dt_out}{double}{\si{\s}}[$(t_\text{stop}-t_\text{start})/1000$]
+  Step width of the output of \pvec and \svec[i]
+\end{configdoc}
+
+\begin{configdoc}{gammaModel}{string}{}[radiation]
+  Model for longitudinal beam dynamics $\gamma_i(t)$ during spin tracking. The two
+  realistic and three simple models are discussed in \cite[chapter~4]{dr}.
+  \todo[inline]{add doc section about gammaModels}
+  \begin{description}
+  \item[\xmlinline{radiation}] This model is implemented in \polem and calculates
+    stochastic emission of synchrotron radiation.
+  \item[\xmlinline{simtool}] $\gamma_i(t)$ is imported from the particle tracking program,
+    which is selected as \xmlinline{<simTool>} in the group \xmlinline{<palattice>} (see below).
+    I recommend to use this model with \ele.
+  \item[\xmlinline{linear}] Deactivation of longitudinal dynamics. All particles just
+    follow the linear energy ramp: $\gamma_i(t) = \gcentral$.
+  \item[\xmlinline{offset}] Every particle gets an energy offset, which is constant over
+    time: $\gamma_i(t) = \gcentral + \Delta\gamma_i$.
+  \item[\xmlinline{oscillation}] Approximation of longitudinal dynamics by harmonic
+    oscillations:\\$\gamma_i(t) = \gcentral + \Delta\gamma_i \cos(\ws t + \psi_i)$
+  \end{description}
+\end{configdoc}
+
+% \begin{configdoc}{trajectoryModel}{string}{}[closed orbit]
+%   Modell für die transversalen Teilchenbahnen $\posvec[i](t)$, über das die transversalen
+%   Ablagen der Teilchen in das Spintracking eingehen. Dabei sind bisher zwei Modelle
+%   wählbar:
+%   \begin{description}
+%   \item[\xmlinline{closed orbit}] Für alle Teilchen wird der \clo als Teilchenbahn
+%     verwendet. Auf alle Spins wirken dann die selben Magnetfelder, die (abgesehen von
+%     explizit zeitabhängigen Feldern) ausschließlich umlaufharmonische Anteile haben. Um
+%     den \clo zu bestimmen ist kein Teilchentracking erforderlich. Dieses Modell ist
+%     ausreichend, wenn keine intrinsischen Resonanzen simuliert werden sollen.
+%   \item[\xmlinline{trajectory}] Die individuellen Trajektorien werden aus dem
+%     Teilchentracking-Programm übernommen, welches unter \xmlinline{<simTool>} in der
+%     Gruppe \xmlinline{<palattice>} ausgewählt ist (s.u.).
+%   \end{description}
+% \end{configdoc}
+
+% \begin{configdoc}{edgeFocussing}{bool}{}[false]
+%   Schaltet die Berücksichtigung der horizontalen Magnetfelder an den Kanten von
+%   Dipolmagneten ein oder aus. Die Berechnung wird in \cref{sec:polem-kanten} beschrieben.
+% \end{configdoc}
+
+
+
+% \subsection{palattice}
+% In der Gruppe \xmlinline{<palattice>} werden Lattice-Import und Teilchentracking
+% konfiguriert. Als Schnittstelle zu \madx und \ele wird die Bibliothek \pal eingesetzt
+% (siehe \cref{sec:param-von-feldern}).\\[2mm]
+
+% \begin{configdoc}{simTool}{string}{}
+%   Auswahl des Teilchentracking-Programms.
+%   Mögliche Werte: \xmlinline{elegant} oder \xmlinline{madx}. Es wird die Verwendung von
+%   \ele empfohlen, da einige Funktionen von \polem nur mit \ele möglich sind. Ein
+%   \madx-Lattice kann mit Hilfe von \pal in ein \ele-Lattice umgewandelt werden.
+% \end{configdoc}
+
+% \begin{configdoc}{mode}{string}{}
+%   Auswahl des Betriebsmodus für den Import aus dem Teilchentracking-Programm.
+%   \begin{description}
+%   \item[\xmlinline{online}] In diesem Modus wird das Teilchentracking-Programm automatisch
+%     konfiguriert und ausgeführt. Normalerweise sollte dieser Modus verwendet werden.
+%   \item[\xmlinline{offline}] In diesem Modus werden nur die bereits vorliegenden Ausgabedateien
+%     des Teilchentrackings eingelesen. Dieser Modus kann nützlich sein um eine unnötige
+%     Wiederholung des Teilchentrackings zu verhindern oder um \polem zu verwenden, wenn
+%     \madx oder \ele nicht verfügbar sind.
+%   \end{description}
+% \end{configdoc}
+
+% \begin{configdoc}{file}{string}{}
+%   Datei in der das Lattice für das Spintracking gespeichert ist. Das Format muss dem unter
+%   \xmlinline{<simTool>} gewählten Programm entsprechen.
+
+%   Welche Datei angegeben werden muss, hängt von dem unter \xmlinline{<mode>} eingestellten
+%   Modus ab:
+%   \begin{itemize}
+%   \item  Im \xmlinline{online}-Modus ist die Lattice-Datei anzugeben (\bashinline{.lte} für \ele,
+%     meist \bashinline{.madx} für \madx).
+%   \item Im \xmlinline{offline}-Modus ist die \bashinline{.param}-Datei (\ele)
+%     beziehungsweise die \bashinline{.twiss}-Datei (\madx) anzugeben.
+%   \end{itemize}
+% \end{configdoc}
+
+
+% \begin{configdoc}{saveGamma}{string}{}[]
+%   Diese Option ist nur im Zusammenhang mit \xmlinline{<gammaModel>} \xmlinline{simtool}
+%   sinnvoll. Sie enthält eine Liste der Teilchennummern $i$, für die das aus dem
+%   Teilchentracking eingelesene $\gamma_i(t)$ als Textdatei ausgegeben werden soll. Die
+%   Teilchennummern werden durch Kommata getrennt (z.B. \xmlinline{0,2,7}). Außerdem können
+%   Bereiche durch Bindestriche angegeben werden (z.B. \xmlinline{0,3-6,8}). Die Dateien werden
+%   unter dem Namen \bashinline{gammaSimTool_i.dat} (mit Teilchennummer $i$) gespeichert.
+
+%   Achtung: Die in \ele verwendete \bashinline{particleID} wird beginnend bei 1 gezählt.
+%   In \polem wird diesem Teilchen die Nummer 0 zugewiesen.
+% \end{configdoc}
+
+% \begin{configdocgroup}{simToolRamp}
+%   Wenn ein Teilchentracking mit \ele ausgeführt wird, kann die in der
+%   Gruppe \xmlinline{<spintracking>} konfigurierte Energierampe automatisch auch für das
+%   Teilchentracking in \ele gesetzt wird. Für \madx ist dies nicht implementiert.
+
+%   \begin{configdoc}{set}{bool}{}[true]
+%     Diese Option bestimmt ob die Energierampe auf \ele übertragen wird. Sie kann mit
+%     \xmlinline{true} oder \xmlinline{1} aktiviert und mit \xmlinline{false} oder
+%     \xmlinline{0} deaktiviert werden.
+%   \end{configdoc}
+
+%   \begin{configdoc}{steps}{unsigned int}{}[200]
+%     Wenn die Übergabe der Energierampe an \ele aktiv ist, wird diese an diskreten
+%     Stützstellen in eine \sdds-Datei geschrieben. Hier kann die Anzahl dieser Stützstellen
+%     festgelegt werden, die äquidistant über den Bereich von $t_\text{start}$ bis
+%     $t_\text{stop}$ verteilt sind.
+%   \end{configdoc}
+% \end{configdocgroup}
+
+% \begin{configdocgroup}{rfMagnets}
+%   Mit diesen Optionen können die Magnetfelder beliebiger Elemente des Lattices als
+%   Wechselfelder konfiguriert werden (siehe \cref{sec:lattice}). Die Einstellungen wirken
+%   sich nur auf die Magnetfelder während des Spintrackings aus und nicht auf das
+%   Teilchentracking mit \madx oder \ele. Soll der Einfluss eines Wechselfeldes auf die
+%   Strahldynamik einbezogen werden, muss dieses zusätzlich manuell im jeweiligen
+%   Trackingprogramm eingerichtet werden.
+
+%   Es können beliebig viele Elemente mit Wechselfeldern eingerichtet werden, da alle
+%   folgenden Optionen die Eingabe mehrerer Werte als durch Kommata getrennte Liste
+%   erlauben. Alle Optionen müssen gleich viele Einträge enthalten, die dann entsprechend
+%   der Liste in \xmlinline{<elements>} den Elementen zugeordnet werden.\\[1mm]
+
+%   \begin{configdoc}{elements}{string}{}[]
+%     Namen des Elements für das das Wechselfeld aktiviert werden soll (mehrere
+%     Elemente mit Kommata getrennt).
+%   \end{configdoc}
+
+%   \begin{configdoc}{Q1}{string}{}[]
+%     Frequenz des Wechselfeldes zu Beginn des Trackings (Umlauf 1) normiert auf die
+%     Umlauffrequenz, also als einheitenloser Arbeitspunkt (oder für mehrere Elemente mit
+%     Kommata getrennt).
+%   \end{configdoc}
+
+%   \begin{configdoc}{dQ}{string}{}[]
+%     Änderung der Frequenz pro Umlauf (Frequenz-\foreignquote{american}{sweep}) --
+%     ebenfalls als einheitenloser Arbeitspunkt (für mehrere Elemente mit Kommata getrennt).
+%   \end{configdoc}
+
+%   \begin{configdoc}{period}{string}{}[]
+%     Länge des Frequenz-\foreignquote{american}{sweeps} in Umläufen. Danach beginnt der
+%     \foreignquote{american}{sweep} von vorne (für mehrere Elemente mit Kommata getrennt).
+%   \end{configdoc}
+% \end{configdocgroup}
+
+
+
+% \subsection{radiation}
+% In dieser Gruppe wird das in \polem implementierte Modell der longitudinalen Strahldynamik
+% unter Einbeziehung von \synrad konfiguriert. Dementsprechend ist die gesamte Gruppe nur
+% dann relevant, wenn unter \xmlinline{<spintracking>} der \xmlinline{<gammaModel>}
+% \xmlinline{radiation} gewählt ist. Andernfalls kann die Gruppe vollständig weggelassen werden.\\[2mm]
+
+% \begin{configdoc}{seed}{int}{}[zufällig]
+%   Der \foreignquote{american}{seed} für den Zufallszahlengenerator, der die
+%   Startverteilung der Teilchen und die stochastische Abstrahlung bestimmt. Durch Angabe
+%   des selben Wertes bei mehreren Simulationen können die Ergebnisse exakt reproduziert werden. 
+% \end{configdoc}
+
+% \begin{configdocgroup}{savePhaseSpace}
+%   Analog zu \xmlinline{<saveGamma>} in der Gruppe \xmlinline{<palattice>} können hier
+%   Teilchennummern $i$ gewählt werden, für die die Koordinate im longitudinalen
+%   Phasenraum $(\phf,\gamma)$ während des Spintrackings in einer Textdatei aufgezeichnet
+%   werden soll.
+
+%   \begin{configdoc}{list}{string}{}[]
+%     Diese Option enthält eine Liste der Teilchennummern $i$, für die die Aufgezeichnung
+%     aktiviert werden soll. Die Teilchennummern werden durch Kommata getrennt (z.B.
+%     \xmlinline{0,2,7}). Außerdem können Bereiche durch Bindestriche angegeben werden (z.B.
+%     \xmlinline{0,3-6,8}). Die Dateien werden unter dem Namen
+%     \bashinline{longPhaseSpace_i.dat} (mit Teilchennummer $i$) gespeichert. Die Ausgabe
+%     erfolgt in jedem Umlauf an der Position des unter \xmlinline{<elementName>}
+%     angegebenen Elements.
+%   \end{configdoc}
+
+%   \begin{configdoc}{elementName}{string}{}[]
+%     Der Name des Elements im Lattice, an dessen Position die Phasenraumkoordinaten
+%     aufgezeichnet werden sollen. Die Option muss gesetzt werden, wenn
+%     \xmlinline{<savePhaseSpace>} verwendet werden soll. Sonst erfolgt keine Ausgabe.
+%   \end{configdoc}
+% \end{configdocgroup}
+
+% \begin{configdocgroup}{startDistribution}
+%   \polem berechnet die Startkoordinaten der Teilchen im longitudinalen Phasenraum zum
+%   Beginn des Spintrackings ($t_\text{start}$) automatisch so, dass die $\phf_i$ und
+%   $\gamma_i$ \textsc{gauß}verteilt sind und Schwerpunkt und Breite der Verteilungen dem
+%   Strahlungsgleichgewicht entsprechen (siehe \cref{sec:radiation-model}). Mit diesen
+%   beiden Optionen können die Startwerte der Verteilungen in ihrer Breite verändert werden.
+%   Dann ist beispielsweise die Strahlungsdämpfung erkennbar (siehe
+%   \cref{fig:radmodel-damping}).
+
+%   \begin{configdoc}{sigmaPhaseFactor}{double}{}[1.0]
+%     Faktor zur Skalierung der Breite der \textsc{Gauß}verteilung der Phasen $\phf_i$. Der
+%     Wert 1 entspricht dem Strahlungsgleichgewicht.
+%   \end{configdoc}
+
+%   \begin{configdoc}{sigmaGammaFactor}{double}{}[1.0]
+%     Faktor zur Skalierung der Breite der \textsc{Gauß}verteilung der Teilchenenergien
+%     $\gamma_i$. Der Wert 1 entspricht dem Strahlungsgleichgewicht.
+%   \end{configdoc}
+% \end{configdocgroup}
+
+% Bei den folgenden Optionen handelt es sich um physikalische Parameter des Beschleunigers,
+% die zur Berechnung der \sylia benötigt werden. Sie werden von dem verwendeten
+% Teilchentracking-Programm berechnet und automatisch übernommen, wenn die jeweilige Option
+% nicht angegeben ist (Standardwert \num{0.0}). Die Optionen können verwendet werden um
+% abweichende Werte zu erzwingen.\\[2mm]
+
+% \begin{configdoc}{momentum_compaction_factor}{double}{}[0.0]
+%   der \momcomp \alphac
+% \end{configdoc}
+
+% \begin{configdoc}{momentum_compaction_factor_2}{double}{}[0.0]
+%     der \momcomp zweiter Ordnung \alphactwo
+% \end{configdoc}
+
+% \begin{configdoc}{overvoltage_factor}{double}{}[0.0]
+%   der Überspannungsfaktor $q$
+% \end{configdoc}
+
+% \begin{configdoc}{harmonic_number}{unsigned int}{}[0]
+%   die Harmonischenzahl $h$
+% \end{configdoc}
+
+% \begin{configdoc}{bending_radius}{double}{\si{\m}}[0.0]
+%   der mittlere Ablenkradius $R$ der Dipolmagnete
+% \end{configdoc}
+
+% \begin{configdoc}{longitudinal_damping_partition_number}{double}{}[0.0]
+%   die longitudinale Dämpfungszahl $J_s$
+% \end{configdoc}
+
+
+
+% \subsection{resonancestrengths}
+% Diese Gruppe dient der Einstellung der Berechnung von Resonanzstärken depolarisierender
+% Resonanzen, die über die Kommandozeilenoption \bashinline{-R} aktiviert wird. Soll \polem
+% für das Spintracking verwendet werden, kann die gesamte Gruppe weggelassen werden. Die
+% Implementation der Berechnung von Resonanzstärken ist in \cref{sec:resstrengths}
+% beschrieben.\\[2mm]
+
+% \begin{configdocgroup}{spintune}
+%   Die Resonanzstärke wird für diskrete Werte des \stune[es] \ga berechnet und in die
+%   Textdatei \bashinline{resonance-strengths.dat} geschrieben. Hier können Bereich und
+%   Schrittweie der Berechnung und Ausgabe konfiguriert werden.
+
+%   \begin{configdoc}{min}{double}{}[0.0]
+%     minimaler \stune \ga
+%   \end{configdoc}
+
+%   \begin{configdoc}{max}{double}{}[10.0]
+%     maximaler \stune \ga
+%   \end{configdoc}
+
+%   \begin{configdoc}{step}{double}{}[1.0]
+%     Schrittweite $\Delta\ga$ für Berechnung und Ausgabe des \stune[es]
+%   \end{configdoc}
+% \end{configdocgroup}
+
+% \begin{configdoc}{turns}{unsigned int}{}[0]
+%   Wenn Resonanzstärken nicht nur für ganzzahlige \ga berechnet werden sollen, müssen die
+%   individuellen Trajektorien der Teilchen berücksichtigt werden und die Resonanzstärken über alle
+%   Teilchen gemittelt werden (siehe \cref{sec:resstrengths}). Dazu wird der Import der
+%   Trajektorien aus dem Teilchentracking analog zum Spintracking in der Gruppe
+%   \xmlinline{<palattice>} konfiguriert. Die Anzahl der Teilchen, wird aus der Option
+%   \xmlinline{<numParticles>} (Gruppe \xmlinline{<spintracking>}) übernommen.
+
+%   Hier kann die Anzahl der Umläufe $N_u$ eingestellt werden, über die die Resonanzstärken
+%   berechnet werden. Wenn der Standardwert 0 gewählt ist, wird die für die gewählte
+%   Auflösung \xmlinline{<step>} benötigte Mindestanzahl $N_u = 1/\Delta\ga$ verwendet.
+% \end{configdoc}
 
 
 \clearpage

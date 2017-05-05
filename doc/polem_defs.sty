@@ -40,6 +40,9 @@
 \newcommand*{\plong}{\ensuremath{P_s}\xspace}
 \newcommand*{\poli}{\ensuremath{P_i}\xspace}
 \newcommand*{\polf}{\ensuremath{P_f}\xspace}
+% longitudinal dynamics
+\newcommand*{\ws}{\ensuremath{\omega_s}\xspace}
+\newcommand*{\gcentral}{\ensuremath{\gamma_0}\xspace}
 
 
 
@@ -85,10 +88,66 @@
 }
 
 % cpp-inline Setup
-\newmintinline{cpp}{}
+\newmintinline{cpp}{fontsize=\small}
 
 % xml-inline setup
 \newmintinline{xml}{fontsize=\small}
 
 % bash-inline setup
 \newmintinline{bash}{fontsize=\footnotesize}
+
+
+
+
+% listings setup
+\RequirePackage{listings}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  showstringspaces=false,
+  escapeinside={(*}{*)}
+}
+
+% cpp setup
+\lstdefinelanguage{cpp}[ISO]{c++}{
+  keywordstyle=[1]\bfseries\color{purple},
+  keywordstyle=[2]\color{cyan!80},
+  keywordstyle=[3]\bfseries\color{green!50!black},
+  commentstyle=\color{teal},
+  stringstyle=\color{red!80!black},
+  keywords=[1]{double,unsigned,int,void,string,bool,AccLattice, AccElement,
+    SimToolInstance, FunctionOfPos, AccPair, AccTriple, Anchor, const_iterator, colvec},
+  keywords=[2]{std,pal,arma}, keywords=[3]{for,while,if,else,const,return},
+}
+
+
+  
+% Environment for documentation of configuration file entries
+\RequirePackage{xparse}
+\RequirePackage{xcolor}
+\DeclareDocumentEnvironment{configdoc}{ m m m o }{
+  \def\defaultval{#4}
+  \noindent
+  % \rule{\textwidth}{0.5pt}
+  \underline{{\large\xmlinline{<#1>}}\hspace{5mm}{\footnotesize{\color{gray!60!black}\textsc{Type:}}
+      \lstinline[language=cpp]@#2@\hspace{5mm}{\color{gray!60!black}\textsc{Unit:}} #3}
+    \IfValueTF{#4}
+    {\hspace{5mm}{\footnotesize{\color{gray!60!black}\textsc{Default Value:}} #4}}
+    {}%\\[-2mm]
+  }
+  % \rule{\textwidth}{0.5pt}
+  \begin{addmargin}[20pt]{0pt}
+  }{
+  \end{addmargin}
+  \vspace{3mm}
+}
+
+\newenvironment{configdocgroup}[1]{
+  \noindent
+  \underline{{\large\xmlinline{<#1>}}\hspace{5mm}{\footnotesize{\color{gray!60!black}\textsc{Group}}}}
+  \begin{addmargin}[20pt]{0pt}
+  }{
+  \end{addmargin}
+  \vspace{3mm}
+}
