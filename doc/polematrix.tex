@@ -22,8 +22,10 @@
 \usepackage{siunitx}
 \usepackage{csquotes}
 \usepackage{booktabs}
-\usepackage[colorlinks]{hyperref}
-\usepackage[backend=biber,style=alphabetic]{biblatex}
+\usepackage{multicol}
+\usepackage{amsmath}
+\usepackage[colorlinks,linkcolor=blue,citecolor=magenta,urlcolor=teal]{hyperref}
+\usepackage[backend=biber,style=alphabetic,backref]{biblatex}
 \usepackage{todonotes}
 
 \usepackage{polem_defs}
@@ -65,9 +67,54 @@
 \clearpage
 
 
+\section{\polem can}
+\label{sec:polem-can}
+\todo[inline]{list}
+
+\section{\polem cannot}
+\label{sec:polem-cannot}
+\todo[inline]{list}
+
+
+\section{Coordinate System}
+\label{sec:coord}
+
+\begin{figure}
+  \centering
+  \includegraphics{coord}
+  \caption{Accelerator coordinate system and precessing spin vectors. \cite{dr}}
+  \label{fig:coord}
+\end{figure}
+
+% Coordinate System
+\polem uses the typical accelerator coordinate system sketched in \cref{fig:coord}, which
+is moving along the reference orbit. The position along the reference orbit is called $s$.
+Since \polem assumes ultra relativistic electrons, the velocity along $s$ is assumed to be
+constant $v\approx c$ and the position is alternatively parametrized by the time
+$t = s/c$, which increases linearly for multiple turns in a circular accelerator. $t$ is
+used to define the duration and output step width of the spin tracking.
+
+At each position $s$ the $x$ axis points in horizontal direction and the $z$ axis points
+in vertical direction. $z>0$ is above the reference orbit. In a circular electron
+accelerator $x>0$ corresponds to the outer side of the ring (to larger radii of the
+bending magnets). The longitudinal axis is also referred to as $s$ axis.
+
+% Spin and Polarization Vectors
+Accordingly, the tracked spin vectors $\svec[i](t)$ are parametrized as horizontal
+component \sx, vertical component \sz and longitudinal component \slong. The same
+coordinate system is used for the resulting polarization vector $\pvec(t)$.
+
+
+
+
+
+
 
 \section{Usage}
 \label{sec:usage}
+
+\subsection{Execution}
+\label{sec:execution}
 
 \polem is called via
 \begin{bashcode}
@@ -77,6 +124,10 @@ where \bashinline{[options]} are the command line options shown in
 \cref{tab:polem-options}. All parameters of the spin tracking can be set up in an \xml
 configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
 \cref{sec:config}.
+%
+The lattice of the accelerator is given as any conventional \ele or \madx lattice file and
+is set in the configuration file (see \cref{sec:config}). A template configuration file
+with default values can be generated anytime by executing \bashinline{polematrix --template}.
 
 
 \begin{table}[h]
@@ -102,7 +153,15 @@ configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
   \label{tab:polem-options}
 \end{table}
 
+\subsection{Output}
+\label{sec:output}
 
+The components of each spin vector $\svec[i](t)$ is written to the text file
+\bashinline{spins/spin_i.dat} in the output path during tracking. The output step width
+can be set in the configuration file (see \cref{sec:config-spintrk}). When tracking is
+completed for all spins, the polarization vector $\pvec(t)$ is calculated for each output
+step as average over all successfully tracked spins. It is saved as
+\bashinline{polarization.dat} in the output path.
 
 
 \section{Installation}
@@ -114,17 +173,19 @@ configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
 \label{sec:dependencies}
 
 \polem requires the following programs and libraries:
+\begin{multicols}{2}
 \begin{itemize}
 \item GCC compiler
 \item CMake
 \item Gnu Scientific Library (GSL) \cite{gsl}
 \item Boost program options
 \item Boost filesystem
-\item Boost property tree \cite{boost-pt}
-\item Boost random \cite{boost-random}
+\item Boost property tree %\cite{boost-pt}
+\item Boost random %\cite{boost-random}
 \item Armadillo library \cite{arma}
 \item \pal library \cite{palattice}
 \end{itemize}
+\end{multicols}
 \pal is available on github. The source code can be downloaded at \cite{palattice} and
 compiled and installed as described in the enclosed README file.
 %
@@ -193,11 +254,6 @@ website \cite{madx}, which also provides the \madx manual.
 
 
 
-\section{Introduction to the Concept of \polem}
-\label{sec:concept}
-
-
-
 
 \section{Configuration File Reference}
 \label{sec:config}
@@ -219,6 +275,7 @@ entries is saved as \bashinline{currentconfig.pole}. All entries are
 documented in the following.
 
 \subsection{spintracking}
+\label{sec:config-spintrk}
 
 The group \xmlinline{<spintracking>} contains the setup of the spin tracking itself.\\[2mm]
 
@@ -273,7 +330,6 @@ The group \xmlinline{<spintracking>} contains the setup of the spin tracking its
 \begin{configdoc}{gammaModel}{string}{}[radiation]
   Model for longitudinal beam dynamics $\gamma_i(t)$ during spin tracking. The two
   realistic and three simple models are discussed in \cite[chapter~4]{dr}.
-  \todo[inline]{add doc section about gammaModels}
   \begin{description}
   \item[\xmlinline{radiation}] This model is implemented in \polem and calculates
     stochastic emission of synchrotron radiation.
@@ -307,14 +363,14 @@ The group \xmlinline{<spintracking>} contains the setup of the spin tracking its
 \begin{configdoc}{edgeFocussing}{bool}{}[false]
   Switch to enable horizontal magnetic fields at the edges of dipole magnets (edge
   focusing) during the spin tracking. Can be activated with \xmlinline{true} or
-  \xmlinline{1} and deactivated with \xmlinline{false} or \xmlinline{0}. \todo[inline]{add
-    sec about angle def}
+  \xmlinline{1} and deactivated with \xmlinline{false} or \xmlinline{0}.
 \end{configdoc}
 
 
 
 
 \subsection{palattice}
+\label{sec:config-pal}
 The group \xmlinline{<palattice>} contains the configuration of lattice import and
 particle tracking.\\[2mm]
 
@@ -381,11 +437,16 @@ particle tracking.\\[2mm]
 \end{configdocgroup}
 
 \begin{configdocgroup}{rfMagnets}
-  These options can be used to configure the magnetic fields of any lattice element as a
-  time dependent alternating field (rf field).\todo{formula} The setup only affects the
-  spin tracking and not the particle tracking with \ele or \madx. In addition, the field
-  has to be set up in \ele/\madx, if the influence of an rf field on beam dynamics should
-  be included.
+  These options can be used to configure the magnetic field $B$ of any lattice element as a
+  time dependent alternating field (rf field)
+  \begin{equation*}
+    B(T) = B \cdot \cos\left( 2\pi \left[ Q_\text{rf,1}T + \frac{1}{2}\Delta
+        Q_\text{rf} T^2 \right] \right)
+  \end{equation*}
+  as a function of the turn $T$.
+  The setup only affects the spin tracking and not the particle tracking with \ele or
+  \madx. In addition, the field has to be set up in \ele/\madx, if the influence of an rf
+  field on beam dynamics should be included.
 
   An arbitrary number of elements can be set up with an rf field since all
   following options allow for giving multiple values as a comma separated list. All
@@ -397,13 +458,13 @@ particle tracking.\\[2mm]
   \end{configdoc}
 
   \begin{configdoc}{Q1}{string}{}[]
-    Frequency of the rf field at the beginning of the spin tracking (turn 1) normalized to
-    the revolution frequency (tune). [for multiple elements as comma separated list]
+    Frequency of the rf field at the beginning of the spin tracking (turn $T=1$) normalized to
+    the revolution frequency (tune $Q_\text{rf,1}$). [for multiple elements as comma separated list]
   \end{configdoc}
 
   \begin{configdoc}{dQ}{string}{}[]
-    Frequency change per turn (frequency sweep) -- also as a tune. [for multiple elements
-    as comma separated list]
+    Frequency change per turn (frequency sweep) -- also as a tune $\Delta Q_\text{rf}$.
+    [for multiple elements as comma separated list]
   \end{configdoc}
 
   \begin{configdoc}{period}{string}{}[]
@@ -415,6 +476,7 @@ particle tracking.\\[2mm]
 
 
 \subsection{radiation}
+\label{sec:config-rad}
 This group is for configuration of the \xmlinline{<gammaModel>} \xmlinline{radiation},
 which is a model of longitudinal dynamics implemented in \polem to allow for a stochastic
 synchrotron radiation model without import from a particle tracking program. If another
@@ -495,6 +557,7 @@ imported automatically if the corresponding option is not set here (default valu
 
 
 \subsection{resonancestrengths}
+\label{sec:config-resstr}
 This group is for configuration of the estimation of resonance strengths of depolarizing
 resonances. This special mode can be activated by the command line option \bashinline{-R}.
 If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
@@ -531,13 +594,14 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 \end{configdoc}
 
 
+
 \clearpage
 \appendix
 
 \section{\ele Installation Guide}
 \label{sec:ele-install}
 
-
+\todo[inline]{guide}
 
 
 \printbibliography[heading=bibintoc]
