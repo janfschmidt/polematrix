@@ -382,164 +382,153 @@ particle tracking.\\[2mm]
 
 \begin{configdocgroup}{rfMagnets}
   These options can be used to configure the magnetic fields of any lattice element as a
-  time dependent alternating field.\todo{formula} The setup only affects the spin tracking
-  and not the particle tracking with \ele or \madx. In addition, the field has to be set
-  up in \ele/\madx, if the influence of an alternating field on beam dynamics should be
-  included.
+  time dependent alternating field (rf field).\todo{formula} The setup only affects the
+  spin tracking and not the particle tracking with \ele or \madx. In addition, the field
+  has to be set up in \ele/\madx, if the influence of an rf field on beam dynamics should
+  be included.
 
-  An arbitrary number of elements can be set up with an alternating field since all
+  An arbitrary number of elements can be set up with an rf field since all
   following options allow for giving multiple values as a comma separated list. All
   options must have the same number of entries, which are then assigned to the
   corresponding elements in \xmlinline{<elements>}.\\[1mm]
 
-  % \begin{configdoc}{elements}{string}{}[]
-  %   Namen des Elements für das das Wechselfeld aktiviert werden soll (mehrere
-  %   Elemente mit Kommata getrennt).
-  % \end{configdoc}
+  \begin{configdoc}{elements}{string}{}[]
+    Name of the element for rf field. [multiple elements as comma separated list]
+  \end{configdoc}
 
-  % \begin{configdoc}{Q1}{string}{}[]
-  %   Frequenz des Wechselfeldes zu Beginn des Trackings (Umlauf 1) normiert auf die
-  %   Umlauffrequenz, also als einheitenloser Arbeitspunkt (oder für mehrere Elemente mit
-  %   Kommata getrennt).
-  % \end{configdoc}
+  \begin{configdoc}{Q1}{string}{}[]
+    Frequency of the rf field at the beginning of the spin tracking (turn 1) normalized to
+    the revolution frequency (tune). [for multiple elements as comma separated list]
+  \end{configdoc}
 
-  % \begin{configdoc}{dQ}{string}{}[]
-  %   Änderung der Frequenz pro Umlauf (Frequenz-\foreignquote{american}{sweep}) --
-  %   ebenfalls als einheitenloser Arbeitspunkt (für mehrere Elemente mit Kommata getrennt).
-  % \end{configdoc}
+  \begin{configdoc}{dQ}{string}{}[]
+    Frequency change per turn (frequency sweep) -- also as a tune. [for multiple elements
+    as comma separated list]
+  \end{configdoc}
 
-  % \begin{configdoc}{period}{string}{}[]
-  %   Länge des Frequenz-\foreignquote{american}{sweeps} in Umläufen. Danach beginnt der
-  %   \foreignquote{american}{sweep} von vorne (für mehrere Elemente mit Kommata getrennt).
-  % \end{configdoc}
+  \begin{configdoc}{period}{string}{}[]
+    Duration of the frequency sweep in turns. After this period the sweep starts again.
+    [for multiple elements as comma separated list]
+  \end{configdoc}
 \end{configdocgroup}
 
 
 
-% \subsection{radiation}
-% In dieser Gruppe wird das in \polem implementierte Modell der longitudinalen Strahldynamik
-% unter Einbeziehung von \synrad konfiguriert. Dementsprechend ist die gesamte Gruppe nur
-% dann relevant, wenn unter \xmlinline{<spintracking>} der \xmlinline{<gammaModel>}
-% \xmlinline{radiation} gewählt ist. Andernfalls kann die Gruppe vollständig weggelassen werden.\\[2mm]
+\subsection{radiation}
+This group is for configuration of the \xmlinline{<gammaModel>} \xmlinline{radiation},
+which is a model of longitudinal dynamics implemented in \polem to allow for a stochastic
+synchrotron radiation model without import from a particle tracking program. If another
+\xmlinline{<gammaModel>} is selected, the whole group can be ignored.
 
-% \begin{configdoc}{seed}{int}{}[zufällig]
-%   Der \foreignquote{american}{seed} für den Zufallszahlengenerator, der die
-%   Startverteilung der Teilchen und die stochastische Abstrahlung bestimmt. Durch Angabe
-%   des selben Wertes bei mehreren Simulationen können die Ergebnisse exakt reproduziert werden. 
-% \end{configdoc}
 
-% \begin{configdocgroup}{savePhaseSpace}
-%   Analog zu \xmlinline{<saveGamma>} in der Gruppe \xmlinline{<palattice>} können hier
-%   Teilchennummern $i$ gewählt werden, für die die Koordinate im longitudinalen
-%   Phasenraum $(\phf,\gamma)$ während des Spintrackings in einer Textdatei aufgezeichnet
-%   werden soll.
+\begin{configdoc}{seed}{int}{}[\textit{random}]
+  The seed of the random number generator, which is used for the initial particle
+  distribution in phase space and the stochastic photon emission.
+\end{configdoc}
 
-%   \begin{configdoc}{list}{string}{}[]
-%     Diese Option enthält eine Liste der Teilchennummern $i$, für die die Aufgezeichnung
-%     aktiviert werden soll. Die Teilchennummern werden durch Kommata getrennt (z.B.
-%     \xmlinline{0,2,7}). Außerdem können Bereiche durch Bindestriche angegeben werden (z.B.
-%     \xmlinline{0,3-6,8}). Die Dateien werden unter dem Namen
-%     \bashinline{longPhaseSpace_i.dat} (mit Teilchennummer $i$) gespeichert. Die Ausgabe
-%     erfolgt in jedem Umlauf an der Position des unter \xmlinline{<elementName>}
-%     angegebenen Elements.
-%   \end{configdoc}
+\begin{configdocgroup}{savePhaseSpace}
+  Here, particle numbers $i$ can be chosen for a plain text export of longitudinal phase
+  space $(\phf,\gamma)$ -- analog to \xmlinline{<saveGamma>} in group
+  \xmlinline{<palattice>}.
 
-%   \begin{configdoc}{elementName}{string}{}[]
-%     Der Name des Elements im Lattice, an dessen Position die Phasenraumkoordinaten
-%     aufgezeichnet werden sollen. Die Option muss gesetzt werden, wenn
-%     \xmlinline{<savePhaseSpace>} verwendet werden soll. Sonst erfolgt keine Ausgabe.
-%   \end{configdoc}
-% \end{configdocgroup}
+  \begin{configdoc}{list}{string}{}[]
+    A list of particle numbers $i$ for the export. The particle numbers are delimited by
+    commas (e.g. \xmlinline{0,2,7}). Additionally, ranges of numbers can be given by
+    hyphens (e.g. \xmlinline{0,3-6,8}). The text files are saved as
+    \bashinline{longPhaseSpace_i.dat} (particle number $i$).
+  \end{configdoc}
 
-% \begin{configdocgroup}{startDistribution}
-%   \polem berechnet die Startkoordinaten der Teilchen im longitudinalen Phasenraum zum
-%   Beginn des Spintrackings ($t_\text{start}$) automatisch so, dass die $\phf_i$ und
-%   $\gamma_i$ \textsc{gauß}verteilt sind und Schwerpunkt und Breite der Verteilungen dem
-%   Strahlungsgleichgewicht entsprechen (siehe \cref{sec:radiation-model}). Mit diesen
-%   beiden Optionen können die Startwerte der Verteilungen in ihrer Breite verändert werden.
-%   Dann ist beispielsweise die Strahlungsdämpfung erkennbar (siehe
-%   \cref{fig:radmodel-damping}).
+  \begin{configdoc}{elementName}{string}{}[]
+    The name of an element in the lattice. The phase space coordinates are recorded at the
+    position of this element. This option must be set to use \xmlinline{<savePhaseSpace>}.
+    Else no output is written.
+  \end{configdoc}
+\end{configdocgroup}
 
-%   \begin{configdoc}{sigmaPhaseFactor}{double}{}[1.0]
-%     Faktor zur Skalierung der Breite der \textsc{Gauß}verteilung der Phasen $\phf_i$. Der
-%     Wert 1 entspricht dem Strahlungsgleichgewicht.
-%   \end{configdoc}
+\begin{configdocgroup}{startDistribution}
+  \polem calculates the initial phase space coordinates of all particles so that the
+  $\phf_i$ and the $\gamma_i$ are Gaussian distributed and average and width of the
+  distribution correspond to the radiation equilibrium. The following two options can be
+  used to vary the width  of these distributions.
 
-%   \begin{configdoc}{sigmaGammaFactor}{double}{}[1.0]
-%     Faktor zur Skalierung der Breite der \textsc{Gauß}verteilung der Teilchenenergien
-%     $\gamma_i$. Der Wert 1 entspricht dem Strahlungsgleichgewicht.
-%   \end{configdoc}
-% \end{configdocgroup}
+  \begin{configdoc}{sigmaPhaseFactor}{double}{}[1.0]
+    Factor to scale the width of the Gaussian distribution of the phases $\phf_i$. A value
+    of 1 corresponds to the radiation equilibrium.
+  \end{configdoc}
 
-% Bei den folgenden Optionen handelt es sich um physikalische Parameter des Beschleunigers,
-% die zur Berechnung der \sylia benötigt werden. Sie werden von dem verwendeten
-% Teilchentracking-Programm berechnet und automatisch übernommen, wenn die jeweilige Option
-% nicht angegeben ist (Standardwert \num{0.0}). Die Optionen können verwendet werden um
-% abweichende Werte zu erzwingen.\\[2mm]
+  \begin{configdoc}{sigmaGammaFactor}{double}{}[1.0]
+    Factor to scale the width of the Gaussian distribution of the particle energies
+    $\gamma_i$. A value of 1 corresponds to the radiation equilibrium.
+  \end{configdoc}
+\end{configdocgroup}
 
-% \begin{configdoc}{momentum_compaction_factor}{double}{}[0.0]
-%   der \momcomp \alphac
-% \end{configdoc}
 
-% \begin{configdoc}{momentum_compaction_factor_2}{double}{}[0.0]
-%     der \momcomp zweiter Ordnung \alphactwo
-% \end{configdoc}
+The following options are physics parameters of the accelerator, which are required by the
+synchrotron radiation model. They are determined by the particle tracking program and
+imported automatically if the corresponding option is not set here (default value
+\num{0.0}). Thus, these options can be used to enforce other values.\\[2mm]
 
-% \begin{configdoc}{overvoltage_factor}{double}{}[0.0]
-%   der Überspannungsfaktor $q$
-% \end{configdoc}
+\begin{configdoc}{momentum_compaction_factor}{double}{}[0.0]
+  the momentum compaction factor \alphac
+\end{configdoc}
 
-% \begin{configdoc}{harmonic_number}{unsigned int}{}[0]
-%   die Harmonischenzahl $h$
-% \end{configdoc}
+\begin{configdoc}{momentum_compaction_factor_2}{double}{}[0.0]
+   the second order momentum compaction factor \alphactwo
+\end{configdoc}
 
-% \begin{configdoc}{bending_radius}{double}{\si{\m}}[0.0]
-%   der mittlere Ablenkradius $R$ der Dipolmagnete
-% \end{configdoc}
+\begin{configdoc}{overvoltage_factor}{double}{}[0.0]
+  the overvoltage factor $q$
+\end{configdoc}
 
-% \begin{configdoc}{longitudinal_damping_partition_number}{double}{}[0.0]
-%   die longitudinale Dämpfungszahl $J_s$
-% \end{configdoc}
+\begin{configdoc}{harmonic_number}{unsigned int}{}[0]
+  the harmonic number $h$
+\end{configdoc}
+
+\begin{configdoc}{bending_radius}{double}{\si{\m}}[0.0]
+  the average bending radius $R$ of the dipole magnets
+\end{configdoc}
+
+\begin{configdoc}{longitudinal_damping_partition_number}{double}{}[0.0]
+  the longitudinal damping partition number $J_s$
+\end{configdoc}
 
 
 
-% \subsection{resonancestrengths}
-% Diese Gruppe dient der Einstellung der Berechnung von Resonanzstärken depolarisierender
-% Resonanzen, die über die Kommandozeilenoption \bashinline{-R} aktiviert wird. Soll \polem
-% für das Spintracking verwendet werden, kann die gesamte Gruppe weggelassen werden. Die
-% Implementation der Berechnung von Resonanzstärken ist in \cref{sec:resstrengths}
-% beschrieben.\\[2mm]
+\subsection{resonancestrengths}
+This group is for configuration of the estimation of resonance strengths of depolarizing
+resonances. This special mode can be activated by the command line option \bashinline{-R}.
+If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 
-% \begin{configdocgroup}{spintune}
-%   Die Resonanzstärke wird für diskrete Werte des \stune[es] \ga berechnet und in die
-%   Textdatei \bashinline{resonance-strengths.dat} geschrieben. Hier können Bereich und
-%   Schrittweie der Berechnung und Ausgabe konfiguriert werden.
+\begin{configdocgroup}{spintune}
+  The resonance strength is calculated for discrete values of the spin tune \ga and
+  written to the text file \bashinline{resonance-strengths.dat}. Here, the output range and
+  step width can be set.
 
-%   \begin{configdoc}{min}{double}{}[0.0]
-%     minimaler \stune \ga
-%   \end{configdoc}
+  \begin{configdoc}{min}{double}{}[0.0]
+    minimum spin tune \ga
+  \end{configdoc}
 
-%   \begin{configdoc}{max}{double}{}[10.0]
-%     maximaler \stune \ga
-%   \end{configdoc}
+  \begin{configdoc}{max}{double}{}[10.0]
+    maximum spin tune \ga
+  \end{configdoc}
 
-%   \begin{configdoc}{step}{double}{}[1.0]
-%     Schrittweite $\Delta\ga$ für Berechnung und Ausgabe des \stune[es]
-%   \end{configdoc}
-% \end{configdocgroup}
+  \begin{configdoc}{step}{double}{}[1.0]
+    step width $\Delta\ga$ for calculation and output of the spin tune
+  \end{configdoc}
+\end{configdocgroup}
 
-% \begin{configdoc}{turns}{unsigned int}{}[0]
-%   Wenn Resonanzstärken nicht nur für ganzzahlige \ga berechnet werden sollen, müssen die
-%   individuellen Trajektorien der Teilchen berücksichtigt werden und die Resonanzstärken über alle
-%   Teilchen gemittelt werden (siehe \cref{sec:resstrengths}). Dazu wird der Import der
-%   Trajektorien aus dem Teilchentracking analog zum Spintracking in der Gruppe
-%   \xmlinline{<palattice>} konfiguriert. Die Anzahl der Teilchen, wird aus der Option
-%   \xmlinline{<numParticles>} (Gruppe \xmlinline{<spintracking>}) übernommen.
+\begin{configdoc}{turns}{unsigned int}{}[0]
+  If the resonance strengths are calculated for non integer \ga, multiple particles with
+  their individual trajectories have to be taken into account and the resulting resonance
+  strength is the average over all particles. For this purpose, the trajectories are
+  imported from the particle tracking program as it is configured in the group
+  \xmlinline{<palattice>}. The number of particles is taken from the option
+  \xmlinline{<numParticles>} (Gruppe \xmlinline{<spintracking>}).
 
-%   Hier kann die Anzahl der Umläufe $N_u$ eingestellt werden, über die die Resonanzstärken
-%   berechnet werden. Wenn der Standardwert 0 gewählt ist, wird die für die gewählte
-%   Auflösung \xmlinline{<step>} benötigte Mindestanzahl $N_u = 1/\Delta\ga$ verwendet.
-% \end{configdoc}
+  Here the number of turns $N_u$ for the trajectories can bes set. If the default value 0
+  is used, the number of turns is set automatically according to the minimum number
+  required for the chosen frequency resolution \xmlinline{<step>}: $N_u = 1/\Delta\ga$.
+\end{configdoc}
 
 
 \clearpage
