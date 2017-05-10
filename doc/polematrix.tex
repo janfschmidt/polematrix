@@ -69,12 +69,42 @@
 
 \section{\polem can}
 \label{sec:polem-can}
-\todo[inline]{list}
+
+\begin{itemize}
+\item perform element by element electron spin tracking
+\item read a lattice from common \ele or \madx files\footnote{Supported element types are
+    listed in \cref{sec:types}.}
+\item import closed orbit, optics calculations and particle trajectories from \ele or
+  \madx
+\item configure and execute \ele (or \madx) automatically
+\item track multiple spins at once using threads
+
+\item consider synchrotron radiation for beam dynamics:
+  \begin{itemize}
+  \item full 6D phase space via import from \ele (or \madx)
+  \item longitudinal phase space via fast own implementation
+  \end{itemize}
+\item simulate depolarizing resonances including synchrotron sidebands
+\item estimate resonance strengths of depolarizing resonances
+\item be used and modified for free under terms of the GNU General Public License
+\end{itemize}
+A detailed description and discussion of \polem as well as simulation examples can be
+found in \cite{dr}.
 
 \section{\polem cannot}
 \label{sec:polem-cannot}
-\todo[inline]{list}
 
+\begin{itemize}
+\item simulate radiative polarization build-up (\textsc{Sokolov-Ternov} effect)
+\item track spins of other particles than electrons
+\item consider electric fields for spin tracking
+\item perform transversal particle tracking independent of \ele and \madx
+\item simulate nonlinear energy ramps
+\item consider a field strength which varies longitudinally within a magnet
+\item configure a magnet to apply an an-harmonic time dependent magnetic field
+\end{itemize}
+Some of these features could be added with little effort. Please contact me if you have
+any questions.
 
 \section{Coordinate System}
 \label{sec:coord}
@@ -602,6 +632,34 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 \label{sec:ele-install}
 
 \todo[inline]{guide}
+
+\section{Supported Element Types}
+\label{sec:types}
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \pal & \ele & \madx \\
+    \midrule
+    Dipole & CSBEND & SBEND \\
+    Corrector & (H,V)KICK oder KICKER & (H,V)KICKER, \\
+    Solenoid & SOLE & SOLENOID \\
+    Quadrupole & KQUAD & QUADRUPOLE \\
+    Sextupole & KSEXT & SEXTUPOLE \\
+    Multipole & MULT & MULTIPOLE \\
+    Marker & MARK & MARKER \\
+    Monitor & MONI & MONITOR \\
+    Cavity & RFCA & RFCAVITY \\
+    Rcollimator & RCOL & RCOLLIMATOR \\
+    Drift & DRIF & DRIFT \\
+    \bottomrule
+  \end{tabular}
+  \caption{Assignment of lattice element types in the \pal library to the types in \ele
+    and \madx. Other types are ignored during lattice import in \polem.}
+  \label{tab:pal-eletypes}
+\end{table}
+
 
 
 \printbibliography[heading=bibintoc]
