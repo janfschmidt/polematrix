@@ -55,10 +55,10 @@
   \madx. All required particle trajectories are also imported from the established
   particle tracking codes \ele or \madx.
 
-  \polem includes synchrotron radiation via import from \ele or an own implementation of
-  longitudinal phasespace. A short description of \polem is given in the IPAC'16
-  contribution \cite{IPAC16-decoh} and in my phd thesis, which will be available soon (in
-  German).
+  \polem includes synchrotron radiation via import of particle trajectories from \ele or
+  via an own implementation of longitudinal phasespace. A short description of \polem is
+  given in the IPAC'16 contribution \cite{IPAC16-decoh} and in my phd thesis \cite{dr},
+  which will be available soon (in German).
   
   Do not hesitate to contact me if you have any questions and please report bugs.
 \end{abstract}
@@ -72,18 +72,19 @@
 
 \begin{itemize}
 \item perform element by element electron spin tracking
-\item read a lattice from common \ele or \madx files\footnote{Supported element types are
-    listed in \cref{sec:types}.}
-\item import closed orbit, optics calculations and particle trajectories from \ele or
+\item read a lattice from common \ele or \madx files (see \cref{sec:types} for supported elements)
+\item import closed orbit, optics parameters and particle trajectories from \ele or
   \madx
 \item configure and execute \ele (or \madx) automatically
-\item track multiple spins at once using threads
+\item track multiple spins in parallel (any number of threads)
 
 \item consider synchrotron radiation for beam dynamics:
   \begin{itemize}
-  \item full 6D phase space via import from \ele (or \madx)
+  \item longitudinal and transversal phase space via import from \ele (or \madx)
   \item longitudinal phase space via fast own implementation
   \end{itemize}
+\item simulate linear energy ramps
+\item configure any magnet's field to oscillate harmonically (including linear frequency sweep)
 \item simulate depolarizing resonances including synchrotron sidebands
 \item estimate resonance strengths of depolarizing resonances
 \item be used and modified for free under terms of the GNU General Public License
@@ -101,97 +102,13 @@ found in \cite{dr}.
 \item perform transversal particle tracking independent of \ele and \madx
 \item simulate nonlinear energy ramps
 \item consider a field strength which varies longitudinally within a magnet
-\item configure a magnet to apply an an-harmonic time dependent magnetic field
 \end{itemize}
 Some of these features could be added with little effort. Please contact me if you have
 any questions.
 
-\section{Coordinate System}
-\label{sec:coord}
-
-\begin{figure}
-  \centering
-  \includegraphics{coord}
-  \caption{Accelerator coordinate system and precessing spin vectors. \cite{dr}}
-  \label{fig:coord}
-\end{figure}
-
-% Coordinate System
-\polem uses the typical accelerator coordinate system sketched in \cref{fig:coord}, which
-is moving along the reference orbit. The position along the reference orbit is called $s$.
-Since \polem assumes ultra relativistic electrons, the velocity along $s$ is assumed to be
-constant $v\approx c$ and the position is alternatively parametrized by the time
-$t = s/c$, which increases linearly for multiple turns in a circular accelerator. $t$ is
-used to define the duration and output step width of the spin tracking.
-
-At each position $s$ the $x$ axis points in horizontal direction and the $z$ axis points
-in vertical direction. $z>0$ is above the reference orbit. In a circular electron
-accelerator $x>0$ corresponds to the outer side of the ring (to larger radii of the
-bending magnets). The longitudinal axis is also referred to as $s$ axis.
-
-% Spin and Polarization Vectors
-Accordingly, the tracked spin vectors $\svec[i](t)$ are parametrized as horizontal
-component \sx, vertical component \sz and longitudinal component \slong. The same
-coordinate system is used for the resulting polarization vector $\pvec(t)$.
 
 
 
-
-
-
-
-\section{Usage}
-\label{sec:usage}
-
-\subsection{Execution}
-\label{sec:execution}
-
-\polem is called via
-\begin{bashcode}
-  polematrix [options] [CONFIGURATION FILE]
-\end{bashcode}
-where \bashinline{[options]} are the command line options shown in
-\cref{tab:polem-options}. All parameters of the spin tracking can be set up in an \xml
-configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
-\cref{sec:config}.
-%
-The lattice of the accelerator is given as any conventional \ele or \madx lattice file and
-is set in the configuration file (see \cref{sec:config}). A template configuration file
-with default values can be generated anytime by executing \bashinline{polematrix --template}.
-
-
-\begin{table}[h]
-  \centering
-  \begin{tabular}{ll}
-    \toprule
-    \bashinline{-h [ --help ]}              &  display this help message \\
-    \bashinline{-V [ --version ]}           &  display version \\
-    \bashinline{-T [ --template ]}          &  create config file template (\bashinline{template.pole}) and quit \\
-    \bashinline{-R [ --resonance-strengths ]} &  estimate resonance strengths instead of spin tracking \\
-    \midrule
-    \bashinline{-t [ --threads ] arg (=all)}     &  set number of threads used for tracking \\
-    \bashinline{-o [ --output-path ] arg (=.)}   &  path for output files \\
-    \bashinline{-v [ --verbose ]}            &  activate additional status output \\
-    \bashinline{-n [ --no-progressbar ]}     &  do not show progress bar during tracking\\
-                                            &  (e.g. if output is redirected to a log file)\\
-    \bashinline{-a [ --all ]}                &  write additional output files (e.g. lattice und orbit) \\
-    \bashinline{-s [ --spintune ] arg}       &  in resonance strengths mode (\bashinline{-R}):\\
-                                            &  calculate for given spin tune only\\
-    \bottomrule
-  \end{tabular}
-  \caption{Command line options of \polem.}
-  \label{tab:polem-options}
-\end{table}
-
-\subsection{Output}
-\label{sec:output}
-
-The components of each spin vector $\svec[i](t)$ is written to the text file
-\bashinline{spins/spin_i.dat} in the output path during tracking. The output step width
-can be set in the configuration file (see \cref{sec:config-spintrk}). When tracking is
-completed for all spins, the polarization vector $\pvec(t)$ is calculated for each output
-step as average over all successfully tracked spins. It is saved as
-\bashinline{polarization.dat} in the output path.
 
 
 \section{Installation}
@@ -283,6 +200,240 @@ website \cite{madx}, which also provides the \madx manual.
 
 
 
+\section{Usage}
+\label{sec:usage}
+
+\subsection{Execution}
+\label{sec:execution}
+
+\polem is called via
+\begin{bashcode}
+  polematrix [options] [CONFIGURATION FILE]
+\end{bashcode}
+where \bashinline{[options]} are the command line options shown in
+\cref{tab:polem-options}. All parameters of the spin tracking can be set up in an \xml
+configuration file (\bashinline{[CONFIGURATION FILE]}) which is described in
+\cref{sec:config}.
+%
+The lattice of the accelerator is given as any conventional \ele or \madx lattice file and
+is set in the configuration file (see \cref{sec:config}). A template configuration file
+with default values can be generated anytime by executing \bashinline{polematrix --template}.
+
+
+\begin{table}[h]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    \bashinline{-h [ --help ]}              &  display this help message \\
+    \bashinline{-V [ --version ]}           &  display version \\
+    \bashinline{-T [ --template ]}          &  create config file template (\bashinline{template.pole}) and quit \\
+    \bashinline{-R [ --resonance-strengths ]} &  estimate resonance strengths instead of spin tracking \\
+    \midrule
+    \bashinline{-t [ --threads ] arg (=all)}     &  set number of threads used for tracking \\
+    \bashinline{-o [ --output-path ] arg (=.)}   &  path for output files \\
+    \bashinline{-v [ --verbose ]}            &  activate additional status output \\
+    \bashinline{-n [ --no-progressbar ]}     &  do not show progress bar during tracking\\
+                                            &  (e.g. if output is redirected to a log file)\\
+    \bashinline{-a [ --all ]}                &  write additional output files (e.g. lattice und orbit) \\
+    \bashinline{-s [ --spintune ] arg}       &  in resonance strengths mode (\bashinline{-R}):\\
+                                            &  calculate for given spin tune only\\
+    \bottomrule
+  \end{tabular}
+  \caption{Command line options of \polem. They consist of special program modes in the
+    upper part and configuration options in the lower part.}
+  \label{tab:polem-options}
+\end{table}
+
+\subsection{Output}
+\label{sec:output}
+
+The components of each spin vector $\svec[i](t)$ is written to the text file
+\bashinline{spins/spin_i.dat} in the output path during tracking. The output step width
+can be set in the configuration file (see \cref{sec:config-spintrk}). When tracking is
+completed for all spins, the polarization vector $\pvec(t)$ is calculated for each output
+step as average over all successfully tracked spins. It is saved as
+\bashinline{polarization.dat} in the output path.
+
+
+
+\section{Coordinate System and Polarization}
+\label{sec:coord}
+
+\begin{figure}
+  \centering
+  \includegraphics{coord}
+  \caption{Accelerator coordinate system and precessing spin vectors. \cite{dr}}
+  \label{fig:coord}
+\end{figure}
+
+% Coordinate System
+\polem uses the typical accelerator coordinate system sketched in \cref{fig:coord}, which
+is moving along the reference orbit. The position along the reference orbit is called $s$.
+Since \polem assumes ultra relativistic electrons, the velocity along $s$ is assumed to be
+constant $v\approx c$ and the position is alternatively parametrized by the time
+$t = s/c$. $t$ is used as parameter for multiple turns in a circular accelerator and to
+define the duration and output step width of the spin tracking. The output can be fixed to
+the position of a certain element in the accelerator using the entry
+\xmlinline{<outElement>} in the configuration file (see \cref{sec:config}).
+
+At each position $s$ the $x$ axis points in horizontal direction and the $z$ axis points
+in vertical direction. $z>0$ is above the reference orbit. In a circular electron
+accelerator $x>0$ corresponds to the outer side of the ring (to larger radii of the
+bending magnets). The longitudinal axis is also referred to as $s$ axis.
+
+% Spin and Polarization Vectors
+Accordingly, the tracked spin vector $\svec[i](t)$ of electron $i$ is parametrized by a horizontal
+component \sx, vertical component \sz and longitudinal component \slong. Since the spin
+naturally \enquote{moves} with the corresponding electron, $\svec[i](t)$ only
+includes the spin orientation at the current spacial position of the electron. The
+absolute value is always $|\svec[i]| = 1$.
+%
+The same coordinate system is used for the resulting polarization vector
+\begin{equation*}
+\pvec(t) = \frac{1}{N} \sum_{i=0}^{N-1} \svec[i](t) \quad.
+\end{equation*}
+Its absolute value $0\leq\pabs\leq 1$ is the polarization degree. The projections \px, \pz
+and \plong can be interpreted as probabilities to measure spins oriented in parallel to
+the corresponding axis.
+%
+The $N$ tracked spins are labeled with $i\in \{0,1,\dots,N-1\}$.
+
+
+
+
+\section{Brief Introduction to the Concept of \polem}
+\label{sec:brief-intr}
+
+\subsection{Spin Tracking and Magnetic Fields}
+\label{sec:concept-spin-tracking}
+Spin precession of a relativistic electron in a particle accelerator can be described in
+the laboratory frame by the
+\textsc{Thomas-BMT} equation \cite{thomas,bmt}
+\begin{align}
+  \nonumber
+  \frac{\dif \svec}{\dif t} &= \wtbmtvec\times\svec\\
+  \label{eq:tbmt}
+  \text{with}\quad
+  \wtbmtvec &:= - \frac{e}{\gamma m} \left[ (1+\ga)\btrans + (1+a)\bpara
+    - \left(\frac{\gamma}{1+\gamma} +\ga\right)\vec\beta\times\frac{\vec E}{c} \right] \quad.
+\end{align}
+Here, $e$, $m$ and $a=(g_s-2)/2$ are charge, rest mass and gyromagnetic anomaly of an
+electron. 
+$\gamma$ is the \textsc{Lorentz} factor and \bvec and $\vec E$ are the magnetic and
+electric  field at the position of the electron, where the components of \bvec have to be
+distinguished with respect to the direction of motion of the electron.
+%
+This equation describes a precession of \svec around any magnetic field vector. The precession
+frequency around a vertical field \bdip of a bending magnet is
+\begin{equation}
+  \label{eq:omegaDip}
+  \Omega_{\text{TBMT}, z} = - \frac{e}{\gamma m} (1+\ga) \bdip = (1+\ga) \wrev
+\end{equation}
+with the revolution frequency of a circular accelerator
+\begin{equation*}
+  \wrev = - \frac{e}{\gamma m} \bdip \quad.
+\end{equation*}
+
+
+Neglecting transversal electric fields and normalizing the magnetic fields to the magnetic
+rigidity as
+\begin{equation}
+\label{eq:Bn}
+  \bnvec := \frac{e}{\pcentral} \bvec \quad,
+\end{equation}
+the \textsc{Thomas-BMT} equation can be simplified to
+\begin{equation}
+  \label{eq:tbmt-short}
+  \frac{\dif \svec}{\dif t} \approx - c\cdot \left[ (1+\ga)\bntrans + (1+a)\bnpara \right]
+  \times\svec \quad.
+\end{equation}
+Now the precession frequency is reduced by the revolution frequency \wrev to transform the
+equation from the laboratory frame to the co-moving accelerator coordinate system
+introduced in \cref{sec:coord}, which rotates in the lab frame once per
+revolution (as the particle's momentum). This yields the equation
+\begin{equation}
+  \label{eq:tbmt-pole}
+  \frac{\dif \svec(t)}{\dif t} \approx - c\cdot \left[ \gamma(t)a\bntrans(t) + a\bnpara(t) \right]
+  \times\svec(t) \quad,
+\end{equation}
+where all time dependencies are now given explicitly.
+
+Both $\gamma(t)$ and $\bvec(t)$ depend on the time $t$. The \textsc{Lorentz} factor
+$\gamma$ is proportional to the particle's energy and therefore depends on its
+longitudinal dynamics, which can be considered by different models described in
+\cref{sec:concept-gamma}.
+%
+In case of the magnetic field, $t$ parameterizes two dependencies. First, the field
+depends on the position $s$ in the lattice; second, it depends on the transversal position
+$(x,z)$ of the electron relative to the reference orbit for some element types. The
+element positions and parameters like bending radius $R$, quadrupole strength $k_1$ and
+sextupole strength $k_2$ are imported from the \ele or \madx lattice file. The transversal
+trajectories $x(t)$ and $z(t)$ can be considered by different models described in
+\cref{sec:concept-traj}.
+
+\Cref{eq:tbmt-pole} describes a three dimensional rotation of \svec around \bnvec with variable
+speed. \polem models this spin motion by three dimensional rotation matrices using the
+following assumptions:
+\begin{itemize}
+\item The spin does not precess in-between the magnets because of $\bnvec=0$ in the drift
+  spaces.
+\item The magnetic field of an element does not change along the particles path within the
+  element.
+\item The particle's angle to the reference orbit can be neglected and \bpara can be set
+  to \blong.
+\end{itemize}
+Hence, the spin rotation can be tracked element by element. This means, the spin
+precession from a position $s_1$ in front of an element with reference position $s_e$ to a
+position $s_2$ behind the element is calculated as
+\begin{equation}
+  \label{eq:matrixtracking}
+  \svec(s_2) = \mathbf{R}_{\hat{r}}(\sang) \cdot\svec(s_1)
+\end{equation}
+with the general three dimensional rotation matrix
+\begin{equation*}
+  \mathbf{R}_{\hat{r}}(\sang) = 
+  \begin{pmatrix}
+    \hat{r}_x^2\left(1-\cos \sang \right)+\cos \sang &\hat{r}_x\hat{r}_s\left(1-\cos \sang
+    \right)-\hat{r}_z\sin \sang &\hat{r}_x\hat{r}_z\left(1-\cos \sang \right)+\hat{r}_s\sin
+    \sang \\
+    \hat{r}_s\hat{r}_x\left(1-\cos \sang \right)+\hat{r}_z\sin \sang &\hat{r}_s^2\left(1-\cos \sang
+    \right)+\cos \sang &\hat{r}_s\hat{r}_z\left(1-\cos \sang \right)-\hat{r}_x\sin \sang \\
+    \hat{r}_z\hat{r}_x\left(1-\cos \sang \right)-\hat{r}_s\sin \sang &\hat{r}_z\hat{r}_s\left(1-\cos \sang
+    \right)+\hat{r}_x \sin \sang &\hat{r}_z^{2}\left(1-\cos \sang \right)+\cos \sang
+  \end{pmatrix}
+\end{equation*}
+for a rotation with the angle \sang around the axis $\hat{r}$. Rotation angle and axis are
+given by \cref{eq:tbmt-pole} and the integrated field of the element with effective length
+\leff:
+\begin{align*}
+  \vec\sang_{x,z} &= \ga \int_{s_1}^{s_2} \bnvec[x,z] \dif s \approx \ga\cdot \bnvec[x,z](x(t),z(t)) \cdot\leff\\
+  \text{and}\quad \vec\sang_{s} &= a \int_{s_1}^{s_2} \bnvec[s] \dif s \approx a\cdot \bnvec[s](x(t),z(t)) \cdot\leff
+  \quad.
+\end{align*}
+The rotation angle is $\sang = |\vec\sang|$ and the rotation axis
+is $\hat{r} = \vec\sang / \sang$.
+%
+The trajectories $x(t)$ and $z(t)$ are inserted for the time $t$ corresponding to the
+current tracking step.
+
+
+
+
+
+
+
+\subsection{Magnetic Fields}
+\label{sec:concept-b}
+\todo[inline]{magnetic fields}
+
+\subsection{Transversal Phase Space}
+\label{sec:concept-traj}
+\todo[inline]{transeversal phase space: trajectoryModels}
+
+\subsection{Longitudinal Phase Space}
+\label{sec:concept-gamma}
+\todo[inline]{longitudinal phase space: gammaModels}
+
 
 
 \section{Configuration File Reference}
@@ -355,6 +506,14 @@ The group \xmlinline{<spintracking>} contains the setup of the spin tracking its
 
 \begin{configdoc}{dt_out}{double}{\si{\s}}[$(t_\text{stop}-t_\text{start})/1000$]
   Step width of the output of \pvec and \svec[i]
+\end{configdoc}
+
+\begin{configdoc}{outElement}{string}{}
+  Name of a specific element in the lattice. If it is given, the output of \pvec and
+  \svec[i] is printed only when passing this element. Thereby, the polarization can be
+  observed at a specific position in a circular accelerator (e.g. a detector or extraction
+  device). The output is written at the next passage after the time $t$ has increased by
+  \xmlinline{<dt_out>}.
 \end{configdoc}
 
 \begin{configdoc}{gammaModel}{string}{}[radiation]
