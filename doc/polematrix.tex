@@ -849,14 +849,59 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 
 
 
-\clearpage
+
 \appendix
 
 \section{\ele Installation Guide}
 \label{sec:ele-install}
 
-\todo[inline]{guide}
+\ele packages for many operating systems can be downloaded at \cite{elegant-download}.
+%
+Additionally you have to download the \bashinline{defns.rpn} file and store its path in
+the environment variable \bashinline{RPN_DEFNS}. E.g. add the following line to your
+\bashinline{~/.bashrc} file:
+\begin{bashcode}
+  export RPN_DEFNS = '/path/to/defns.rpn'
+\end{bashcode}
 
+If there is no \ele package for your system, you can download the \software{Build-AOP-RPMs}
+script instead which automatically builds all desired programs from source.
+%
+If you want to use \software{Pelegant}, first install \software{mpicc}. Under Ubuntu it is
+in the package \bashinline{mpi-default-dev}.
+%
+Now go to the folder with the \software{Build-AOP-RPMs} script and run
+\begin{bashcode}
+  sudo ./Build-AOP_RPMs
+\end{bashcode}
+Accept the programs you want to install by hitting \bashinline{y} and decline all others
+with \bashinline{n}. For \pal and \polem you need
+\begin{itemize}
+\item SDDS (Not SDDSEpics)
+\item elegant
+\item (Pelegant recommended)
+\end{itemize}
+For \software{Pelegant} the script asks for the path of \software{mpicc}. You can
+determine it by calling \bashinline{which mpicc}. The script expects the directory (without
+\bashinline{mpicc} at the end).
+%
+The scripts downloads the source code of all programs, builds them and creates rpm
+packages. This will take some time. Finally, these packages can be found in
+\bashinline{~/rpmbuild/RPMs/} (additional subfolder depending on the architecture).
+Install each package. Under Ubuntu rpm package files can be installed via
+\begin{bashcode}
+  sudo alien -i packagename.rpm
+\end{bashcode}
+
+\software{Pelegant} is called via \bashinline{mpirun -n 4 Pelegant}, where the argument of
+the option \bashinline{-n} is the number of threads used for tracking.
+%
+To use \software{Pelegant} for the automatic \ele execution by \polem, you have to modify
+the \ele command in the \bashinline{config.hpp} file of \pal and build and install \pal
+again (see \pal README for details).
+
+
+\clearpage
 \section{Supported \ele/\madx Element Types and Parameters}
 \label{sec:types}
 
@@ -884,7 +929,7 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
   \label{tab:pal-eletypes}
 \end{table}
 
-\begin{table}
+\begin{table}[h]
   \centering
   \begin{tabular}{lll}
     \toprule
@@ -908,15 +953,16 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
     freq &  FREQ & FREQ \\
     \bottomrule
   \end{tabular}
-  \caption{Assignment of element parameters in \pal (member variables of
-    \cppinline{pal::AccElement}) to parameters in \ele and \madx. Special cases: For \ele
-    k0.x and k0.z have to be distinguished between element types KICK (parameters HKICK
-    und VKICK) and HKICK und VKICK (parameter KICK). Aperture is only imported from \madx
-    (APER\_1 und APER\_2) if APERTYPE has the value RECTANGLE.}
+  \caption{Assignment of element parameters in \pal
+    %(member variables of \cppinline{pal::AccElement})
+    to parameters in \ele and \madx. Special cases: For \ele k0.x and k0.z have to be
+    distinguished between element types KICK (parameters HKICK und VKICK) and HKICK und
+    VKICK (parameter KICK). Aperture is only imported from \madx if APERTYPE has the value
+    RECTANGLE. }
   \label{tab:pal-eleparas}
 \end{table}
 
-
+\clearpage
 \printbibliography[heading=bibintoc]
 
 \end{document}
