@@ -323,18 +323,6 @@ $\gamma$ is the \textsc{Lorentz} factor and \bvec and $\vec E$ are the magnetic 
 electric  field at the position of the electron, where the components of \bvec have to be
 distinguished with respect to the direction of motion of the electron.
 %
-This equation describes a precession of \svec around any magnetic field vector. The precession
-frequency around a vertical field \bdip of a bending magnet is
-\begin{equation}
-  \label{eq:omegaDip}
-  \Omega_{\text{TBMT}, z} = - \frac{e}{\gamma m} (1+\ga) \bdip = (1+\ga) \wrev
-\end{equation}
-with the revolution frequency of a circular accelerator
-\begin{equation*}
-  \wrev = - \frac{e}{\gamma m} \bdip \quad.
-\end{equation*}
-
-
 Neglecting transversal electric fields and normalizing the magnetic fields to the magnetic
 rigidity as
 \begin{equation}
@@ -347,9 +335,22 @@ the \textsc{Thomas-BMT} equation can be simplified to
   \frac{\dif \svec}{\dif t} \approx - c\cdot \left[ (1+\ga)\bntrans + (1+a)\bnpara \right]
   \times\svec \quad.
 \end{equation}
-Now the precession frequency is reduced by the revolution frequency \wrev to transform the
-equation from the laboratory frame to the co-moving accelerator coordinate system
-introduced in \cref{sec:coord}, which rotates in the lab frame once per
+%
+This equation describes a precession of \svec around any magnetic field vector. The precession
+frequency around a vertical field \bdip of a bending magnet is
+\begin{equation}
+  \label{eq:omegaDip}
+  \Omega_{\text{TBMT}, z} = - \frac{e}{\gamma m} (1+\ga) \bdip = (1+\ga) \wrev
+\end{equation}
+with the revolution frequency in a circular accelerator
+\begin{equation*}
+  \wrev = - \frac{e}{\gamma m} \bdip \quad.
+\end{equation*}
+
+
+Now the revolution frequency \wrev is subtracted from the precession frequency to
+transform \cref{eq:tbmt-short} from the laboratory frame to the co-moving accelerator
+coordinate system introduced in \cref{sec:coord}, which rotates in the lab frame once per
 revolution (as the particle's momentum). This yields the equation
 \begin{equation}
   \label{eq:tbmt-pole}
@@ -357,23 +358,25 @@ revolution (as the particle's momentum). This yields the equation
   \times\svec(t) \quad,
 \end{equation}
 where all time dependencies are now given explicitly.
-
-Both $\gamma(t)$ and $\bvec(t)$ depend on the time $t$. The \textsc{Lorentz} factor
-$\gamma$ is proportional to the particle's energy and therefore depends on its
-longitudinal dynamics, which can be considered by different models described in
-\cref{sec:concept-gamma}.
 %
-In case of the magnetic field, $t$ parameterizes two dependencies. First, the field
-depends on the position $s$ in the lattice; second, it depends on the transversal position
-$(x,z)$ of the electron relative to the reference orbit for some element types. The
-element positions and parameters like bending radius $R$, quadrupole strength $k_1$ and
-sextupole strength $k_2$ are imported from the \ele or \madx lattice file. The transversal
-trajectories $x(t)$ and $z(t)$ can be considered by different models described in
-\cref{sec:concept-traj}.
+Both $\gamma(t)$ and $\bvec(t)$ depend on the time $t$:
+\begin{itemize}
+\item In case of the magnetic field $\bvec(t)$, $t$ parameterizes two dependencies. First, the field
+  depends on the position $s$ in the lattice; second, for some element types it depends on the transversal position
+  $(x,z)$ of the electron relative to the reference orbit. The
+  element positions and parameters like bending radius $R$, quadrupole strength $k_1$ and
+  sextupole strength $k_2$ are imported from the \ele or \madx lattice file. The formula
+  for field calculation is given in \cref{sec:concept-b}. The transversal
+  trajectories $x(t)$ and $z(t)$ can be considered by different models described in
+  \cref{sec:concept-traj}.
+  \item The \textsc{Lorentz} factor $\gamma(t)$ is proportional to the particle's energy and
+  therefore depends on its longitudinal dynamics, which can be considered by different
+  models described in \cref{sec:concept-gamma}.
+\end{itemize}
 
 \Cref{eq:tbmt-pole} describes a three dimensional rotation of \svec around \bnvec with variable
 speed. \polem models this spin motion by three dimensional rotation matrices using the
-following assumptions:
+following assumptions/approximations:
 \begin{itemize}
 \item The spin does not precess in-between the magnets because of $\bnvec=0$ in the drift
   spaces.
@@ -406,15 +409,16 @@ for a rotation with the angle \sang around the axis $\hat{r}$. Rotation angle an
 given by \cref{eq:tbmt-pole} and the integrated field of the element with effective length
 \leff:
 \begin{align*}
-  \vec\sang_{x,z} &= \ga \int_{s_1}^{s_2} \bnvec[x,z] \dif s \approx \ga\cdot \bnvec[x,z](x(t),z(t)) \cdot\leff\\
+  \vec\sang_{x,z} &= \gamma(t)a \int_{s_1}^{s_2} \bnvec[x,z] \dif s \approx \ga\cdot \bnvec[x,z](x(t),z(t)) \cdot\leff\\
   \text{and}\quad \vec\sang_{s} &= a \int_{s_1}^{s_2} \bnvec[s] \dif s \approx a\cdot \bnvec[s](x(t),z(t)) \cdot\leff
   \quad.
 \end{align*}
 The rotation angle is $\sang = |\vec\sang|$ and the rotation axis
 is $\hat{r} = \vec\sang / \sang$.
 %
-The trajectories $x(t)$ and $z(t)$ are inserted for the time $t$ corresponding to the
-current tracking step.
+The effective length \leff is taken from the \ele or \madx lattice.
+The \textsc{Lorentz} factor $\gamma(t)$ and the trajectories $x(t)$ and $z(t)$ are
+inserted for the time $t$ corresponding to the current tracking step.
 
 
 
@@ -424,18 +428,71 @@ current tracking step.
 
 \subsection{Magnetic Fields}
 \label{sec:concept-b}
-\todo[inline]{magnetic fields}
+The magnetic field $\bnvec(x,z)$ of an element is calculated using the library \pal.
+Currently, it supports elements of all types listed in \cref{sec:types}. The field vector
+is
+\begin{align*}
+  \bnx(x,z) &= \knull{x} \;+\; k_1\cdot z \;+\; k_2\cdot x\cdot z \quad,\\
+  \bnz(x,z) &= \knull{z} \;+\; k_1\cdot x \;+\; k_2\cdot \frac{x^2-z^2}{2} \quad,\\
+  \bnlong(x,z) &= \knull{s} \quad.
+\end{align*}
+All parameters are imported from the \ele or \madx lattice automatically by \pal using the
+\ele/\madx parameters listed in \cref{tab:pal-eleparas}.
+
+
 
 \subsection{Transversal Phase Space}
 \label{sec:concept-traj}
-\todo[inline]{transeversal phase space: trajectoryModels}
+Currently, there are two models of transversal trajectories $x(t)$ and $z(t)$ in \polem,
+which can be selected with the configuration file entry \xmlinline{<trajectoryModel>} (see
+\cref{sec:config-spintrk}):
+\begin{description}
+\item[closed orbit] all particles move along the closed orbit imported from \ele or \madx
+\item[simtool] individual trajectories imported from \ele or \madx particle tracking for each particle
+\end{description}
+Modeling transversal phase space simply by the closed orbit for all particles is
+sufficient when simulating integer depolarizing resonances, because betatron tunes are
+never integer and thus betatron motion does not contribute to integer resonances.
+
+Using the individual trajectories requires particle tracking over the full period
+requested for spin tracking. I recommend to use the parallel version of \ele and to
+compile \pal with \software{libSDDS1} support to allow \pal reading binary SDDS files without
+converting them to ascii. Nevertheless a lot of RAM is recommended since the trajectories
+are stored in memory completely by \software{libSDDS1}.
+
+
 
 \subsection{Longitudinal Phase Space}
 \label{sec:concept-gamma}
-\todo[inline]{longitudinal phase space: gammaModels}
+Currently, there are two realistic models of longitudinal phase space in \polem, which can
+be selected with the configuration file entry \xmlinline{<gammaModel>} (see
+\cref{sec:config-spintrk}):
+\begin{description}
+\item[radiation] implementation of stochastic synchrotron radiation within \polem
+\item[simtool] $\gamma_i(t)$ imported from \ele or \madx particle tracking
+\end{description}
+The model \enquote{radiation} is described in detail in \cite[section~4.2]{dr}. It
+calculates the energy loss by radiating photons in dipole magnets based on the correct
+statistical distributions of photon energy and photon number. The phase advance along
+the accelerator is not tracked via the time of flight (dispersion), but approximated using
+the momentum compaction factor (first and second order).
+
+The $\gamma_i(t)$ from \ele (or \madx) tracking may be used considering the same advises
+given above for the transversal trajectories.
+
+Furthermore, there are some simplified models of $\gamma(t)$ -- see
+\cref{sec:config-spintrk}.
 
 
+\subsubsection{Linear Energy Ramp}
+A linear energy ramp can be set up in the \polem configuration file. When using
+\xmlinline{<gammaModel>} \enquote{simtool} with \ele, the ramp is automatically
+transmitted to \ele before starting the particle tracking. With \madx it has to be set up
+manually in advance. For all other models the linear ramp is added directly to the
+$\gamma_i(t)$.
 
+
+\clearpage
 \section{Configuration File Reference}
 \label{sec:config}
 
@@ -527,6 +584,12 @@ The group \xmlinline{<spintracking>} contains the setup of the spin tracking its
     I recommend to use this model with \ele.
   \item[\xmlinline{linear}] Deactivation of longitudinal dynamics. All particles just
     follow the linear energy ramp: $\gamma_i(t) = \gcentral$.
+  \item[\xmlinline{simtool+linear}] Sum of the two options above: The linear energy ramp
+    is added to the imported $\gamma_i(t)$, which have been calculated for a constant
+    energy.
+  \item[\xmlinline{simtool_no_interpolation}] Similar to \xmlinline{simtool}, but faster
+    and less precise. The recorded trajectory at the closest quadrupole is used directly
+    instead of interpolating it to the current element position.
   \item[\xmlinline{offset}] Every particle gets an energy offset, which is constant over
     time: $\gamma_i(t) = \gcentral + \Delta\gamma_i$.
   \item[\xmlinline{oscillation}] Approximation of longitudinal dynamics by harmonic
@@ -625,6 +688,7 @@ particle tracking.\\[2mm]
   \end{configdoc}
 \end{configdocgroup}
 
+\clearpage
 \begin{configdocgroup}{rfMagnets}
   These options can be used to configure the magnetic field $B$ of any lattice element as a
   time dependent alternating field (rf field)
@@ -696,6 +760,7 @@ synchrotron radiation model without import from a particle tracking program. If 
   \end{configdoc}
 \end{configdocgroup}
 
+\clearpage
 \begin{configdocgroup}{startDistribution}
   \polem calculates the initial phase space coordinates of all particles so that the
   $\phf_i$ and the $\gamma_i$ are Gaussian distributed and average and width of the
@@ -792,7 +857,7 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 
 \todo[inline]{guide}
 
-\section{Supported Element Types}
+\section{Supported \ele/\madx Element Types and Parameters}
 \label{sec:types}
 
 \begin{table}[h]
@@ -819,6 +884,37 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
   \label{tab:pal-eletypes}
 \end{table}
 
+\begin{table}
+  \centering
+  \begin{tabular}{lll}
+    \toprule
+    \pal & \ele & \madx \\
+    \midrule
+    name & ElementName & NAME \\
+    length & L & L \\
+    k0.x & sin([V]KICK)/L &  sin(VKICK)/L \\
+    k0.z & ANGLE/L - sin([H]KICK)/L & ANGLE/L - sin(HKICK)/L \\
+    k0.s & KS &  KSI/L\\
+    k1 & K1 & K1L/L \\
+    k2 & K2 &  K2L/L\\
+    e1 & E1 & E1 \\
+    e2 & E2 & E2 \\
+    tilt & TILT & TILT + DPSI \\
+    displacement.x & DX & DX \\
+    displacement.z & DY & DY \\
+    halfWidth.x & X\_MAX & APER\_1 \\
+    halfWidth.z & Y\_MAX & APER\_2 \\
+    volt & VOLT & VOLT \\
+    freq &  FREQ & FREQ \\
+    \bottomrule
+  \end{tabular}
+  \caption{Assignment of element parameters in \pal (member variables of
+    \cppinline{pal::AccElement}) to parameters in \ele and \madx. Special cases: For \ele
+    k0.x and k0.z have to be distinguished between element types KICK (parameters HKICK
+    und VKICK) and HKICK und VKICK (parameter KICK). Aperture is only imported from \madx
+    (APER\_1 und APER\_2) if APERTYPE has the value RECTANGLE.}
+  \label{tab:pal-eleparas}
+\end{table}
 
 
 \printbibliography[heading=bibintoc]
