@@ -482,13 +482,14 @@ For simulations of intrinsic resonances without particle tracking, there is the 
 oscillation of particle $i$ as
 \begin{equation}
   \label{eq:traj-oscillation}
-  x_i(t) = \sqrt{\epsilon_{x,i} \beta_x} \cdot \cos\left(\omega_xt + \psi_{x,i}\right)
+  x_i(t) = x_\text{orbit}(t) + \sqrt{\epsilon_{x,i} \beta_x} \cdot \cos\left(\omega_xt + \psi_{x,i}\right)
   \qquad\text{with}\quad
   \omega_x = \frac{2\pi Q_x}{T_\text{rev}}
 \end{equation}
-with the single particle emittance $\epsilon_{x,i}$, the beta function $\beta_x$, the
-start phase $\psi_{x,i}$, the tune $Q_x$ and the revolution time $T_\text{rev}$. The same
-equation is used for the vertical trajectory.
+with the imported closed orbit $x_\text{orbit}$, the single particle emittance
+$\epsilon_{x,i}$, the beta function $\beta_x$, the start phase $\psi_{x,i}$, the tune
+$Q_x$ and the revolution time $T_\text{rev}$. The same equation is used for the vertical
+trajectory.
 %
 Beta functions, tunes and revolution time are imported automatically from the particle tracking
 program. The start phases are chosen randomly (uniform distribution $[0,2\pi]$). The
