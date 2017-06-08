@@ -34,7 +34,7 @@
 \author{Jan Felix Schmidt \textless janschmidt@mailbox.org\textgreater}
 \title{polematrix}
 \subtitle{a spin tracking code for electron accelerators using elegant}
-\date{documentation for version 0.99}
+\date{documentation for version 1.0}
 
 \hypersetup{
   pdftitle={polematrix documentation},
@@ -438,6 +438,18 @@ is
 \end{align*}
 All parameters are imported from the \ele or \madx lattice automatically by \pal using the
 \ele/\madx parameters listed in \cref{tab:pal-eleparas}.
+
+\paragraph{Misalignments}
+Currently, there are two kinds of magnet misalignments implemented in \pal and thus
+supported by \polem:
+\begin{itemize}
+\item transversal displacements $\Delta x$ and $\Delta z$
+\item rotations around the beam axis $s$
+\end{itemize}
+Both types are imported automatically from \ele and \madx respecting the particular sign
+conventions of the particle tracking program. The corresponding \ele/\madx parameters are
+also listed in \cref{tab:pal-eleparas}.
+
 
 
 
@@ -916,7 +928,7 @@ If \polem is used for spin tracking, the whole group can be omitted.\\[2mm]
 
 
 \appendix
-
+\clearpage
 \section{\ele Installation Guide}
 \label{sec:ele-install}
 
