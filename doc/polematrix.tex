@@ -443,23 +443,46 @@ All parameters are imported from the \ele or \madx lattice automatically by \pal
 
 \subsection{Transversal Phase Space}
 \label{sec:concept-traj}
-Currently, there are two models of transversal trajectories $x(t)$ and $z(t)$ in \polem,
+Currently, there are three models of transversal trajectories $x(t)$ and $z(t)$ in \polem,
 which can be selected with the configuration file entry \xmlinline{<trajectoryModel>} (see
 \cref{sec:config-spintrk}):
-\begin{description}
-\item[closed orbit] all particles move along the closed orbit imported from \ele or \madx
-\item[simtool] individual trajectories imported from \ele or \madx particle tracking for each particle
-\end{description}
+\begin{itemize}
+\item \xmlinline{closed orbit}: all particles move along the closed orbit imported from \ele or \madx
+\item \xmlinline{simtool}: individual trajectories imported from \ele or \madx particle tracking for each particle
+\item \xmlinline{oscillation}: simplified individual trajectories as oscillations
+\end{itemize}
+
+\paragraph{closed orbit}
 Modeling transversal phase space simply by the closed orbit for all particles is
 sufficient when simulating integer depolarizing resonances, because betatron tunes are
 never integer and thus betatron motion does not contribute to integer resonances.
 
-Using the individual trajectories requires particle tracking over the full period
+\paragraph{simtool}
+Using realistic individual trajectories requires particle tracking over the full period
 requested for spin tracking. I recommend to use the parallel version of \ele and to
 compile \pal with \software{libSDDS1} support to allow \pal reading binary SDDS files without
 converting them to ascii. Nevertheless a lot of RAM is recommended since the trajectories
 are stored in memory completely by \software{libSDDS1}.
 
+\paragraph{oscillation}
+For simulations of intrinsic resonances without particle tracking, there is the simplified
+\xmlinline{<trajectoryModel>} \xmlinline{oscillation}. It calculates the betatron
+oscillation of particle $i$ as
+\begin{equation}
+  \label{eq:traj-oscillation}
+  x_i(t) = \sqrt{\epsilon_{x,i} \beta_x} \cdot \cos\left(\omega_xt + \psi_{x,i}\right)
+  \qquad\text{with}\quad
+  \omega_x = \frac{2\pi Q_x}{T_\text{rev}}
+\end{equation}
+with the single particle emittance $\epsilon_{x,i}$, the beta function $\beta_x$, the
+start phase $\psi_{x,i}$, the tune $Q_x$ and the revolution time $T_\text{rev}$. The same
+equation is used for the vertical trajectory.
+%
+Beta functions, tunes and revolution time are imported automatically from the particle tracking
+program. The start phases are chosen randomly (uniform distribution $[0,2\pi]$). The
+beam emittances $\epsilon_x$ and $\epsilon_z$ have to be set in the configuration file.
+Based on those, the single particle emittances are determined randomly (Gaussian
+distribution around zero with $\sigma_x=\epsilon_x$).
 
 
 \subsection{Longitudinal Phase Space}
@@ -467,21 +490,24 @@ are stored in memory completely by \software{libSDDS1}.
 Currently, there are two realistic models of longitudinal phase space in \polem, which can
 be selected with the configuration file entry \xmlinline{<gammaModel>} (see
 \cref{sec:config-spintrk}):
-\begin{description}
-\item[radiation] implementation of stochastic synchrotron radiation within \polem
-\item[simtool] $\gamma_i(t)$ imported from \ele or \madx particle tracking
-\end{description}
-The model \enquote{radiation} is described in detail in \cite[section~4.2]{dr}. It
+\begin{itemize}
+\item \xmlinline{radiation}: implementation of stochastic synchrotron radiation within \polem
+\item \xmlinline{simtool}: $\gamma_i(t)$ imported from \ele or \madx particle tracking
+\end{itemize}
+Furthermore, there are some simplified models of $\gamma(t)$ -- see
+\cref{sec:config-spintrk}.
+
+\paragraph{radiation}
+This model is described in detail in \cite[section~4.2]{dr}. It
 calculates the energy loss by radiating photons in dipole magnets based on the correct
 statistical distributions of photon energy and photon number. The phase advance along
 the accelerator is not tracked via the time of flight (dispersion), but approximated using
 the momentum compaction factor (first and second order).
 
-The $\gamma_i(t)$ from \ele (or \madx) tracking may be used considering the same advises
+\paragraph{simtool}
+The $\gamma_i(t)$ from \ele (or \madx) particle tracking may be used considering the same advises
 given above for the transversal trajectories.
 
-Furthermore, there are some simplified models of $\gamma(t)$ -- see
-\cref{sec:config-spintrk}.
 
 
 \subsubsection{Linear Energy Ramp}
@@ -599,16 +625,20 @@ The group \xmlinline{<spintracking>} contains the setup of the spin tracking its
 
 \begin{configdoc}{trajectoryModel}{string}{}[closed orbit]
   Model for transverse particle trajectories $x_i(t)$ and
-  $z_i(t)$ during spin tracking. To date, two models are available:
+  $z_i(t)$ during spin tracking. To date, three models are available:
   \begin{description}
   \item[\xmlinline{closed orbit}] The closed orbit is used as trajectory for all
     particles. Thereby, all spins experience the same magnetic fields, which exclusively
     consist of revolution harmonic contributions (apart from explicitly time dependent
     fields). The closed orbit can be determined without particle tracking. This model is
     sufficient if the simulation of intrinsic resonances is not necessary.
-  \item[\xmlinline{trajectory}] The individual trajectories are imported from the particle
+  \item[\xmlinline{simtool}] The individual trajectories are imported from the particle
     tracking program selected as \xmlinline{<simTool>} in the group
     \xmlinline{<palattice>} below. The particle tracking is executed automatically.
+  \item[\xmlinline{oscillation}] The individual trajectories are simplified as
+    oscillations using tunes, beta functions and emittances as given in
+    \cref{eq:traj-oscillation}. The emittances and tunes can be set in the group
+    \xmlinline{<oscillation>} described below.
   \end{description}
 \end{configdoc}
 
@@ -807,6 +837,41 @@ imported automatically if the corresponding option is not set here (default valu
 \begin{configdoc}{longitudinal_damping_partition_number}{double}{}[0.0]
   the longitudinal damping partition number $J_s$
 \end{configdoc}
+
+
+\subsection{oscillation}
+\label{sec:config-oscil}
+This group is for configuration of the \xmlinline{<trajectoryModel>}
+\xmlinline{oscillation}, which is described in \cref{sec:concept-traj}. If another
+\xmlinline{<trajectoryModel>} is selected, the whole group can be ignored.
+
+
+\begin{configdocgroup}{emittance}
+  The amplitude of the betatron oscillations depends on the beam emittance, which has to
+  be set here. It is not imported from \ele or \madx.\\[2mm]
+  
+  \begin{configdoc}{x}{double}{\si{\m\radian}}
+  horizontal emittance $\epsilon_x$
+  \end{configdoc}
+  \begin{configdoc}{z}{double}{\si{\m\radian}}
+    vertical emittance $\epsilon_z$
+  \end{configdoc}
+\end{configdocgroup}
+
+\clearpage
+\begin{configdocgroup}{tune}
+  The frequency of the betatron oscillations is given by the tunes.
+  They are determined by the particle tracking program and
+  imported automatically if the corresponding option is not set here (default value
+  \num{0.0}). Thus, these options can be used to enforce other values.\\[2mm]
+  
+  \begin{configdoc}{x}{double}{\si{\m\radian}}[0.0]
+  horizontal tune $Q_x$
+  \end{configdoc}
+  \begin{configdoc}{z}{double}{\si{\m\radian}}[0.0]
+    vertical tune $Q_z$
+  \end{configdoc}
+\end{configdocgroup}
 
 
 

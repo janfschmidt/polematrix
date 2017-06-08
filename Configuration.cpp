@@ -84,6 +84,7 @@ std::string Configuration::trajectoryModeString() const
 {
   if (_trajectoryMode==TrajectoryMode::closed_orbit) return "closed orbit";
   else if (_trajectoryMode==TrajectoryMode::simtool) return "simtool";
+  else if (_trajectoryMode==TrajectoryMode::oscillation) return "oscillation";
   else
     return "Please implement this TrajectoryModel in Configuration::trajectoryModeString()!";
 }
@@ -149,6 +150,15 @@ void Configuration::save(const std::string &filename) const
     tree.put("spintracking.Emax", Emax());
   if (outElementUsed())
     tree.put("spintracking.outElement", outElement());
+  if (emittance().x != 0. || emittance().z != 0.) {
+    tree.put("oscillation.emittance.x", emittance().x);
+    tree.put("oscillation.emittance.z", emittance().z);
+  }
+  if (tune().x != 0. || tune().z != 0.) {
+    tree.put("oscillation.tune.x", tune().x);
+    tree.put("oscillation.tune.z", tune().z);
+  }
+
 
   #if BOOST_VERSION < 105600
   pt::xml_writer_settings<char> settings(' ', 2); //indentation
@@ -188,6 +198,7 @@ void Configuration::load(const std::string &filename)
     set_s_start(tmp);
     
     setSimToolInstance(tree);
+
     
     //optional, but throws if invalid value
     setGammaMode(tree);
@@ -198,6 +209,22 @@ void Configuration::load(const std::string &filename)
 	      << e.what() << std::endl;
     exit(1);
   }
+
+
+  //obligatory for trajectoryMode oscillation
+  if (trajectoryMode() == TrajectoryMode::oscillation) {
+    try {
+      set_emittance_x( tree.get<double>("oscillation.emittance.x") );
+      set_emittance_z( tree.get<double>("oscillation.emittance.z") );
+    }
+    catch (pt::ptree_error &e) {
+      std::cout << "Error loading configuration file:" << std::endl
+		<< "emittance has to be set for trajectoryModel \"oscillation\"" << std::endl
+		<< " --> " << e.what() << std::endl;
+      exit(1);
+    }
+  }
+
 
   
   // optional config with default values
@@ -221,6 +248,8 @@ void Configuration::load(const std::string &filename)
   set_sigmaPhaseFactor( tree.get<double>("radiation.startDistribution.sigmaPhaseFactor", 1.0) );
   set_sigmaGammaFactor( tree.get<double>("radiation.startDistribution.sigmaGammaFactor", 1.0) );
   set_checkStability( tree.get<bool>("radiation.checkStability", true) );
+  set_tune_x( tree.get<double>("oscillation.tune.x", 0.0) );
+  set_tune_z( tree.get<double>("oscillation.tune.z", 0.0) );
   set_agammaMin( tree.get<double>("resonancestrengths.spintune.min", 0.) );
   set_agammaMax( tree.get<double>("resonancestrengths.spintune.max", 10.) );
   set_dagamma( tree.get<double>("resonancestrengths.spintune.step", 1.) );
@@ -233,7 +262,7 @@ void Configuration::load(const std::string &filename)
   catch (pt::ptree_error &e) {
     _outElementUsed = false;
   }
-
+  
   set_metadata(filename);
   
   std::cout << "* configuration loaded from " << filename << std::endl;
@@ -384,7 +413,8 @@ void Configuration::setTrajectoryMode(pt::ptree &tree)
     _trajectoryMode = TrajectoryMode::closed_orbit;
   else if (s == "simtool")
     _trajectoryMode = TrajectoryMode::simtool;
-  
+  else if (s == "oscillation")
+      _trajectoryMode = TrajectoryMode::oscillation;
   else
     throw pt::ptree_error("Invalid trajectoryModel "+s);
 }
@@ -489,6 +519,18 @@ void Configuration::autocomplete(const pal::AccLattice& lattice)
     set_Js(palattice->readDampingPartitionNumber_syli().s);
     std::cout << "* set long. damping partition number from " << palattice->tool_string()
 	      << ": Js=" << Js() << std::endl;
+  }
+  if (trajectoryMode() == TrajectoryMode::oscillation) {
+    if (tune().x==0.) {
+      set_tune_x(palattice->readTune().x);
+      std::cout << "* set horizontal tune from " << palattice->tool_string()
+		<< ": Qx=" << tune().x << std::endl;
+    }
+    if (tune().z==0.) {
+      set_tune_z(palattice->readTune().z);
+      std::cout << "* set vertical tune from " << palattice->tool_string()
+		<< ": Qz=" << tune().z << std::endl;
+    }
   }
 
   _circumference = lattice.circumference();

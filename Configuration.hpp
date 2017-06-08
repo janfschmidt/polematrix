@@ -39,7 +39,7 @@ namespace fs = boost::filesystem;
 
 
 enum class GammaMode{linear, offset, oscillation, radiation, simtool, simtool_plus_linear, simtool_no_interpolation};
-enum class TrajectoryMode{closed_orbit, simtool};
+enum class TrajectoryMode{closed_orbit, simtool, oscillation};
 
 
 
@@ -130,6 +130,10 @@ private:
   double _sigmaGammaFactor; // start value for sigma_gamma in units of equilibrium value
   bool _checkStability;     // switch checking longitudinal motion during tracking
 
+  //oscillation (used with trajectoryMode oscillation only)
+  pal::AccPair _emittance;  // transversal emittances
+  pal::AccPair _tune;       // transversal tunes
+
   //Resonance Strengths
   double _agammaMin;    // output spin tune range
   double _agammaMax;
@@ -183,6 +187,8 @@ public:
   std::string savePhaseSpaceElement() const {return _savePhaseSpaceElement;}
   double sigmaPhaseFactor() const {return _sigmaPhaseFactor;}
   double sigmaGammaFactor() const {return _sigmaGammaFactor;}
+  pal::AccPair emittance() const {return _emittance;}
+  pal::AccPair tune() const {return _tune;}
   bool checkStability() const {return _checkStability;}
   double agammaMin() const {return _agammaMin;}
   double agammaMax() const {return _agammaMax;}
@@ -224,6 +230,12 @@ public:
   void set_savePhaseSpace(std::string particleList) {set_saveList(particleList,_savePhaseSpace,"savePhaseSpace");}
   void set_sigmaPhaseFactor(double sP) {_sigmaPhaseFactor = sP;}
   void set_sigmaGammaFactor(double sG) {_sigmaGammaFactor = sG;}
+  void set_emittance(pal::AccPair e) {_emittance = e;}
+  void set_emittance_x(double ex) {_emittance.x = ex;}
+  void set_emittance_z(double ez) {_emittance.z = ez;}
+  void set_tune(pal::AccPair q) {_tune = q;}
+  void set_tune_x(double qx) {_tune.x = qx;}
+  void set_tune_z(double qz) {_tune.z = qz;}
   void set_checkStability(bool c) {_checkStability = c;}
   void set_agammaMin(double a) {_agammaMin = a;}
   void set_agammaMax(double a) {_agammaMax = a;}

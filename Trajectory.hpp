@@ -34,18 +34,22 @@ public:
 
 protected:
   const std::shared_ptr<Configuration> config;
+  bool initDone;
 
 public:
-  Trajectory(unsigned int id, const std::shared_ptr<Configuration> c) : particleId(id), config(c) {}
+  Trajectory(unsigned int id, const std::shared_ptr<Configuration> c) : particleId(id), config(c), initDone(false) {}
   virtual ~Trajectory() {}
 
   void setOrbit(std::shared_ptr<const pal::FunctionOfPos<pal::AccPair>> o) {orbit = o;}
   
   virtual pal::AccPair get(const double& pos) =0;
   
-  virtual void init() {}
+  void init();
   virtual void saveSimtoolData() {}
   virtual void clear() {} // clear trajectory data
+
+protected:
+  virtual void initImplementation() =0;
 };
 
 
@@ -56,6 +60,9 @@ public:
   Orbit(unsigned int id, const std::shared_ptr<Configuration> c) : Trajectory(id,c) {}
     virtual ~Orbit() {}
   virtual pal::AccPair get(const double& pos) {return orbit->interp( orbit->posInTurn(pos) );}
+
+protected:
+  virtual void initImplementation() {}
 };
 
 
@@ -64,15 +71,34 @@ class SimtoolTrajectory : public Trajectory
 {
 private:
   pal::FunctionOfPos<pal::AccPair> simtoolTrajectory;
-  bool initDone;
   
 public:
   SimtoolTrajectory(unsigned int id, const std::shared_ptr<Configuration> c);
   virtual ~SimtoolTrajectory() {}
   virtual pal::AccPair get(const double& pos) {return simtoolTrajectory.interpPeriodic(pos-config->pos_start());}
-  virtual void init();
   virtual void clear() {simtoolTrajectory.clear();}
   virtual void saveSimtoolData();
+
+  protected:
+  virtual void initImplementation();
+};
+
+
+class Oscillation : public Trajectory
+{
+private:
+  pal::FunctionOfPos<pal::AccPair> beta;  // beta function (twiss)
+  AccPair emittance;                      // single particle emittance
+  AccPair phase0;                         // phase(0) start value
+  AccPair freq;                           // oscillation frequency / 1/m
+  
+public:
+  Oscillation(unsigned int id, const std::shared_ptr<Configuration> c);
+  virtual ~Oscillation() {}
+  virtual pal::AccPair get(const double& pos);
+
+protected:
+  virtual void initImplementation();
 };
 
 

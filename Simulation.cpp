@@ -28,6 +28,9 @@ SingleParticleSimulation::SingleParticleSimulation(unsigned int id, const std::s
   case TrajectoryMode::simtool:
     trajectory.reset( new SimtoolTrajectory(particleId, config) );
     break;
+  case TrajectoryMode::oscillation:
+    trajectory.reset( new Oscillation(particleId, config) );
+    break;
   default:
     trajectory.reset( new Orbit(particleId, config) );
   }
