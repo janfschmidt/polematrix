@@ -130,33 +130,41 @@ void Configuration::save(const std::string &filename) const
   tree.put("radiation.startDistribution.sigmaPhaseFactor", sigmaPhaseFactor());
   tree.put("radiation.startDistribution.sigmaGammaFactor", sigmaGammaFactor());
   tree.put("radiation.checkStability", checkStability());
-  tree.put("radiation.overvoltage_factor", q());
-  tree.put("radiation.momentum_compaction_factor", alphac());
-  tree.put("radiation.momentum_compaction_factor_2", alphac2());
-  tree.put("radiation.harmonic_number", h());
-  tree.put("radiation.bending_radius", R());
-  tree.put("radiation.longitudinal_damping_partition_number", Js());
   tree.put("resonancestrengths.spintune.min", agammaMin());
   tree.put("resonancestrengths.spintune.max", agammaMax());
   tree.put("resonancestrengths.spintune.step", _dagamma);
   tree.put("resonancestrengths.turns", _nTurns);
-  
+  tree.put("oscillation.emittance.x", emittance().x);
+  tree.put("oscillation.emittance.z", emittance().z);
+
   tree.put("spintracking.gammaModel", gammaModeString());
   tree.put("spintracking.trajectoryModel", trajectoryModeString());
   rf.writeToConfig(tree);
 
   // options, which are only saved if not default value
-  if (Emax() < 1e10)
+  if (Emax() < 1e10) {
     tree.put("spintracking.Emax", Emax());
-  if (outElementUsed())
+  }
+  if (outElementUsed()) {
     tree.put("spintracking.outElement", outElement());
-  if (emittance().x != 0. || emittance().z != 0.) {
-    tree.put("oscillation.emittance.x", emittance().x);
-    tree.put("oscillation.emittance.z", emittance().z);
   }
   if (tune().x != 0. || tune().z != 0.) {
     tree.put("oscillation.tune.x", tune().x);
     tree.put("oscillation.tune.z", tune().z);
+  }
+  if (q() != 0. || h() != 0.) {
+    tree.put("radiation.overvoltage_factor", q());
+    tree.put("radiation.harmonic_number", h());
+  }
+  if (alphac() != 0. || alphac2() != 0.) {
+    tree.put("radiation.momentum_compaction_factor", alphac());
+    tree.put("radiation.momentum_compaction_factor_2", alphac2());
+  }
+  if (R() != 0.) {
+    tree.put("radiation.bending_radius", R());
+  }
+  if (Js() != 0.) {
+    tree.put("radiation.longitudinal_damping_partition_number", Js());
   }
 
 
