@@ -34,7 +34,7 @@
 \author{Jan Felix Schmidt \textless janschmidt@mailbox.org\textgreater}
 \title{polematrix}
 \subtitle{a spin tracking code for electron accelerators using elegant}
-\date{documentation for version 1.0}
+\date{documentation for version 1.01}
 
 \hypersetup{
   pdftitle={polematrix documentation},
@@ -493,7 +493,8 @@ trajectory.
 %
 Beta functions, tunes and revolution time are imported automatically from the particle tracking
 program. The start phases are chosen randomly (uniform distribution $[0,2\pi]$). The
-beam emittances $\epsilon_x$ and $\epsilon_z$ have to be set in the configuration file.
+beam emittances $\epsilon_x$ and $\epsilon_z$ have to be set in the configuration file
+(see \cref{sec:config-oscil}).
 Based on those, the single particle emittances are determined randomly (Gaussian
 distribution around zero with $\sigma_x=\epsilon_x$).
 
