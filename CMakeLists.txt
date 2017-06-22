@@ -5,7 +5,7 @@ project(palattice CXX C)
 set(CMAKE_BUILD_TYPE Release)
 
 # Project Version
-set(PROG_VERSION 1.0)
+set(PROG_VERSION 1.01)
 
 # Install Path
 # set(CMAKE_INSTALL_PREFIX "/usr/local")
