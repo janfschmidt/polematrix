@@ -38,7 +38,12 @@
 // spin tracking result container (3d spin vector as function of time)
 class SpinMotion : public std::map<double,arma::colvec3>
 {
+protected:
+  std::shared_ptr<const Configuration> config;
+  
 public:
+  SpinMotion(const std::shared_ptr<Configuration> c) : config(c) {}
+
   void operator+=(const SpinMotion &other); // operators for calculation of polarization (average over spins)
   void operator/=(const unsigned int &num);
   

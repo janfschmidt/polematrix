@@ -316,7 +316,7 @@ void Configuration::printSummary() const
     s << "energy from " << palattice->tool_string() << std::endl;
   }
   else {
-    s << "energy    " <<std::setw(w-4)<< gamma_start()*E_rest_GeV << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< gamma_stop()*E_rest_GeV << " GeV" << std::endl
+    s << "energy    " <<std::setw(w-4)<< E_GeV(gamma(t_start())) << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< E_GeV(gamma(t_stop())) << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   }
   if (palattice->mode == pal::online)

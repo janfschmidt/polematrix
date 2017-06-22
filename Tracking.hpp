@@ -37,7 +37,7 @@ private:
 
 
 public:
-  Tracking(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads) {}
+  Tracking(unsigned int nThreads=std::thread::hardware_concurrency()) : Simulation(nThreads), polarization(config) {}
   Tracking(const Tracking& o) = delete;
   ~Tracking() {}
   
@@ -46,7 +46,7 @@ public:
   unsigned int numParticles() const {return config->nParticles();}
   unsigned int numThreads() const {return threadPool.size();} // number of threads (particle trackings) executed in parallel
 
-  std::map<double,arma::colvec3> getPolarization() const {return polarization;}
+  const SpinMotion getPolarization() const {return polarization;}
   void savePolarization();
 };
 

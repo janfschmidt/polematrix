@@ -261,6 +261,7 @@ public:
   double gamma_stop() const {return gamma(t_stop());}
   double agamma_start() const {return agamma(t_start());}
   double agamma_stop() const {return agamma(t_stop());}
+  double E_GeV(double t) const {return gamma(t) * E_rest_GeV;}
   unsigned int outSteps() const {return (t_stop()-t_start())/dt_out();}
   unsigned int outSteps_resStrengths() const {return (agammaMax()-agammaMin())/dagamma();}
   std::string saveGammaList() const {return getSaveList(_saveGamma);}

@@ -55,7 +55,7 @@ std::string SpinMotion::printHeader(unsigned int w, std::string name) const
 {
   std::stringstream ss;
   ss << "#"<<std::setw(w+1)<< "t / s" <<std::setw(w)<< name+"x" <<std::setw(w)<< name+"z"
-     <<std::setw(w)<< name+"s" <<std::setw(w)<< "|"+name+"|";
+     <<std::setw(w)<< name+"s" <<std::setw(w)<< "|"+name+"|" <<std::setw(w)<< "E0 / GeV";
   return ss.str();
 }
 
@@ -67,7 +67,9 @@ std::string SpinMotion::print(unsigned int w) const
        <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< it->first
        <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
        <<std::setw(w)<< it->second[0] <<std::setw(w)<< it->second[2] <<std::setw(w)<< it->second[1]
-       <<std::setw(w)<< arma::norm(it->second) << std::endl;
+       <<std::setw(w)<< arma::norm(it->second)
+       <<std::setw(w)<< config->E_GeV(it->first)
+       << std::endl;
   }
     return ss.str();
 }
@@ -79,7 +81,8 @@ std::string SpinMotion::printLine(unsigned int w, const double &key) const
      <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< key
      <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
      <<std::setw(w)<< this->at(key)[0] <<std::setw(w)<< this->at(key)[2] <<std::setw(w)<< this->at(key)[1]
-     <<std::setw(w)<< arma::norm(this->at(key));
+     <<std::setw(w)<< arma::norm(this->at(key))
+     <<std::setw(w)<< config->E_GeV(key);
   return ss.str();
 }
 
@@ -90,7 +93,8 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
      <<std::showpoint<<std::setprecision(8)<<std::setw(w+2)<< t
      <<std::resetiosflags(std::ios::scientific)<<std::setiosflags(std::ios::fixed)<<std::setprecision(5)
      <<std::setw(w)<< s[0] <<std::setw(w)<< s[2] <<std::setw(w)<< s[1]
-     <<std::setw(w)<< arma::norm(s);
+     <<std::setw(w)<< arma::norm(s)
+     <<std::setw(w)<< config->E_GeV(t);
   return ss.str();
 }
 
@@ -100,7 +104,7 @@ std::string SpinMotion::printAnyData(unsigned int w, const double &t, const arma
 
 
 TrackingTask::TrackingTask(unsigned int id, const std::shared_ptr<Configuration> c)
-  : SingleParticleSimulation(id,c), w(14), completed(false),
+  : SingleParticleSimulation(id,c), storage(config), w(14), completed(false),
     gammaSimTool(config->getSimToolInstance(), gsl_interp_akima),
     syliModel(config->seed()+particleId, config),
     currentElement(pal::AccLattice().begin())
