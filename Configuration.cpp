@@ -231,6 +231,12 @@ void Configuration::load(const std::string &filename)
 		<< " --> " << e.what() << std::endl;
       exit(1);
     }
+    //do not accept emittance zero
+    if (emittance().x==0.0 || emittance().z==0.0) {
+      std::cout << "Error loading configuration file:" << std::endl
+		<< "emittance > 0 has to be set for trajectoryModel \"oscillation\"" << std::endl;
+      exit(1);
+    }
   }
 
 
@@ -316,7 +322,7 @@ void Configuration::printSummary() const
     s << "energy from " << palattice->tool_string() << std::endl;
   }
   else {
-    s << "energy    " <<std::setw(w-4)<< E_GeV(gamma(t_start())) << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< E_GeV(gamma(t_stop())) << " GeV" << std::endl
+    s << "energy    " <<std::setw(w-4)<< E_GeV(t_start()) << " GeV   ----- " <<std::setw(3)<< _dE << " GeV/s ---->   " <<std::setw(w-4)<< E_GeV(t_stop()) << " GeV" << std::endl
       << "spin tune " <<std::setw(w)<< agamma_start() << "   -------------------->   " <<std::setw(w)<< agamma_stop() << std::endl;
   }
   if (palattice->mode == pal::online)
