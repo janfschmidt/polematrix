@@ -11,9 +11,11 @@ or Mad-X. All required particle trajectories are also imported from the establis
 particle tracking codes Elegant or Mad-X.
 
 polematrix includes synchrotron radiation via import from Elegant or an own implementation
-of longitudinal phasespace. A short description of polematrix is given in [this IPAC'16
-contribution](http://jacow.org/ipac2016/papers/mopor046.pdf) and in my phd thesis, which
-will be available soon (in German).
+of longitudinal phasespace. polematrix is described in my [phd thesis (in
+German)](http://hss.ulb.uni-bonn.de/2017/4831/4831.htm). A short (english) description is
+also published in [this IPAC'16 contribution](http://jacow.org/ipac2016/papers/mopor046.pdf).
+
+The [documentation](doc/polematrix.pdf) includes a brief introduction to the concept of polematrix.
 
 Do not hesitate to contact me if you have any questions and please report bugs.
 A user guide is coming soon.
@@ -52,7 +54,8 @@ sudo make install
 polematrix [CONFIGURATION FILE] [options]
 ```
 *[CONFIGURATION FILE]* is an easy to read xml file, which holds the tracking parameters.
-A template configuration file can be generated with option `--template`
+They are all described in the [documentation](doc/polematrix.pdf).
+A template configuration file can be generated with option `--template`.
 
 ### Allowed options:
 
